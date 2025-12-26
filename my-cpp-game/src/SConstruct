@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+import os
+import sys
+
+# godot-cppのビルド設定を読み込む
+env = SConscript("godot-cpp/SConstruct")
+
+# インクルードパスの設定
+env.Append(CPPPATH=["."])
+
+# ソースファイルをすべて取得
+sources = Glob("*.cpp")
+
+# DLLの出力先と名前 (../bin/gdexample.dll になります)
+if env["platform"] == "macos":
+    library = env.SharedLibrary(
+        "../bin/gdexample.macos.template_debug.framework/gdexample",
+        source=sources,
+    )
+else:
+    library = env.SharedLibrary(
+        "../bin/gdexample",
+        source=sources,
+    )
+
+Default(library)
