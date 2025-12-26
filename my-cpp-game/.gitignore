@@ -1,3 +1,20 @@
-# Godot 4+ specific ignores
+# ビルドされたファイルや中間ファイルを無視する
+bin/
+src/godot-cpp/bin/
+src/godot-cpp/src/*.obj
+src/godot-cpp/src/*.o
+*.dll
+*.lib
+*.exe
+*.exp
+*.pdb
+*.ilk
+
+# SConsのキャッシュファイル
+.sconsign.dblite
+
+# Godotの一時ファイル
 .godot/
-/android/
+
+# VS Codeの設定（パスがPCごとに違うため、共有しない方が安全）
+# .vscode/
