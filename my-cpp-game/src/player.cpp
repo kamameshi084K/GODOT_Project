@@ -166,54 +166,10 @@ void Player::_ready()
 
     // AnimationPlayerを取得
     // ※ノードパスはあなたの環境に合わせてください ("Idle/AnimationPlayer" など)
+    // AnimationPlayerを取得するだけ
     anim_player = Object::cast_to<AnimationPlayer>(get_node_or_null("Idle/AnimationPlayer"));
     
-    if (anim_player)
-    {
-        // ライブラリを取得（なければ作る）
-        Ref<AnimationLibrary> lib;
-        if (anim_player->has_animation_library(""))
-        {
-            lib = anim_player->get_animation_library("");
-        } else {
-            lib.instantiate();
-            anim_player->add_animation_library("", lib);
-        }
-
-        if (lib.is_valid()) 
-        {
-            // 1. Run の登録
-            Ref<Resource> run_anim = ResourceLoader::get_singleton()->load("res://Run.res");
-            if (run_anim.is_valid())
-            {
-                if (!lib->has_animation("Run"))
-                {
-                    lib->add_animation("Run", run_anim);
-                    UtilityFunctions::print("Success: Run animation added!");
-                }
-            }
-            else
-            {
-                UtilityFunctions::print("ERROR: Could not load Run.res");
-            }
-
-            // 2. Idle の登録 (ここを追加！)
-            Ref<Resource> idle_anim = ResourceLoader::get_singleton()->load("res://Idle.res");
-            if (idle_anim.is_valid())
-            {
-                if (!lib->has_animation("Idle"))
-                {
-                    lib->add_animation("Idle", idle_anim);
-                    UtilityFunctions::print("Success: Idle animation added!");
-                }
-            }
-            else
-            {
-                UtilityFunctions::print("ERROR: Could not load Idle.res. Check file name (case sensitive!)");
-            }
-        }
-    }
-    else
+    if (!anim_player)
     {
         UtilityFunctions::print("ERROR: AnimationPlayer node not found!");
     }
@@ -308,17 +264,17 @@ void Player::_physics_process(double delta)
         if (horizontal_speed > 0.1) 
         {
             // 動いているなら Run
-            if (anim_player->get_current_animation() != "Run")
+            if (anim_player->get_current_animation() != "clips/Run")
             {
-                anim_player->play("Run", -1, 1.5);
+                anim_player->play("clips/Run", -1, 1.5);
             }
         } 
         else 
         {
             // 止まっているなら Idle
-            if (anim_player->get_current_animation() != "Idle")
+            if (anim_player->get_current_animation() != "clips/Idle")
             {
-                anim_player->play("Idle", 0.2);
+                anim_player->play("clips/Idle", 0.2);
             }
         }
     }
