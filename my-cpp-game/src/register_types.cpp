@@ -1,5 +1,6 @@
 #include "register_types.h"
 #include "gdexample.h" // 自作クラスをインクルード
+#include "player.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -15,6 +16,7 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     }
     // ここで自作クラスを登録！
     ClassDB::register_class<GDExample>();
+    ClassDB::register_class<Player>();
 }
 
 void uninitialize_gdexample_module(ModuleInitializationLevel p_level) 

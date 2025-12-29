@@ -1,0 +1,64 @@
+[gd_scene load_steps=5 format=3 uid="uid://nrc7ipixrte"]
+
+[ext_resource type="PackedScene" uid="uid://imcu3pc77edr" path="res://Idle.fbx" id="1_f3sb7"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_gv5m4"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_f3sb7"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_tlwt5"]
+
+[node name="world" type="Node3D"]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+transform = Transform3D(-8.742278e-07, 0, -20, 0, 1, 0, 20, 0, -8.742278e-07, 0, 0, 0)
+mesh = SubResource("BoxMesh_gv5m4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+shape = SubResource("BoxShape3D_f3sb7")
+
+[node name="Player" type="Player" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6401559, 1.500153, 1.9099112)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_tlwt5")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Player"]
+transform = Transform3D(0.9999102, 0.000117590644, -0.0007522447, 0, 0.98793334, 0.15442891, 0.0007613756, -0.15443112, 0.9879186, 0, 5, 0)
+spring_length = 10.0
+
+[node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D"]
+transform = Transform3D(1.0000166, -8.3227114e-08, 1.2410788e-07, -1.1175869e-08, 0.78656924, 0.6175268, -1.4901158e-07, -0.61752534, 0.7865674, 0, 0, 0)
+
+[node name="Idle" parent="Player" instance=ExtResource("1_f3sb7")]
+transform = Transform3D(0.7040253, 0, 0.71017486, 0, 1, 0, -0.71017486, 0, 0.7040253, 0, -0.94571066, 0)
+
+[node name="Skeleton3D" parent="Player/Idle" index="0"]
+bones/11/rotation = Quaternion(0.25328454, 0.061618283, -0.2282103, 0.93806726)
+bones/13/rotation = Quaternion(-0.0016647386, -0.00080778124, 0.0069197505, 0.9999744)
+bones/15/rotation = Quaternion(-6.059341e-07, 9.9535276e-11, -0.00016426753, 1)
+bones/16/rotation = Quaternion(-6.084827e-20, 0, 0.00025564426, 1)
+bones/17/rotation = Quaternion(-1.010017e-20, 0, -8.792197e-05, 1)
+bones/19/rotation = Quaternion(-9.78174e-07, 4.9085347e-10, -0.0005018059, 0.9999999)
+bones/20/rotation = Quaternion(-1.7667906e-20, -2.646978e-23, 0.00084987143, 0.99999964)
+bones/21/rotation = Quaternion(-2.5239809e-19, 5.293956e-23, -0.000321842, 0.99999994)
+bones/23/rotation = Quaternion(6.963166e-08, 1.085061e-11, 0.0001558293, 1)
+bones/24/rotation = Quaternion(-3.761026e-20, 0, -0.0002215151, 1)
+bones/25/rotation = Quaternion(2.317801e-20, 6.617445e-24, -0.0001128051, 1)
+bones/27/rotation = Quaternion(4.6707196e-06, 2.430471e-09, 0.000520363, 0.9999999)
+bones/28/rotation = Quaternion(4.8573726e-21, -6.617445e-24, 0.00084623165, 0.99999964)
+bones/29/rotation = Quaternion(-1.2429584e-21, 8.271806e-25, -0.0004967778, 0.9999999)
+bones/32/rotation = Quaternion(-0.024606362, -0.0025613955, 0.103504546, 0.99432135)
+bones/37/rotation = Quaternion(-0.0015313593, 0.0007452554, -0.006073121, 0.99998015)
+bones/45/rotation = Quaternion(-4.2758992e-07, -8.846624e-12, 2.0689502e-05, 1)
+bones/55/rotation = Quaternion(2.704767e-09, 0.0103564765, 0.9999464, 2.6115273e-07)
+bones/60/rotation = Quaternion(2.8191485e-09, 0.01036796, 0.9999463, 2.71895e-07)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, -0.46368933, 9.036392, -0.8837156)
+shadow_enabled = true
+
+[editable path="Player/Idle"]

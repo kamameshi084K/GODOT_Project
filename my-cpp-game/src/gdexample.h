@@ -1,17 +1,22 @@
 #ifndef GDEXAMPLE_H
 #define GDEXAMPLE_H
 
-#include <godot_cpp/classes/sprite2d.hpp>
+#include <godot_cpp/classes/character_body2d.hpp>
 
 namespace godot 
 {
 
-    class GDExample : public Sprite2D 
+    // クラスの継承元を変更
+    class GDExample : public CharacterBody2D
     {
-        GDCLASS(GDExample, Sprite2D)
+        GDCLASS(GDExample, CharacterBody2D)
 
         private:
             double time_passed;
+            double speed;
+            // セッター・ゲッターの宣言
+            void set_speed(double p_speed);
+            double get_speed() const;
 
         protected:
             static void _bind_methods();
@@ -19,8 +24,9 @@ namespace godot
         public:
             GDExample();
             ~GDExample();
-
-        void _process(double delta) override;
+            virtual void _ready() override;
+            // 物理演算をする場合は _process ではなく _physics_process を使うのが定石です
+            virtual void _physics_process(double delta) override;
     };
 }
 
