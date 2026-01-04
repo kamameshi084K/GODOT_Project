@@ -2,6 +2,10 @@
 
 #include <godot_cpp/classes/character_body3d.hpp>
 #include <godot_cpp/classes/animation_player.hpp> // cppに合わせてAnimationPlayerに戻しました
+#include <godot_cpp/classes/animation_tree.hpp>   // 追加: AnimationTreeを使うためにインクルード
+#include <godot_cpp/classes/animation_node_state_machine_playback.hpp>
+#include <godot_cpp/classes/animation_node_one_shot.hpp>
+#include <godot_cpp/classes/area3d.hpp>
 
 namespace godot
 {
@@ -19,6 +23,9 @@ namespace godot
 
         // cpp側で anim_player を使っているため、型と変数名を合わせました
         AnimationPlayer* anim_player;
+        // ▼ 変更: AnimationTree* に変える
+        AnimationTree* anim_tree;
+        AnimationNodeStateMachinePlayback* state_machine; // 追加: ステートマシンの操作用
 
     protected:
         static void _bind_methods();

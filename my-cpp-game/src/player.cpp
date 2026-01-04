@@ -28,6 +28,9 @@ Player::Player()
     camera_sensitivity = 0.005;
     acceleration = 40.0; // 値が大きいほど、すぐにトップスピードになる
     friction = 30.0;     // 値が大きいほど、すぐに止まる（小さいと氷の上みたいになる）
+
+    anim_tree = nullptr;
+    state_machine = nullptr; // ▼ 初期化忘れずに
 }
 
 Player::~Player()
@@ -164,6 +167,23 @@ void Player::_ready()
     joy_jump->set_button_index(JoyButton::JOY_BUTTON_A); // 一般的な決定/ジャンプボタン
     map->action_add_event("ui_accept", joy_jump);
 
+    if (!map->has_action("attack"))
+    {
+        map->add_action("attack");
+        
+        // キーボード (Zキー)
+        Ref<InputEventKey> key_attack;
+        key_attack.instantiate();
+        key_attack->set_keycode(Key::KEY_Z);
+        map->action_add_event("attack", key_attack);
+
+        // コントローラー (Xボタン / PSなら□)
+        Ref<InputEventJoypadButton> joy_attack;
+        joy_attack.instantiate();
+        joy_attack->set_button_index(JoyButton::JOY_BUTTON_X); // 攻撃ボタン
+        map->action_add_event("attack", joy_attack);
+    }
+/*
     // AnimationPlayerを取得
     // ※ノードパスはあなたの環境に合わせてください ("Idle/AnimationPlayer" など)
     // AnimationPlayerを取得するだけ
@@ -172,6 +192,21 @@ void Player::_ready()
     if (!anim_player)
     {
         UtilityFunctions::print("ERROR: AnimationPlayer node not found!");
+    }
+*/
+    // AnimationPlayerを取得// エディタで追加した "AnimationTree" という名前のノードを探します
+    anim_tree = Object::cast_to<AnimationTree>(get_node_or_null("AnimationTree"));
+    
+    if (anim_tree)
+    {
+        // ActiveをONにして動くようにする
+        anim_tree->set_active(true);
+        // ステートマシンのPlaybackオブジェクトを取得して保存しておく
+        state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/StateMachine/playback"));
+    }
+    else
+    {
+        UtilityFunctions::print("ERROR: AnimationTree node not found!");
     }
 }
 
@@ -257,8 +292,8 @@ void Player::_physics_process(double delta)
         velocity.x = Math::move_toward(velocity.x, (real_t)0.0, (real_t)(friction * delta));
         velocity.z = Math::move_toward(velocity.z, (real_t)0.0, (real_t)(friction * delta));
     }
-
-    if (anim_player)
+/*
+if (anim_player)
     {
         double horizontal_speed = Vector3(velocity.x, 0, velocity.z).length();
         if (horizontal_speed > 0.1) 
@@ -278,9 +313,70 @@ void Player::_physics_process(double delta)
             }
         }
     }
+*/
+    if (anim_tree)
+    {
+        // 1. 攻撃 (OneShot) & 捕食処理
+        if (input->is_action_just_pressed("attack"))
+        {
+            // --- アニメーション再生 ---
+            anim_tree->set("parameters/Punch/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
+            UtilityFunctions::print("Attack!");
+
+            // --- ▼▼▼ ここから捕食ロジック追加 ▼▼▼ ---
+            
+            // Hitboxノードを取得
+            Area3D* hitbox = Object::cast_to<Area3D>(get_node_or_null("Idle/Hitbox"));
+            
+            if (hitbox)
+            {
+                // 今、エリア内に入っている「物体」を全部取得する
+                TypedArray<Node3D> bodies = hitbox->get_overlapping_bodies();
+                
+                // 見つかった物体をひとつずつチェック
+                for (int i = 0; i < bodies.size(); i++)
+                {
+                    Node3D* body = Object::cast_to<Node3D>(bodies[i]);
+                    
+                    // そいつは "enemy" グループに入っているか？
+                    if (body && body->is_in_group("enemy"))
+                    {
+                        // 捕食成功！
+                        UtilityFunctions::print("Gotcha! Ate the enemy!");
+                        
+                        // 敵を消去する
+                        body->queue_free();
+                        
+                        // ※動物番長なら、ここでHP回復や変形ゲージUPが入ります！
+                    }
+                }
+            }
+        }
+
+        // 2. 移動 (BlendSpace)
+        double h_speed = Vector3(velocity.x, 0, velocity.z).length();
+        // パス: parameters/ステートマシン名/BlendSpace名/blend_position
+        // ※ブレンドツリー内のステートマシンの名前が "StateMachine" である前提です
+        anim_tree->set("parameters/StateMachine/Move/blend_position", (real_t)h_speed);
+
+        // 3. 状態遷移 (StateMachine)
+        // state_machine変数は、StateMachinePlayback型なので、パスの変更影響を受けません（_readyで取得済みならOK）
+        if (state_machine)
+        {
+            if (is_on_floor())
+            {
+                state_machine->travel("Move");
+            }
+            else
+            {
+                state_machine->travel("Jump");
+            }
+        }
+    }
 
     // move_and_slide(); の直前に入れる
-    if (direction.length() > 0) {
+    if (direction.length() > 0)
+    {
         UtilityFunctions::print("Velocity: ", velocity, " Direction: ", direction);
     }
     
