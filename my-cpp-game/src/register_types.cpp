@@ -3,6 +3,7 @@
 #include "player.hpp"
 #include "enemy.hpp"
 #include "portal.hpp"
+#include "battle_ui.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -21,11 +22,13 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     ClassDB::register_class<Player>();
     ClassDB::register_class<Enemy>();   // 敵クラスを登録
     ClassDB::register_class<Portal>(); // ポータルクラスを登録
+    ClassDB::register_class<BattleUI>(); // バトルUIクラスを登録
 }
 
 void uninitialize_gdexample_module(ModuleInitializationLevel p_level) 
 {
-    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE)
+    {
         return;
     }
 }

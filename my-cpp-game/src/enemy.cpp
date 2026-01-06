@@ -1,8 +1,9 @@
 #include "enemy.hpp"
-#include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/core/class_db.hpp> // ClassDBを使うために必要
+#include <godot_cpp/classes/engine.hpp> // Engineを使うために必要
+#include <godot_cpp/classes/scene_tree.hpp> // SceneTreeを使うために必要
+#include <godot_cpp/variant/utility_functions.hpp> // UtilityFunctionsを使うために必要
+#include <godot_cpp/classes/kinematic_collision3d.hpp> // KinematicCollision3Dを使うために必要
 
 // 名前空間を使用
 // namespaceを使うことで、godot:: を毎回書かなくて済むように
@@ -90,4 +91,26 @@ void Enemy::_physics_process(double delta)
     }
     set_velocity(velocity);
     move_and_slide();
+
+    // 移動した結果、何かにぶつかっているかチェック
+    for (int i = 0; i < get_slide_collision_count(); i++)
+    {
+        Ref<KinematicCollision3D> collision = get_slide_collision(i);
+        Object *collider = collision->get_collider();
+
+        // ぶつかった相手をNodeとして扱い、グループを確認
+        Node *body = Object::cast_to<Node>(collider);
+
+        // "player" グループに入っている物体（プレイヤー）ならバトルへ
+        if (body && body->is_in_group("player"))
+        {
+            UtilityFunctions::print("Encounter! Battle Start!");
+
+            // 物理演算中にシーンを変えるため、call_deferredを使用
+            get_tree()->call_deferred("change_scene_to_file", "res://battle.tscn");
+            
+            // バトル開始後はこれ以上処理しない
+            return;
+        }
+    }
 }

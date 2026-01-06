@@ -39,15 +39,15 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 2
 size = Vector3(1, 5, 20)
 
 [node name="Player" parent="." instance=ExtResource("1_fj7yv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9535043, 1.4995998, -3.198501)
-velocity = Vector3(-0.24400127, 0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02033344, 1.5001525, 5.2527776)
+velocity = Vector3(0, 0, 2.3333335)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, -0.46368933, 9.036392, -0.8837156)
 shadow_enabled = true
 
 [node name="Enemy" parent="." instance=ExtResource("6_dwbse")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 1.010297, 2.6630192, -3.1047862)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2.663, -5)
 
 [node name="ToDungeon" type="Portal" parent="."]
 next_scene_path = "uid://dyf0a4m18ql3f"
