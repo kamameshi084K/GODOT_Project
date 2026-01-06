@@ -39,8 +39,8 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 2
 size = Vector3(1, 5, 20)
 
 [node name="Player" parent="." instance=ExtResource("1_fj7yv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02033344, 1.5001525, 5.2527776)
-velocity = Vector3(0, 0, 2.3333335)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0107805785, 1.5001329, 5.2138886)
+velocity = Vector3(0, 0, 2.8333335)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, -0.46368933, 9.036392, -0.8837156)

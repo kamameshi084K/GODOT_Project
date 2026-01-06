@@ -1,4 +1,5 @@
 #include "enemy.hpp"
+#include "game_manager.hpp" // GameManagerを使うために必要
 #include <godot_cpp/core/class_db.hpp> // ClassDBを使うために必要
 #include <godot_cpp/classes/engine.hpp> // Engineを使うために必要
 #include <godot_cpp/classes/scene_tree.hpp> // SceneTreeを使うために必要
@@ -34,6 +35,7 @@ Enemy::~Enemy()
 /**
  * @brief キャラクターの動作を制御するために_physics_processをオーバーライド
  * @param delta フレーム間の経過時間（秒）
+ * @note virtualとは、基底クラスで仮想関数として宣言されていることを示します
  */
 void Enemy::_physics_process(double delta)
 {
@@ -104,6 +106,20 @@ void Enemy::_physics_process(double delta)
         // "player" グループに入っている物体（プレイヤー）ならバトルへ
         if (body && body->is_in_group("player"))
         {
+            GameManager *gm = GameManager::get_singleton(); // クラス名は GameManager でOK
+            if (gm)
+            {
+                Node3D *player_3d = Object::cast_to<Node3D>(body);
+                if (player_3d)
+                {
+                    // プレイヤーの現在位置を保存
+                    gm->set_last_player_position(player_3d->get_global_position());
+                    // 「バトル帰りだよ」フラグを立てる
+                    gm->set_is_returning_from_battle(true);
+                    
+                    UtilityFunctions::print("Position Saved: ", player_3d->get_global_position());
+                }
+            }
             UtilityFunctions::print("Encounter! Battle Start!");
 
             // 物理演算中にシーンを変えるため、call_deferredを使用

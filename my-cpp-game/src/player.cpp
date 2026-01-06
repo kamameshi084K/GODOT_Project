@@ -1,4 +1,5 @@
 #include "player.hpp"
+#include "game_manager.hpp"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_map.hpp>
@@ -207,6 +208,20 @@ void Player::_ready()
     else
     {
         UtilityFunctions::print("ERROR: AnimationTree node not found!");
+    }
+
+    GameManager *gm = GameManager::get_singleton();
+
+    // マネージャーが存在し、かつ「バトル帰り」なら
+    if (gm && gm->get_is_returning_from_battle())
+    {
+        // 保存しておいた場所にワープ
+        set_global_position(gm->get_last_player_position());
+        
+        // フラグを下ろす（次は普通にスタートできるように）
+        gm->set_is_returning_from_battle(false);
+
+        UtilityFunctions::print("Welcome back! Warp to: ", gm->get_last_player_position());
     }
 }
 

@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="MyCppGame"
-run/main_scene="uid://cmxx0tea40vwu"
+run/main_scene="uid://nrc7ipixrte"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GlobalGameManager="*res://game_manager.tscn"
 
 [input]
 

@@ -30,5 +30,5 @@ void BattleUI::_on_win_button_pressed()
     UtilityFunctions::print("Battle Win! Returning to dungeon...");
     
     // ダンジョンに戻る！
-    get_tree()->change_scene_to_file("res://dungeon.tscn");
+    get_tree()->change_scene_to_file("res://world.tscn");
 }
