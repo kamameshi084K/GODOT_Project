@@ -2,16 +2,18 @@
 
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/animation_player.hpp>
-#include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/progress_bar.hpp>
 
 namespace godot
 {
     class BattleUI : public Control
     {
+        // Godotのマクロ
         GDCLASS(BattleUI, Control)
 
     private:
         int player_hp; // プレイヤーのHP
+        int max_player_hp; // プレイヤーの最大HP
         int enemy_hp; // 敵のHP
         NodePath enemy_anim_path; // エディタで設定する「敵のアニメーションプレイヤーへのパス」
         AnimationPlayer *enemy_anim; // 実際のポインタ
@@ -19,7 +21,7 @@ namespace godot
         NodePath player_anim_path; // エディタで設定する「プレイヤーのアニメーションプレイヤーへのパス」
         AnimationPlayer *player_anim; // 実際のポインタ
 
-        Label *hp_label; // 敵のHP表示ラベル
+        ProgressBar *player_hp_bar; // HP表示ラベルへのポインタ
 
     protected:
         static void _bind_methods();

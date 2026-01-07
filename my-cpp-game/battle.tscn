@@ -9,10 +9,10 @@ background_mode = 2
 [sub_resource type="PlaneMesh" id="PlaneMesh_ip7xm"]
 size = Vector2(20, 20)
 
-[sub_resource type="LabelSettings" id="LabelSettings_w7wwj"]
-font_size = 90
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ip7xm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oxp8w"]
+bg_color = Color(0, 1, 0, 1)
 
 [node name="BattleScene" type="Node3D"]
 
@@ -112,15 +112,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HPLabel" type="Label" parent="CanvasLayer/BattleUI"]
-layout_mode = 0
-offset_left = 242.0
-offset_top = 162.0
-offset_right = 719.0
-offset_bottom = 287.0
-text = "バトルスタート"
-label_settings = SubResource("LabelSettings_w7wwj")
-
 [node name="AttackButton" type="Button" parent="CanvasLayer/BattleUI"]
 layout_mode = 0
 offset_left = 877.0
@@ -131,6 +122,17 @@ theme_override_colors/font_color = Color(1, 0, 0, 1)
 theme_override_font_sizes/font_size = 25
 theme_override_styles/normal = SubResource("StyleBoxFlat_ip7xm")
 text = "Attack"
+
+[node name="PlayerHPBar" type="ProgressBar" parent="CanvasLayer/BattleUI"]
+layout_mode = 0
+offset_left = 213.0
+offset_top = 242.0
+offset_right = 429.0
+offset_bottom = 269.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_oxp8w")
+max_value = 10.0
+value = 10.0
+show_percentage = false
 
 [connection signal="pressed" from="CanvasLayer/BattleUI/AttackButton" to="CanvasLayer/BattleUI" method="_on_attack_button_pressed"]
 
