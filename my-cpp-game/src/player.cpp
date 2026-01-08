@@ -4,34 +4,75 @@
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_map.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
-#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/input_event_joypad_button.hpp>
+#include <godot_cpp/classes/input_event_joypad_motion.hpp>
+#include <godot_cpp/classes/animation_node_one_shot.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <godot_cpp/classes/input_event_joypad_button.hpp> // ボタン用
-#include <godot_cpp/classes/input_event_joypad_motion.hpp> // スティック用
-#include <godot_cpp/classes/spring_arm3d.hpp> // カメラアーム用
-#include <godot_cpp/classes/resource_loader.hpp>
-#include <godot_cpp/classes/animation_library.hpp>
-#include <godot_cpp/classes/animation.hpp>
 
 using namespace godot;
 
 void Player::_bind_methods()
 {
-    // 必要ならここにプロパティ登録などを書きます
+    // --- パラメータの登録 ---
+    
+    ClassDB::bind_method(D_METHOD("set_speed", "p_speed"), &Player::set_speed);
+    ClassDB::bind_method(D_METHOD("get_speed"), &Player::get_speed);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "speed"), "set_speed", "get_speed");
+
+    ClassDB::bind_method(D_METHOD("set_jump_velocity", "p_velocity"), &Player::set_jump_velocity);
+    ClassDB::bind_method(D_METHOD("get_jump_velocity"), &Player::get_jump_velocity);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "jump_velocity"), "set_jump_velocity", "get_jump_velocity");
+
+    ClassDB::bind_method(D_METHOD("set_gravity", "p_gravity"), &Player::set_gravity);
+    ClassDB::bind_method(D_METHOD("get_gravity"), &Player::get_gravity);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "gravity"), "set_gravity", "get_gravity");
+
+    ClassDB::bind_method(D_METHOD("set_camera_sensitivity", "p_sensitivity"), &Player::set_camera_sensitivity);
+    ClassDB::bind_method(D_METHOD("get_camera_sensitivity"), &Player::get_camera_sensitivity);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_sensitivity"), "set_camera_sensitivity", "get_camera_sensitivity");
+
+    ClassDB::bind_method(D_METHOD("set_acceleration", "p_accel"), &Player::set_acceleration);
+    ClassDB::bind_method(D_METHOD("get_acceleration"), &Player::get_acceleration);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "acceleration"), "set_acceleration", "get_acceleration");
+
+    ClassDB::bind_method(D_METHOD("set_friction", "p_friction"), &Player::set_friction);
+    ClassDB::bind_method(D_METHOD("get_friction"), &Player::get_friction);
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "friction"), "set_friction", "get_friction");
+
+    // --- ノードパスの登録 ---
+
+    ClassDB::bind_method(D_METHOD("set_visual_node_path", "path"), &Player::set_visual_node_path);
+    ClassDB::bind_method(D_METHOD("get_visual_node_path"), &Player::get_visual_node_path);
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "visual_node_path"), "set_visual_node_path", "get_visual_node_path");
+
+    ClassDB::bind_method(D_METHOD("set_camera_arm_path", "path"), &Player::set_camera_arm_path);
+    ClassDB::bind_method(D_METHOD("get_camera_arm_path"), &Player::get_camera_arm_path);
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "camera_arm_path"), "set_camera_arm_path", "get_camera_arm_path");
+
+    ClassDB::bind_method(D_METHOD("set_anim_tree_path", "path"), &Player::set_anim_tree_path);
+    ClassDB::bind_method(D_METHOD("get_anim_tree_path"), &Player::get_anim_tree_path);
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "anim_tree_path"), "set_anim_tree_path", "get_anim_tree_path");
+
+    ClassDB::bind_method(D_METHOD("set_hitbox_path", "path"), &Player::set_hitbox_path);
+    ClassDB::bind_method(D_METHOD("get_hitbox_path"), &Player::get_hitbox_path);
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "hitbox_path"), "set_hitbox_path", "get_hitbox_path");
 }
 
 Player::Player()
 {
+    // デフォルト値
     speed = 5.0;
     jump_velocity = 4.5;
-    // 一般的な重力値 (プロジェクト設定から取得するのが理想ですが、一旦固定値で)
     gravity = 9.8;
     camera_sensitivity = 0.005;
-    acceleration = 40.0; // 値が大きいほど、すぐにトップスピードになる
-    friction = 30.0;     // 値が大きいほど、すぐに止まる（小さいと氷の上みたいになる）
+    acceleration = 40.0;
+    friction = 30.0;
 
+    visual_node = nullptr;
+    camera_arm = nullptr;
     anim_tree = nullptr;
-    state_machine = nullptr; // ▼ 初期化忘れずに
+    state_machine = nullptr;
+    hitbox = nullptr;
 }
 
 Player::~Player()
@@ -40,257 +81,92 @@ Player::~Player()
 
 void Player::_ready()
 {
-    InputMap *map = InputMap::get_singleton();
-
-    // move_right (Dキー) を登録
-    if (!map->has_action("move_right"))
+    if (!visual_node_path.is_empty())
     {
-        map->add_action("move_right");
-        Ref<InputEventKey> key;
-        key.instantiate();
-        key->set_keycode(Key::KEY_D);
-        map->action_add_event("move_right", key);
-    }
-
-    // move_left (Aキー) を登録
-    if (!map->has_action("move_left"))
-    {
-        map->add_action("move_left");
-        Ref<InputEventKey> key;
-        key.instantiate();
-        key->set_keycode(Key::KEY_A);
-        map->action_add_event("move_left", key);
-    }
-
-    // move_up (Wキー) を登録
-    if (!map->has_action("move_up"))
-    {
-        map->add_action("move_up");
-        Ref<InputEventKey> key;
-        key.instantiate();
-        key->set_keycode(Key::KEY_W);
-        map->action_add_event("move_up", key);
-    }
-
-    // move_down (Sキー) を登録
-    if (!map->has_action("move_down"))
-    {
-        map->add_action("move_down");
-        Ref<InputEventKey> key;
-        key.instantiate();
-        key->set_keycode(Key::KEY_S);
-        map->action_add_event("move_down", key);
+        visual_node = get_node<Node3D>(visual_node_path);
     }
     
-    // 1. 右移動 (左スティックを右に倒した時)
-    Ref<InputEventJoypadMotion> joy_right;
-    joy_right.instantiate();
-    joy_right->set_axis(JoyAxis::JOY_AXIS_LEFT_X); // 左スティックのX軸
-    joy_right->set_axis_value(1.0); // プラス方向 (右)
-    map->action_add_event("move_right", joy_right);
-
-    // 2. 左移動 (左スティックを左に倒した時)
-    Ref<InputEventJoypadMotion> joy_left;
-    joy_left.instantiate();
-    joy_left->set_axis(JoyAxis::JOY_AXIS_LEFT_X);
-    joy_left->set_axis_value(-1.0); // マイナス方向 (左)
-    map->action_add_event("move_left", joy_left);
-
-    // 3. 上移動 (左スティックを上に倒した時)
-    // 注意: ゲームパッドのY軸は「上がマイナス」なことが多いですが
-    // GodotのInput Map上では軸の方向をそのまま登録します
-    Ref<InputEventJoypadMotion> joy_up;
-    joy_up.instantiate();
-    joy_up->set_axis(JoyAxis::JOY_AXIS_LEFT_Y);
-    joy_up->set_axis_value(-1.0); // 上 (マイナス)
-    map->action_add_event("move_up", joy_up);
-
-    // 4. 下移動 (左スティックを下に倒した時)
-    Ref<InputEventJoypadMotion> joy_down;
-    joy_down.instantiate();
-    joy_down->set_axis(JoyAxis::JOY_AXIS_LEFT_Y);
-    joy_down->set_axis_value(1.0); // 下 (プラス)
-    map->action_add_event("move_down", joy_down);
-
-    // 1. カメラ右
-    if (!map->has_action("camera_right"))
+    if (!camera_arm_path.is_empty())
     {
-        map->add_action("camera_right");
-        Ref<InputEventJoypadMotion> joy;
-        joy.instantiate();
-        joy->set_axis(JoyAxis::JOY_AXIS_RIGHT_X);
-        joy->set_axis_value(1.0);
-        map->action_add_event("camera_right", joy);
+        camera_arm = get_node<SpringArm3D>(camera_arm_path);
     }
 
-    // 2. カメラ左
-    if (!map->has_action("camera_left"))
+    if (!anim_tree_path.is_empty())
     {
-        map->add_action("camera_left");
-        Ref<InputEventJoypadMotion> joy;
-        joy.instantiate();
-        joy->set_axis(JoyAxis::JOY_AXIS_RIGHT_X);
-        joy->set_axis_value(-1.0);
-        map->action_add_event("camera_left", joy);
+        anim_tree = get_node<AnimationTree>(anim_tree_path);
+        if (anim_tree)
+        {
+            anim_tree->set_active(true);
+            state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/StateMachine/playback"));
+        }
     }
 
-    // 3. カメラ上
-    if (!map->has_action("camera_up"))
+    if (!hitbox_path.is_empty())
     {
-        map->add_action("camera_up");
-        Ref<InputEventJoypadMotion> joy;
-        joy.instantiate();
-        joy->set_axis(JoyAxis::JOY_AXIS_RIGHT_Y);
-        joy->set_axis_value(-1.0);
-        map->action_add_event("camera_up", joy);
+        hitbox = get_node<Area3D>(hitbox_path);
     }
 
-    // 4. カメラ下
-    if (!map->has_action("camera_down"))
-    {
-        map->add_action("camera_down");
-        Ref<InputEventJoypadMotion> joy;
-        joy.instantiate();
-        joy->set_axis(JoyAxis::JOY_AXIS_RIGHT_Y);
-        joy->set_axis_value(1.0);
-        map->action_add_event("camera_down", joy);
-    }
-
-    // 5. ジャンプ (コントローラーの一番下のボタン: PSなら×、XboxならA)
-    // まだ ui_accept を作っていない場合は追加
-    if (!map->has_action("ui_accept"))
-    {
-        map->add_action("ui_accept");
-    }
-    // 既存のアクションにイベントを追加
-    Ref<InputEventJoypadButton> joy_jump;
-    joy_jump.instantiate();
-    joy_jump->set_button_index(JoyButton::JOY_BUTTON_A); // 一般的な決定/ジャンプボタン
-    map->action_add_event("ui_accept", joy_jump);
-
-    if (!map->has_action("attack"))
-    {
-        map->add_action("attack");
-        
-        // キーボード (Zキー)
-        Ref<InputEventKey> key_attack;
-        key_attack.instantiate();
-        key_attack->set_keycode(Key::KEY_Z);
-        map->action_add_event("attack", key_attack);
-
-        // コントローラー (Xボタン / PSなら□)
-        Ref<InputEventJoypadButton> joy_attack;
-        joy_attack.instantiate();
-        joy_attack->set_button_index(JoyButton::JOY_BUTTON_X); // 攻撃ボタン
-        map->action_add_event("attack", joy_attack);
-    }
-/*
-    // AnimationPlayerを取得
-    // ※ノードパスはあなたの環境に合わせてください ("Idle/AnimationPlayer" など)
-    // AnimationPlayerを取得するだけ
-    anim_player = Object::cast_to<AnimationPlayer>(get_node_or_null("Idle/AnimationPlayer"));
-    
-    if (!anim_player)
-    {
-        UtilityFunctions::print("ERROR: AnimationPlayer node not found!");
-    }
-*/
-    // AnimationPlayerを取得// エディタで追加した "AnimationTree" という名前のノードを探します
-    anim_tree = Object::cast_to<AnimationTree>(get_node_or_null("AnimationTree"));
-    
-    if (anim_tree)
-    {
-        // ActiveをONにして動くようにする
-        anim_tree->set_active(true);
-        // ステートマシンのPlaybackオブジェクトを取得して保存しておく
-        state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/StateMachine/playback"));
-    }
-    else
-    {
-        UtilityFunctions::print("ERROR: AnimationTree node not found!");
-    }
-
+    // GameManagerのチェック（バトル帰りかどうか）
     GameManager *gm = GameManager::get_singleton();
-
-    // マネージャーが存在し、かつ「バトル帰り」なら
     if (gm && gm->get_is_returning_from_battle())
     {
-        // 保存しておいた場所にワープ
         set_global_position(gm->get_last_player_position());
-        
-        // フラグを下ろす（次は普通にスタートできるように）
         gm->set_is_returning_from_battle(false);
-
         UtilityFunctions::print("Welcome back! Warp to: ", gm->get_last_player_position());
     }
 }
 
 void Player::_physics_process(double delta)
 {
+    if (Engine::get_singleton()->is_editor_hint())
+    {
+        return;
+    }
+
     Input *input = Input::get_singleton();
     Vector3 velocity = get_velocity();
 
-    // 1. 重力 (地面にいないなら落下させる)
+    // 1. 重力
     if (!is_on_floor())
     {
         velocity.y -= gravity * delta;
     }
 
-    // 2. ジャンプ (スペースキー "ui_accept" かつ 地面にいるとき)
+    // 2. ジャンプ
     if (input->is_action_just_pressed("ui_accept") && is_on_floor())
     {
         velocity.y = jump_velocity;
     }
 
-    // カメラ操作入力の取得
+    // 3. カメラ操作
     Vector2 cam_input = input->get_vector("camera_left", "camera_right", "camera_up", "camera_down");
-    // シーン内にある "SpringArm3D" という名前のノードを探して取得する
-    SpringArm3D* spring_arm = Object::cast_to<SpringArm3D>(get_node_or_null("SpringArm3D"));
-
-    // カメラアームが存在すれば回転させる
-    if (spring_arm)
+    
+    if (camera_arm)
     {
-        // 横回転 (Y軸まわり)
-        // マイナスを掛けているのは、右に倒したときに右を向くようにするため
-        spring_arm->rotate_y(-cam_input.x * camera_sensitivity);
-
-        // 縦回転 (X軸まわり)
-        // 縦回転はグルグル回りすぎるとおかしくなるので、角度制限(Clamp)をかけます
-        double current_rotation_x = spring_arm->get_rotation_degrees().x;
-        double new_rotation_x = current_rotation_x - (cam_input.y * camera_sensitivity * 50.0); // 縦は少し速めに
+        camera_arm->rotate_y(-cam_input.x * camera_sensitivity);
         
-        // 角度を -90度(真上) 〜 30度(ちょっと下) に制限
+        double current_rotation_x = camera_arm->get_rotation_degrees().x;
+        double new_rotation_x = current_rotation_x - (cam_input.y * camera_sensitivity * 50.0);
         new_rotation_x = Math::clamp(new_rotation_x, (double)-90.0, (double)30.0);
 
-        Vector3 rot = spring_arm->get_rotation_degrees();
+        Vector3 rot = camera_arm->get_rotation_degrees();
         rot.x = new_rotation_x;
-        spring_arm->set_rotation_degrees(rot);
+        camera_arm->set_rotation_degrees(rot);
     }
 
-    // 3. 移動入力の取得
-    // 3Dなので Vector2 で入力を取って、XZ平面の移動量に変換します
-    // "move_left", "move_right" などの設定は2Dの時のままでOKです
-    // 3. 移動入力の取得
+    // 4. 移動入力
     Vector2 input_dir = input->get_vector("move_left", "move_right", "move_up", "move_down");
-    
-    // まず、入力だけのベクトルを作る
     Vector3 direction = Vector3(input_dir.x, 0, input_dir.y);
-    // 入力ベクトルを正規化 (長さ1に) する
-    if (spring_arm && direction.length() > 0)
+
+    if (camera_arm && direction.length() > 0)
     {
-        // 【重要】入力ベクトルを、SpringArmのY軸回転に合わせて回す！
-        // Vector3::UP は (0, 1, 0) つまりY軸のこと
-        double arm_rotation = spring_arm->get_rotation().y;
-        // Y軸 (0, 1, 0) を基準に回転させる
+        double arm_rotation = camera_arm->get_rotation().y;
         direction = direction.rotated(Vector3(0, 1, 0), arm_rotation);
     }
 
     if (direction.length() > 0)
     {
-        // 修正前: get_node_or_null("MeshInstance3D")
-        // 修正後: FBXモデルのノード名 "Idle" に変更！
-        Node3D* visual_node = Object::cast_to<Node3D>(get_node_or_null("Idle"));
-        
+        // 向きの更新
         if (visual_node)
         {
             double target_angle = Math::atan2(direction.x, direction.z);
@@ -298,84 +174,48 @@ void Player::_physics_process(double delta)
             rotation.y = Math::lerp_angle(rotation.y, (real_t)target_angle, (real_t)(15.0 * delta));
             visual_node->set_rotation(rotation);
         }
+
+        // 加速
         velocity.x = Math::move_toward(velocity.x, (real_t)(direction.x * speed), (real_t)(acceleration * delta));
         velocity.z = Math::move_toward(velocity.z, (real_t)(direction.z * speed), (real_t)(acceleration * delta));
     }
     else
     {
-        // 入力がない時： 「摩擦」を使って、0になるまで徐々に減速する
+        // 減速（摩擦）
         velocity.x = Math::move_toward(velocity.x, (real_t)0.0, (real_t)(friction * delta));
         velocity.z = Math::move_toward(velocity.z, (real_t)0.0, (real_t)(friction * delta));
     }
-/*
-if (anim_player)
-    {
-        double horizontal_speed = Vector3(velocity.x, 0, velocity.z).length();
-        if (horizontal_speed > 0.1) 
-        {
-            // 動いているなら Run
-            if (anim_player->get_current_animation() != "clips/Run")
-            {
-                anim_player->play("clips/Run", -1, 1.5);
-            }
-        } 
-        else 
-        {
-            // 止まっているなら Idle
-            if (anim_player->get_current_animation() != "clips/Idle")
-            {
-                anim_player->play("clips/Idle", 0.2);
-            }
-        }
-    }
-*/
+
+    // 5. アニメーションと攻撃
     if (anim_tree)
     {
-        // 1. 攻撃 (OneShot) & 捕食処理
+        // 攻撃入力
         if (input->is_action_just_pressed("attack"))
         {
-            // --- アニメーション再生 ---
             anim_tree->set("parameters/Punch/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
             UtilityFunctions::print("Attack!");
 
-            // --- ▼▼▼ ここから捕食ロジック追加 ▼▼▼ ---
-            
-            // Hitboxノードを取得
-            Area3D* hitbox = Object::cast_to<Area3D>(get_node_or_null("Idle/Hitbox"));
-            
+            // 捕食ロジック（Hitboxがあれば実行）
             if (hitbox)
             {
-                // 今、エリア内に入っている「物体」を全部取得する
                 TypedArray<Node3D> bodies = hitbox->get_overlapping_bodies();
-                
-                // 見つかった物体をひとつずつチェック
                 for (int i = 0; i < bodies.size(); i++)
                 {
                     Node3D* body = Object::cast_to<Node3D>(bodies[i]);
-                    
-                    // そいつは "enemy" グループに入っているか？
                     if (body && body->is_in_group("enemy"))
                     {
-                        // 捕食成功！
                         UtilityFunctions::print("Gotcha! Ate the enemy!");
-                        
-                        // 敵を消去する
                         body->queue_free();
-                        
-                        // ※動物番長なら、ここでHP回復や変形ゲージUPが入ります！
                     }
                 }
             }
         }
 
-        // 2. 移動 (BlendSpace)
+        // 移動アニメーション
         double h_speed = Vector3(velocity.x, 0, velocity.z).length();
-        // パス: parameters/ステートマシン名/BlendSpace名/blend_position
-        // ※ブレンドツリー内のステートマシンの名前が "StateMachine" である前提です
         anim_tree->set("parameters/StateMachine/Move/blend_position", (real_t)h_speed);
 
-        // 3. 状態遷移 (StateMachine)
-        // state_machine変数は、StateMachinePlayback型なので、パスの変更影響を受けません（_readyで取得済みならOK）
+        // ジャンプ/移動の状態遷移
         if (state_machine)
         {
             if (is_on_floor())
@@ -389,13 +229,38 @@ if (anim_player)
         }
     }
 
-    // move_and_slide(); の直前に入れる
-    if (direction.length() > 0)
-    {
-        UtilityFunctions::print("Velocity: ", velocity, " Direction: ", direction);
-    }
-    
     set_velocity(velocity);
     move_and_slide();
-    
 }
+
+// --- セッター・ゲッターの実装 ---
+
+void Player::set_speed(double p_speed) { speed = p_speed; }
+double Player::get_speed() const { return speed; }
+
+void Player::set_jump_velocity(double p_velocity) { jump_velocity = p_velocity; }
+double Player::get_jump_velocity() const { return jump_velocity; }
+
+void Player::set_gravity(double p_gravity) { gravity = p_gravity; }
+double Player::get_gravity() const { return gravity; }
+
+void Player::set_camera_sensitivity(double p_sensitivity) { camera_sensitivity = p_sensitivity; }
+double Player::get_camera_sensitivity() const { return camera_sensitivity; }
+
+void Player::set_acceleration(double p_accel) { acceleration = p_accel; }
+double Player::get_acceleration() const { return acceleration; }
+
+void Player::set_friction(double p_friction) { friction = p_friction; }
+double Player::get_friction() const { return friction; }
+
+void Player::set_visual_node_path(const NodePath &path) { visual_node_path = path; }
+NodePath Player::get_visual_node_path() const { return visual_node_path; }
+
+void Player::set_camera_arm_path(const NodePath &path) { camera_arm_path = path; }
+NodePath Player::get_camera_arm_path() const { return camera_arm_path; }
+
+void Player::set_anim_tree_path(const NodePath &path) { anim_tree_path = path; }
+NodePath Player::get_anim_tree_path() const { return anim_tree_path; }
+
+void Player::set_hitbox_path(const NodePath &path) { hitbox_path = path; }
+NodePath Player::get_hitbox_path() const { return hitbox_path; }

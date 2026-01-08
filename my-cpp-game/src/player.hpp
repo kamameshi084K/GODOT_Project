@@ -1,11 +1,12 @@
 #pragma once
 
 #include <godot_cpp/classes/character_body3d.hpp>
-#include <godot_cpp/classes/animation_player.hpp> // cppに合わせてAnimationPlayerに戻しました
-#include <godot_cpp/classes/animation_tree.hpp>   // 追加: AnimationTreeを使うためにインクルード
+#include <godot_cpp/classes/animation_player.hpp>
+#include <godot_cpp/classes/animation_tree.hpp>
 #include <godot_cpp/classes/animation_node_state_machine_playback.hpp>
-#include <godot_cpp/classes/animation_node_one_shot.hpp>
+#include <godot_cpp/classes/spring_arm3d.hpp>
 #include <godot_cpp/classes/area3d.hpp>
+#include <godot_cpp/classes/engine.hpp>
 
 namespace godot
 {
@@ -14,6 +15,7 @@ namespace godot
         GDCLASS(Player, CharacterBody3D)
 
     private:
+        // 移動パラメータ
         double speed;
         double jump_velocity;
         double gravity;
@@ -21,11 +23,18 @@ namespace godot
         double acceleration;
         double friction;
 
-        // cpp側で anim_player を使っているため、型と変数名を合わせました
-        AnimationPlayer* anim_player;
-        // ▼ 変更: AnimationTree* に変える
+        // ノードパス（エディタで設定用）
+        NodePath visual_node_path;
+        NodePath camera_arm_path;
+        NodePath anim_tree_path;
+        NodePath hitbox_path;
+
+        // 実際のノードへのポインタ（_readyで取得してキャッシュする）
+        Node3D* visual_node;
+        SpringArm3D* camera_arm;
         AnimationTree* anim_tree;
-        AnimationNodeStateMachinePlayback* state_machine; // 追加: ステートマシンの操作用
+        AnimationNodeStateMachinePlayback* state_machine;
+        Area3D* hitbox;
 
     protected:
         static void _bind_methods();
@@ -33,7 +42,39 @@ namespace godot
     public:
         Player();
         ~Player();
+
         virtual void _ready() override;
         virtual void _physics_process(double delta) override;
+
+        // セッター・ゲッター（エディタ設定用）
+        void set_speed(double p_speed);
+        double get_speed() const;
+
+        void set_jump_velocity(double p_velocity);
+        double get_jump_velocity() const;
+
+        void set_gravity(double p_gravity);
+        double get_gravity() const;
+
+        void set_camera_sensitivity(double p_sensitivity);
+        double get_camera_sensitivity() const;
+
+        void set_acceleration(double p_accel);
+        double get_acceleration() const;
+
+        void set_friction(double p_friction);
+        double get_friction() const;
+
+        void set_visual_node_path(const NodePath &path);
+        NodePath get_visual_node_path() const;
+
+        void set_camera_arm_path(const NodePath &path);
+        NodePath get_camera_arm_path() const;
+
+        void set_anim_tree_path(const NodePath &path);
+        NodePath get_anim_tree_path() const;
+
+        void set_hitbox_path(const NodePath &path);
+        NodePath get_hitbox_path() const;
     };
 }

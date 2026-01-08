@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://nrc7ipixrte"]
+[gd_scene load_steps=7 format=3 uid="uid://nrc7ipixrte"]
 
 [ext_resource type="PackedScene" uid="uid://c8ylt6pd4vuqk" path="res://player.tscn" id="1_fj7yv"]
 [ext_resource type="PackedScene" uid="uid://cen7rdjfd05uh" path="res://Enemy.tscn" id="6_dwbse"]
@@ -11,6 +11,8 @@ uv1_triplanar = true
 
 [sub_resource type="BoxMesh" id="BoxMesh_tlwt5"]
 size = Vector3(1, 0.1, 1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_fj7yv"]
 
 [node name="world" type="Node3D"]
 
@@ -38,16 +40,9 @@ size = Vector3(1, 5, 20)
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 2, -10)
 size = Vector3(1, 5, 20)
 
-[node name="Player" parent="." instance=ExtResource("1_fj7yv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0107805785, 1.5001329, 5.2138886)
-velocity = Vector3(0, 0, 2.8333335)
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, -0.46368933, 9.036392, -0.8837156)
 shadow_enabled = true
-
-[node name="Enemy" parent="." instance=ExtResource("6_dwbse")]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2.663, -5)
 
 [node name="ToDungeon" type="Portal" parent="."]
 next_scene_path = "uid://dyf0a4m18ql3f"
@@ -60,3 +55,17 @@ shape = SubResource("BoxShape3D_fj7yv")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="ToDungeon/CollisionShape3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47239137, 0)
 mesh = SubResource("BoxMesh_tlwt5")
+
+[node name="Enemy" parent="." instance=ExtResource("6_dwbse")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -5)
+
+[node name="Player" parent="." instance=ExtResource("1_fj7yv")]
+visual_node_path = NodePath(".")
+camera_arm_path = NodePath("SpringArm3D")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2459729, 5)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 0.8660254, 0.5, 0, -0.5, 0.8660254, 0, 4, 5)
+shape = SubResource("SphereShape3D_fj7yv")
+
+[node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D"]

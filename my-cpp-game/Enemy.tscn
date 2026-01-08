@@ -1,14 +1,16 @@
 [gd_scene load_steps=3 format=3 uid="uid://cen7rdjfd05uh"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_036b0"]
+[ext_resource type="PackedScene" uid="uid://c2q25qg6bk65v" path="res://assets/Birb.gltf" id="1_tt7e2"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_dwbse"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_s7bn3"]
+radius = 1.0
+height = 3.0
 
 [node name="Enemy" type="Enemy" groups=["enemy"]]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_036b0")
+[node name="Birb2" parent="." instance=ExtResource("1_tt7e2")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-shape = SubResource("BoxShape3D_dwbse")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CapsuleShape3D_s7bn3")
