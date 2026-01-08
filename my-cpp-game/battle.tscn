@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bibskgs0n504k"]
+[gd_scene load_steps=13 format=3 uid="uid://bibskgs0n504k"]
 
 [ext_resource type="PackedScene" uid="uid://c2q25qg6bk65v" path="res://assets/Birb.gltf" id="1_ip7xm"]
 [ext_resource type="PackedScene" uid="uid://b8b7wkkpqn0xf" path="res://assets/Warrior.gltf" id="1_oxp8w"]
@@ -13,8 +13,74 @@ size = Vector2(20, 20)
 bg_color = Color(0, 1, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ip7xm"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i431l"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7sfm4"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6t8i5"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[sub_resource type="Animation" id="Animation_7sfm4"]
+resource_name = "EnemyAttackAction"
+length = 2.0
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.033333335, 0.96666664, 1.5),
+"transitions": PackedFloat32Array(1, 1, 1),
+"values": [{
+"args": [],
+"method": &"seq_enemy_attack_start"
+}, {
+"args": [],
+"method": &"seq_enemy_deal_damage"
+}, {
+"args": [],
+"method": &"seq_end_enemy_turn"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_oxp8w"]
+resource_name = "PlayerAttackAction"
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.16666667, 1),
+"transitions": PackedFloat32Array(1, 1),
+"values": [{
+"args": [],
+"method": &"seq_player_attack_start"
+}, {
+"args": [],
+"method": &"seq_deal_damage"
+}]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_7sfm4"]
+_data = {
+&"EnemyAttackAction": SubResource("Animation_7sfm4"),
+&"PlayerAttackAction": SubResource("Animation_oxp8w")
+}
 
 [node name="BattleScene" type="Node3D"]
 
@@ -125,29 +191,65 @@ max_value = 10.0
 value = 10.0
 show_percentage = false
 
-[node name="AttackButton" type="Button" parent="CanvasLayer/BattleUI"]
+[node name="CommandWindow" type="PanelContainer" parent="CanvasLayer/BattleUI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.055555556
+anchor_top = 0.67579013
+anchor_right = 0.20713194
+anchor_bottom = 0.91358024
+offset_top = 0.08798218
+offset_right = 0.3840027
+grow_vertical = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/BattleUI/CommandWindow"]
+layout_mode = 2
+
+[node name="AttackButton" type="Button" parent="CanvasLayer/BattleUI/CommandWindow/VBoxContainer"]
 custom_minimum_size = Vector2(150, 75)
-layout_mode = 0
-offset_left = 2.0
-offset_top = 494.0
-offset_right = 402.0
-offset_bottom = 569.0
-theme_override_colors/font_color = Color(1, 0, 0, 1)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 25
 theme_override_styles/normal = SubResource("StyleBoxFlat_ip7xm")
+theme_override_styles/focus = SubResource("StyleBoxFlat_i431l")
 text = "たたかう"
 
-[node name="Button" type="Button" parent="CanvasLayer/BattleUI"]
+[node name="RunButton" type="Button" parent="CanvasLayer/BattleUI/CommandWindow/VBoxContainer"]
 custom_minimum_size = Vector2(0, 75)
-layout_mode = 0
-offset_left = 2.0
-offset_top = 571.0
-offset_right = 402.0
-offset_bottom = 646.0
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 25
 theme_override_styles/normal = SubResource("StyleBoxFlat_7sfm4")
+theme_override_styles/focus = SubResource("StyleBoxFlat_6t8i5")
 text = "にげる"
 
-[connection signal="pressed" from="CanvasLayer/BattleUI/AttackButton" to="CanvasLayer/BattleUI" method="_on_attack_button_pressed"]
+[node name="MessageWindow" type="PanelContainer" parent="CanvasLayer/BattleUI"]
+visible = false
+custom_minimum_size = Vector2(1000, 0)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -167.0
+offset_right = 20.0
+offset_bottom = -111.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MessageLabel" type="Label" parent="CanvasLayer/BattleUI/MessageWindow"]
+layout_mode = 2
+
+[node name="Sequencer" type="AnimationPlayer" parent="CanvasLayer/BattleUI"]
+libraries = {
+&"": SubResource("AnimationLibrary_7sfm4")
+}
+
+[connection signal="pressed" from="CanvasLayer/BattleUI/CommandWindow/VBoxContainer/AttackButton" to="CanvasLayer/BattleUI" method="_on_attack_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/BattleUI/CommandWindow/VBoxContainer/RunButton" to="CanvasLayer/BattleUI" method="_on_run_button_pressed"]
 
 [editable path="PlayerActor/Warrior"]
 [editable path="EnemyActor/Birb2"]

@@ -3,6 +3,10 @@
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/animation_player.hpp>
 #include <godot_cpp/classes/progress_bar.hpp>
+#include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/timer.hpp>
+#include <godot_cpp/classes/panel_container.hpp>
+#include <godot_cpp/classes/label.hpp>
 
 namespace godot
 {
@@ -23,7 +27,21 @@ namespace godot
 
         ProgressBar *player_hp_bar; // HP表示ラベルへのポインタ
 
+        Button *attack_button;
+        Button *run_button;
+
+        // シーケンサー用のアニメーションプレイヤーポインタ
+        AnimationPlayer *sequencer;
+
+        PanelContainer *command_window; // コマンド選択ウィンドウ
+        PanelContainer *message_window; // メッセージ表示ウィンドウ
+        Label *message_label;           // メッセージの文字を表示するラベル
+
     protected:
+        /**
+         * @brief Godotのメソッドバインド用関数
+         * 
+         */
         static void _bind_methods();
 
     public:
@@ -36,10 +54,16 @@ namespace godot
         virtual void _ready() override;
 
         /**
-         * @brief　「攻撃ボタン」が押されたときに呼ばれる
+         * @brief 「攻撃ボタン」が押されたときに呼ばれる
          * @note エディタのシグナル接続画面から接続される想定
          */
         void _on_attack_button_pressed();
+
+        /**
+         * @brief 「逃げるボタン」が押されたときに呼ばれる
+         * @note エディタのシグナル接続画面から接続される想定
+         */
+        void _on_run_button_pressed();
         
         /**
          * @brief 敵のアニメーションが終わった時に呼ばれる（死亡演出待ち用）
@@ -90,5 +114,48 @@ namespace godot
          * @note エディタから設定できるようにするためのセッター・ゲッター
          */
         NodePath get_player_anim_path() const;
+
+        /**
+         * @brief 攻撃開始の演出（メッセージ表示とプレイヤーのアニメ再生）
+         * 
+         */
+        void seq_player_attack_start();
+        
+        /**
+         * @brief ダメージ計算と反映（HP減少と敵のリアクション）
+         * 
+         */
+        void seq_deal_damage();
+
+        /**
+         * @brief 敵の攻撃開始の演出（メッセージ表示と敵のアニメ再生）
+         * 
+         */
+        void seq_enemy_attack_start();
+
+        /**
+         * @brief 敵のダメージ計算と反映（HP減少とプレイヤーのリアクション）
+         * 
+         */
+        void seq_enemy_deal_damage();
+        
+        /**
+         * @brief プレイヤーターン終了（敵ターンへ移行）
+         * 
+         */
+        void seq_end_player_turn();
+
+        /**
+         * @brief 敵ターン終了（コマンド入力に戻す）
+         * 
+         */
+        void seq_end_enemy_turn();
+        
+        /**
+         * @brief メッセージ表示（コマンドを隠してメッセージを出す）
+         * 
+         * @param text 
+         */
+        void show_message(const String &text);
     };
 } // namespace godot
