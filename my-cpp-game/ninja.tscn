@@ -1,0 +1,55 @@
+[gd_scene load_steps=8 format=3 uid="uid://hd4w3o734hlx"]
+
+[ext_resource type="PackedScene" uid="uid://buqfdv10uuxp5" path="res://assets/Ninja.gltf" id="1_buaqa"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_25rb4"]
+radius = 1.328469
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_lbaip"]
+animation = &"Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_bvjue"]
+animation = &"Walk"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_dwbse"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_lbaip")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_bvjue")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pkg7o"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_g5hew"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_dwbse")
+states/Move/position = Vector2(418, 91)
+states/Start/position = Vector2(202, 91)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_pkg7o")]
+
+[node name="Enemy" type="Enemy" groups=["enemy"]]
+visual_node_path = NodePath("Ninja/AnimationPlayer")
+anim_tree_path = NodePath("AnimationTree")
+transform = Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 0, 0, 0)
+
+[node name="Ninja" parent="." instance=ExtResource("1_buaqa")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+
+[node name="Skeleton3D" parent="Ninja/CharacterArmature" index="0"]
+bones/0/position = Vector3(0, 0.0008229381, -0.0005053152)
+bones/0/rotation = Quaternion(0.0001489959, 0, 5.714223e-20, 1)
+bones/1/position = Vector3(0, 0.51742554, 0)
+bones/1/rotation = Quaternion(-0.00014793736, -1.2809984e-21, 1.8227571e-20, 1)
+bones/2/rotation = Quaternion(0, 4.814825e-35, 3.85186e-34, 1)
+bones/3/rotation = Quaternion(-0.0002061628, -1.7771055e-06, 0.008633193, 0.9999627)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("SphereShape3D_25rb4")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Ninja")
+tree_root = SubResource("AnimationNodeStateMachine_g5hew")
+anim_player = NodePath("../Ninja/AnimationPlayer")
+parameters/Move/blend_position = 0.0029851198
+
+[editable path="Ninja"]

@@ -97,7 +97,7 @@ void Player::_ready()
         if (anim_tree)
         {
             anim_tree->set_active(true);
-            state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/StateMachine/playback"));
+            state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/playback"));
         }
     }
 
@@ -213,7 +213,7 @@ void Player::_physics_process(double delta)
 
         // 移動アニメーション
         double h_speed = Vector3(velocity.x, 0, velocity.z).length();
-        anim_tree->set("parameters/StateMachine/Move/blend_position", (real_t)h_speed);
+        anim_tree->set("parameters/Move/blend_position", (real_t)h_speed);
 
         // ジャンプ/移動の状態遷移
         if (state_machine)
