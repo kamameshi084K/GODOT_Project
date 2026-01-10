@@ -7,6 +7,9 @@
 #include <godot_cpp/classes/timer.hpp>
 #include <godot_cpp/classes/panel_container.hpp>
 #include <godot_cpp/classes/label.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/packed_scene.hpp>
+#include <godot_cpp/classes/node3d.hpp>
 
 namespace godot
 {
@@ -16,9 +19,20 @@ namespace godot
         GDCLASS(BattleUI, Control)
 
     private:
+        // 戦闘に関するステータス変数
+        // プレイヤー側ステータス
         int player_hp; // プレイヤーのHP
         int max_player_hp; // プレイヤーの最大HP
+        int player_attack_power; // プレイヤー攻撃力
+        int player_defense_power; // プレイヤー防御力
+
+        // 敵側ステータス
         int enemy_hp; // 敵のHP
+        int enemy_attack_power; // 敵の攻撃力
+        int enemy_defense_power; // 敵の防御力
+        String enemy_name;      // 敵の名前
+
+        // --- UIノードへのポインタ ---
         NodePath enemy_anim_path; // エディタで設定する「敵のアニメーションプレイヤーへのパス」
         AnimationPlayer *enemy_anim; // 実際のポインタ
 

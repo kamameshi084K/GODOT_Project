@@ -1,9 +1,12 @@
 #include "battle_ui.hpp"
+#include "game_manager.hpp" 
+
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/progress_bar.hpp>
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/node3d.hpp>
 
 using namespace godot;
 
@@ -52,27 +55,108 @@ BattleUI::~BattleUI() {}
 void BattleUI::_ready()
 {
     Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+    
+    // ---------------------------------------------------------
+    // ▼▼▼ 敵の動的スポーン処理 ▼▼▼
+    // ---------------------------------------------------------
+    GameManager *gm = GameManager::get_singleton();
+    AnimationPlayer *spawned_anim = nullptr; // 新しく生成した敵のアニメ
 
-    // 敵のアニメ取得
-    if (!enemy_anim_path.is_empty())
+    if (gm)
+    {
+        enemy_hp = gm->get_next_enemy_max_hp();
+        enemy_attack_power = gm->get_next_enemy_attack();
+        enemy_name = gm->get_next_enemy_name();
+        enemy_defense_power = gm->get_next_enemy_defense();
+
+        player_attack_power = gm->get_player_attack();
+        player_defense_power = gm->get_player_defense();
+
+        String next_enemy = gm->get_next_enemy_scene_path();
+        
+        // もしGameManagerに「次の敵」がセットされていたら
+        if (!next_enemy.is_empty())
+        {
+            // 1. 今バトルシーンに置いてある「仮の敵」を探す
+            // ※ エディタ上で、敵を置く場所（Node3D）の名前を "EnemyPos" とかにしておくと便利ですが
+            //    今回は enemy_anim_path の親ノードを「仮の敵」とみなして差し替えます。
+            
+            Node *placeholder_enemy = nullptr;
+            if (!enemy_anim_path.is_empty())
+            {
+                AnimationPlayer *temp = get_node<AnimationPlayer>(enemy_anim_path);
+                if (temp) placeholder_enemy = temp->get_parent(); // アニメプレイヤーの親＝敵モデル
+            }
+
+            // 2. 新しい敵を読み込む
+            Ref<PackedScene> enemy_scene = ResourceLoader::get_singleton()->load(next_enemy);
+            if (enemy_scene.is_valid())
+            {
+                Node *new_enemy_node = enemy_scene->instantiate();
+                Node3D *new_enemy_3d = Object::cast_to<Node3D>(new_enemy_node);
+
+                if (placeholder_enemy)
+                {
+                    // 仮の敵と同じ場所に置く
+                    Node3D *placeholder_3d = Object::cast_to<Node3D>(placeholder_enemy);
+                    if (placeholder_3d && new_enemy_3d)
+                    {
+                        new_enemy_3d->set_transform(placeholder_3d->get_transform());
+                    }
+                    
+                    // 親ノード（Stageなど）に追加
+                    placeholder_enemy->get_parent()->add_child(new_enemy_node);
+                    
+                    // 仮の敵を削除（さようなら）
+                    placeholder_enemy->queue_free();
+                }
+                else
+                {
+                    // 仮の敵が見つからない場合はとりあえず自身の子として追加
+                    add_child(new_enemy_node);
+                }
+
+                // 3. 新しい敵の中から AnimationPlayer を探す
+                // ※生成した敵の中に "AnimationPlayer" という名前のノードがあると想定
+                spawned_anim = nullptr;
+                TypedArray<Node> children = new_enemy_node->find_children("*", "AnimationPlayer", true, false); 
+                // ↑ "*"は名前不問、"AnimationPlayer"は型指定、trueは再帰検索
+
+                if (children.size() > 0)
+                {
+                    spawned_anim = Object::cast_to<AnimationPlayer>(children[0]);
+                }
+            }
+        }
+    }
+    else
+    {
+        // デフォルト値
+        enemy_hp = 3;
+        enemy_attack_power = 1;
+        enemy_name = "Enemy";
+    }
+    
+
+    // ---------------------------------------------------------
+    // ▼▼▼ アニメーションプレイヤーの接続 ▼▼▼
+    // ---------------------------------------------------------
+
+    // 新しく生成されたアニメがあればそれを使い、なければエディタ設定のものを使う
+    if (spawned_anim)
+    {
+        enemy_anim = spawned_anim;
+    }
+    else if (!enemy_anim_path.is_empty())
     {
         enemy_anim = get_node<AnimationPlayer>(enemy_anim_path);
     }
+
     if (enemy_anim)
     {
-        // 名前を変えたので注意！
         enemy_anim->connect("animation_finished", Callable(this, "_on_enemy_animation_finished"));
-    }
-
-    // ▼ 追加: プレイヤーのアニメ取得
-    if (!player_anim_path.is_empty())
-    {
-        player_anim = get_node<AnimationPlayer>(player_anim_path);
-    }
-    if (player_anim)
-    {
-        // プレイヤーが終わった時のシグナルを接続
-        player_anim->connect("animation_finished", Callable(this, "_on_player_animation_finished"));
+        // 登場時にIdleを再生しておく
+        enemy_anim->play("Idle");
     }
 
     // HPバー取得
@@ -81,6 +165,15 @@ void BattleUI::_ready()
     {
         player_hp_bar->set_max(max_player_hp);
         player_hp_bar->set_value(player_hp);
+    }
+
+    if (!player_anim_path.is_empty())
+    {
+        player_anim = get_node<AnimationPlayer>(player_anim_path);
+        if (player_anim)
+        {
+            player_anim->connect("animation_finished", Callable(this, "_on_player_animation_finished"));
+        }
     }
     // 「たたかう」ボタン取得＆フォーカス設定
     attack_button = get_node<Button>("CommandWindow/VBoxContainer/AttackButton");
@@ -153,6 +246,17 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
     if (anim_name == String("Death"))
     {
         UtilityFunctions::print("You Win!");
+        GameManager *gm = GameManager::get_singleton();
+        if (gm)
+        {
+            String current_id = gm->get_current_enemy_id();
+            if (!current_id.is_empty())
+            {
+                gm->add_defeated_enemy(current_id);
+                // 次の戦いのためにリセットしておく（任意）
+                gm->set_current_enemy_id(""); 
+            }
+        }
         // 本来はここもシーケンサーで「勝利ファンファーレ→画面遷移」とやると良い
         get_tree()->change_scene_to_file("res://world.tscn");
     }
@@ -163,7 +267,7 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
         UtilityFunctions::print("Enemy counter attacks!");
         sequencer->play("EnemyAttackAction");
     }
-    else if (anim_name == String("Punch"))
+    else if (anim_name == String("Attack"))
     {
         // 単に待機に戻すだけでOK
         enemy_anim->play("Idle");
@@ -176,15 +280,33 @@ void BattleUI::seq_player_attack_start()
     if (player_anim) player_anim->play("Sword_Attack"); 
 }
 
-void BattleUI::seq_deal_damage()
+void BattleUI::seq_deal_damage() // プレイヤーの攻撃
 {
-    enemy_hp--;
-    show_message(String::utf8("モンスターに 1 のダメージ！"));
+    // ダメージ計算: (プレイヤー攻撃 - 敵防御) ※最低1
+    int damage = player_attack_power - enemy_defense_power;
+    if (damage < 1)
+    {
+        damage = 1;
+    }
 
-    if (enemy_hp > 0) {
-        if (enemy_anim) enemy_anim->play("HitReact");
-    } else {
-        if (enemy_anim) enemy_anim->play("Death");
+    enemy_hp -= damage;
+    
+    // メッセージ更新
+    show_message(enemy_name + String::utf8(" に ") + String::num_int64(damage) + String::utf8(" のダメージ！"));
+
+    if (enemy_hp > 0)
+    {
+        if (enemy_anim)
+        {
+            enemy_anim->play("HitReact");
+        }
+    }
+    else
+    {
+        if (enemy_anim)
+        {
+            enemy_anim->play("Death");
+        }
     }
 }
 
@@ -198,27 +320,38 @@ void BattleUI::seq_end_player_turn()
 
 void BattleUI::seq_enemy_attack_start()
 {
-    show_message(String::utf8("モンスターの こうげき！"));
-    if (enemy_anim) enemy_anim->play("Punch"); 
+    show_message(enemy_name + String::utf8(" の こうげき！"));
+    if (enemy_anim) 
+    {
+        enemy_anim->play("Attack");
+    }
 }
 
 void BattleUI::seq_enemy_deal_damage()
 {
-    // ★実装: ここでHPを減らし、プレイヤーのリアクションを取る
-    player_hp -= 2;
-    if (player_hp_bar) player_hp_bar->set_value(player_hp);
-    
-    show_message(String::utf8("プレイヤーに 2 のダメージ！"));
+    int damage = enemy_attack_power - player_defense_power;
+    if (damage < 1)
+    {
+        damage = 1;
+    }
+    player_hp -= damage;
+
+    if (player_hp_bar) 
+    {
+        player_hp_bar->set_value(player_hp);
+    }
+    show_message(String::utf8("プレイヤーに ") + String::num_int64(damage) + String::utf8(" のダメージ！"));
 
     if (player_hp <= 0)
     {
-        // 敗北処理
         get_tree()->change_scene_to_file("res://world.tscn");
     }
     else
     {
-        // プレイヤーが痛がる
-        if (player_anim) player_anim->play("RecieveHit");
+        if (player_anim)
+        {
+            player_anim->play("RecieveHit");
+        }
     }
 }
 
