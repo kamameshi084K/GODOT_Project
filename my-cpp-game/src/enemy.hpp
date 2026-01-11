@@ -33,6 +33,7 @@ namespace godot
         int max_hp;        // 戦闘時の体力
         int attack_power;  // 攻撃力
         int defense_power; // 防御力
+        int exp_reward; // 倒した時に与える経験値
 
     protected:
         static void _bind_methods();
@@ -80,5 +81,8 @@ namespace godot
 
         void set_defense_power(int p_def);
         int get_defense_power() const;
+
+        void set_exp_reward(int p_exp);
+        int get_exp_reward() const;
     };
 }

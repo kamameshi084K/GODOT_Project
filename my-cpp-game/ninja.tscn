@@ -459,22 +459,24 @@ transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition
 enemy_name = "丸忍者"
 max_hp = 5
 defense_power = 3
+exp_reward = 50
 visual_node_path = NodePath("Ninja")
 anim_tree_path = NodePath("AnimationTree")
 battler_visual_path = "uid://cmtjxy82rb76r"
 enemy_id = "ninja"
 transform = Transform3D(-2, 0, -1.7484555e-07, 0, 2, 0, 1.7484555e-07, 0, -2, 0, 0, 0)
+metadata/_edit_lock_ = true
 
 [node name="Ninja" parent="." instance=ExtResource("1_buaqa")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Ninja/CharacterArmature" index="0"]
-bones/0/position = Vector3(0, 0.00026981774, 0.000543997)
-bones/0/rotation = Quaternion(-0.00029178863, 3.1065262e-28, -6.7187e-20, 1)
-bones/1/position = Vector3(0, 0.52090293, 0)
-bones/1/rotation = Quaternion(-1.8190882e-05, 2.1999509e-21, 2.914907e-20, 1)
+bones/0/position = Vector3(0, 0.00010974442, -0.0006649312)
+bones/0/rotation = Quaternion(0.00017315685, 0, 0, 1)
+bones/1/position = Vector3(0, 0.51497257, 0)
+bones/1/rotation = Quaternion(0.00010435918, -5.602131e-22, -2.9566582e-20, 1)
 bones/2/rotation = Quaternion(0, 4.814825e-35, 3.85186e-34, 1)
-bones/3/rotation = Quaternion(-0.00027866286, -1.794185e-06, 0.00644848, 0.9999792)
+bones/3/rotation = Quaternion(6.416842e-05, 5.995608e-07, 0.009299448, 0.9999568)
 
 [node name="AnimationPlayer" parent="Ninja" index="1"]
 libraries = {

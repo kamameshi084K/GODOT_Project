@@ -256,6 +256,8 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
                 // 次の戦いのためにリセットしておく（任意）
                 gm->set_current_enemy_id(""); 
             }
+            int reward = gm->get_next_enemy_exp_reward();
+            gm->gain_experience(reward);
         }
         // 本来はここもシーケンサーで「勝利ファンファーレ→画面遷移」とやると良い
         get_tree()->change_scene_to_file("res://world.tscn");

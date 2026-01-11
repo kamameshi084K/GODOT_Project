@@ -43,6 +43,10 @@ void Enemy::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_defense_power"), &Enemy::get_defense_power);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "defense_power"), "set_defense_power", "get_defense_power");
 
+    ClassDB::bind_method(D_METHOD("set_exp_reward", "p_exp"), &Enemy::set_exp_reward);
+    ClassDB::bind_method(D_METHOD("get_exp_reward"), &Enemy::get_exp_reward);
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "exp_reward"), "set_exp_reward", "get_exp_reward");
+
     // バトルシーンのパス（ファイル選択画面が出るように設定）
     ClassDB::bind_method(D_METHOD("set_battle_scene_path", "p_path"), &Enemy::set_battle_scene_path);
     ClassDB::bind_method(D_METHOD("get_battle_scene_path"), &Enemy::get_battle_scene_path);
@@ -79,6 +83,7 @@ Enemy::Enemy()
     max_hp = 3;
     attack_power = 1;
     defense_power = 0;
+    exp_reward = 10; // デフォルト値
     
     // デフォルトのバトルシーンを設定（空なら遷移しないガードを入れる）
     battle_scene_path = "res://battle.tscn";
@@ -223,6 +228,7 @@ void Enemy::_physics_process(double delta)
                 // 敵ステータスをセット
                 gm->set_next_enemy_stats(enemy_name, max_hp, attack_power);
                 gm->set_next_enemy_defense(defense_power);
+                gm->set_next_enemy_exp_reward(exp_reward);
             }
 
             UtilityFunctions::print("Encounter! Battle Start!");
@@ -338,5 +344,20 @@ int Enemy::get_attack_power() const
     return attack_power;
 }
 
-void Enemy::set_defense_power(int p_def) { defense_power = p_def; }
-int Enemy::get_defense_power() const { return defense_power; }
+void Enemy::set_defense_power(int p_def)
+{
+    defense_power = p_def;
+}
+int Enemy::get_defense_power() const
+{
+    return defense_power;
+}
+
+void Enemy::set_exp_reward(int p_exp)
+{
+    exp_reward = p_exp;
+}
+int Enemy::get_exp_reward() const
+{
+    return exp_reward;
+}

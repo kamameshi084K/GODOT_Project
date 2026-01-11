@@ -19,6 +19,8 @@ void GameManager::_bind_methods()
     // --- next_enemy_scene_path のセッター・ゲッター ---
     ClassDB::bind_method(D_METHOD("set_current_enemy_id", "id"), &GameManager::set_current_enemy_id);
     ClassDB::bind_method(D_METHOD("get_current_enemy_id"), &GameManager::get_current_enemy_id);
+    ClassDB::bind_method(D_METHOD("set_next_enemy_exp_reward", "value"), &GameManager::set_next_enemy_exp_reward);
+    ClassDB::bind_method(D_METHOD("get_next_enemy_exp_reward"), &GameManager::get_next_enemy_exp_reward);
     
     // --- defeated_enemies のセッター・ゲッター ---
     ClassDB::bind_method(D_METHOD("add_defeated_enemy", "id"), &GameManager::add_defeated_enemy);
@@ -27,6 +29,22 @@ void GameManager::_bind_methods()
     // --- next_enemy_scene_path のセッター・ゲッター ---
     ClassDB::bind_method(D_METHOD("get_player_attack"), &GameManager::get_player_attack);
     ClassDB::bind_method(D_METHOD("get_player_defense"), &GameManager::get_player_defense);
+
+    // バトルUIなどがHPバーを表示するために使う
+    ClassDB::bind_method(D_METHOD("get_player_max_hp"), &GameManager::get_player_max_hp);
+    ClassDB::bind_method(D_METHOD("get_player_current_hp"), &GameManager::get_player_current_hp);
+    ClassDB::bind_method(D_METHOD("set_player_current_hp", "hp"), &GameManager::set_player_current_hp);
+
+    // レベル表示用
+    ClassDB::bind_method(D_METHOD("get_player_level"), &GameManager::get_player_level);
+    ClassDB::bind_method(D_METHOD("get_player_exp"), &GameManager::get_player_exp);
+    ClassDB::bind_method(D_METHOD("get_player_next_exp"), &GameManager::get_player_next_exp);
+    
+    // 経験値獲得
+    ClassDB::bind_method(D_METHOD("gain_experience", "amount"), &GameManager::gain_experience);
+
+    // 初期化用
+    ClassDB::bind_method(D_METHOD("init_player_stats", "max_hp", "attack", "defense", "level", "exp", "next_exp"), &GameManager::init_player_stats);
 }
 
 GameManager::GameManager()
@@ -38,9 +56,28 @@ GameManager::GameManager()
     next_enemy_max_hp = 3;
     next_enemy_attack = 1;
     next_enemy_defense = 0;
+    next_enemy_exp_reward = 10; // デフォルト値
 
-    player_attack = 5;  // 例: 攻撃力5
-    player_defense = 0; // 例: 防御力0
+    player_max_hp = 10;
+    player_current_hp = 10;
+    player_attack = 5;
+    player_defense = 0;
+    player_level = 1;
+    player_exp = 0;
+    player_next_exp = 50;
+}
+
+void GameManager::init_player_stats(int max_hp, int attack, int defense, int level, int exp, int next_exp)
+{
+    player_max_hp = max_hp;
+    player_current_hp = max_hp; // ゲーム開始時（またはロード時）は回復させるか、現在HPを別途保存するかによりますが、一旦Maxと同じにします
+    player_attack = attack;
+    player_defense = defense;
+    player_level = level;
+    player_exp = exp;
+    player_next_exp = next_exp;
+    
+    UtilityFunctions::print("GameManager: Player Stats Initialized. Level: ", player_level);
 }
 
 void GameManager::set_next_enemy_stats(const String &name, int hp, int attack)
@@ -154,4 +191,72 @@ int GameManager::get_next_enemy_defense() const
 void GameManager::set_next_enemy_defense(int def)
 {
     next_enemy_defense = def;
+}
+
+void GameManager::set_next_enemy_exp_reward(int value)
+{
+    next_enemy_exp_reward = value;
+}
+int GameManager::get_next_enemy_exp_reward() const
+{
+    return next_enemy_exp_reward;
+}
+
+int GameManager::get_player_max_hp() const
+{
+    return player_max_hp;
+}
+
+int GameManager::get_player_current_hp() const
+{
+    return player_current_hp;
+}
+
+void GameManager::set_player_current_hp(int hp)
+{
+    player_current_hp = hp;
+}
+
+int GameManager::get_player_level() const
+{
+    return player_level;
+}
+
+int GameManager::get_player_exp() const
+{
+    return player_exp;
+}
+
+int GameManager::get_player_next_exp() const
+{
+    return player_next_exp;
+}
+
+void GameManager::gain_experience(int amount)
+{
+    player_exp += amount;
+    UtilityFunctions::print("Gained ", amount, " EXP. Total: ", player_exp);
+    
+    // ▼▼▼ レベルアップ処理 ▼▼▼
+    
+    // 経験値が必要量を超えている間ループする（一度に2レベル上がる場合も対応）
+    while (player_exp >= player_next_exp)
+    {
+        player_exp -= player_next_exp; // 現在の経験値から必要分を引く
+        player_level++; // レベルアップ！
+
+        // ステータス上昇（お好みのバランスで！）
+        player_max_hp += 5;
+        player_attack += 2;
+        player_defense += 1;
+        
+        // レベルアップしたら全回復させる（RPGの定番）
+        player_current_hp = player_max_hp;
+
+        // 次のレベルまでの必要経験値を増やす（1.5倍にしていくなど）
+        player_next_exp = (int)(player_next_exp * 1.5); // 50 -> 75 -> 112...
+
+        UtilityFunctions::print("LEVEL UP! Now Level: ", player_level);
+        UtilityFunctions::print("HP: ", player_max_hp, " ATK: ", player_attack);
+    }
 }

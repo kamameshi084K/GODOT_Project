@@ -15,17 +15,26 @@ namespace godot
     private:
         static GameManager *singleton; // 自分自身（シングルトン）へのポインタ
         
-        Vector3 last_player_position;  // プレイヤーの座標
-        bool is_returning_from_battle; // バトルから帰ってきたかフラグ
-        String next_enemy_scene_path;  // 次に戦う敵のシーンパス
-        String current_enemy_id; // 今戦っている敵のID
+        Vector3 last_player_position;       // プレイヤーの座標
+        bool is_returning_from_battle;      // バトルから帰ってきたかフラグ
+        String next_enemy_scene_path;       // 次に戦う敵のシーンパス
+        String current_enemy_id;            // 今戦っている敵のID
         PackedStringArray defeated_enemies; // 倒された敵のIDリスト
-        String next_enemy_name; // 次に戦う敵の名前
-        int next_enemy_max_hp; // 次に戦う敵の最大HP
-        int next_enemy_attack; // 次に戦う敵の攻撃力
-        int player_attack;  // プレイヤー攻撃力
-        int player_defense; // プレイヤー防御力
-        int next_enemy_defense; // 次に戦う敵の防御力
+
+        String next_enemy_name;     // 次に戦う敵の名前
+        int next_enemy_max_hp;      // 次に戦う敵の最大HP
+        int next_enemy_attack;      // 次に戦う敵の攻撃力
+        int next_enemy_defense;     // 次に戦う敵の防御力
+        int next_enemy_exp_reward;  // 次に戦う敵の経験値報酬
+
+        int player_max_hp;      // 最大HP
+        int player_current_hp;  // 現在HP      
+        int player_level;       // レベル
+        int player_exp;         // 現在の経験値
+        int player_next_exp;    // 次のレベルまでの必要経験
+        int player_attack;      // プレイヤー攻撃力
+        int player_defense;     // プレイヤー防御力
+        
 
     protected:
         /**
@@ -42,8 +51,19 @@ namespace godot
         // どこからでも GameManager を呼べるようにする
         static GameManager *get_singleton();
 
-        // データのセット・ゲット
+        /**
+         * @brief プレイヤーの全ステータスを初期化・設定する
+         * (ゲーム開始時にPlayerクラスから呼ばれる想定)
+         * @param max_hp 最大HP
+         * @param attack 攻撃力
+         * @param defense 防御力
+         * @param level レベル
+         * @param exp 現在の経験値
+         * @param next_exp 次のレベルまでの必要経験値
+         */
+        void init_player_stats(int max_hp, int attack, int defense, int level, int exp, int next_exp);
 
+        // データのセット・ゲット
         /**
          * @brief プレイヤーの最後の座標を設定する
          * 
@@ -177,5 +197,65 @@ namespace godot
          * @return int 敵の防御力
          */
         int get_next_enemy_defense() const;
+        
+        /**
+         * @brief 次に戦う敵の経験値報酬を設定する
+         * 
+         * @param value 敵の経験値報酬
+         */
+        void set_next_enemy_exp_reward(int value);
+        /**
+         * @brief 次に戦う敵の経験値報酬を取得する
+         * 
+         * @return int 敵の経験値報酬
+         */
+        int get_next_enemy_exp_reward() const;
+
+        /**
+         * @brief プレイヤーの最大HPを取得する
+         * 
+         * @return int 最大HP
+         */
+        int get_player_max_hp() const;
+        /**
+         * @brief プレイヤーの現在HPを取得する
+         * 
+         * @return int 現在HP
+         */
+        int get_player_current_hp() const;
+        /**
+         * @brief プレイヤーの現在HPを設定する
+         * 
+         * @param hp 現在HP
+         * @note ダメージ計算後や回復処理後に呼ばれる想定
+         */
+        void set_player_current_hp(int hp);
+
+        /**
+         * @brief プレイヤーのレベルを取得する
+         * 
+         * @return int レベル
+         */
+        int get_player_level() const;
+        
+        /**
+         * @brief プレイヤーの現在の経験値を取得する
+         * 
+         * @return int 現在の経験値
+         */
+        int get_player_exp() const;
+        
+        /**
+         * @brief プレイヤーの次のレベルまでの必要経験値を取得する
+         * 
+         * @return int 次のレベルまでの必要経験値
+         */
+        int get_player_next_exp() const;
+
+        /**
+         * @brief 経験値を獲得する処理
+         * @param amount 獲得量
+         */
+        void gain_experience(int amount);
     };
 }

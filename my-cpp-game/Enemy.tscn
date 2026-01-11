@@ -4298,6 +4298,7 @@ height = 3.0
 
 [node name="Enemy" type="Enemy" groups=["enemy"]]
 max_hp = 5
+exp_reward = 20
 visual_node_path = NodePath("Birb2")
 anim_tree_path = NodePath("Birb2/AnimationPlayer")
 battler_visual_path = "uid://b2ivqqnddgehq"
