@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://c8ylt6pd4vuqk"]
+[gd_scene load_steps=9 format=3 uid="uid://c8ylt6pd4vuqk"]
 
 [ext_resource type="PackedScene" uid="uid://b8b7wkkpqn0xf" path="res://assets/Warrior.gltf" id="1_4flbx"]
 
@@ -6,59 +6,94 @@
 radius = 0.6
 height = 3.0
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_4flbx"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_onrkg"]
+animation = &"Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i3pqv"]
+animation = &"Run"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_036b0"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_onrkg")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_i3pqv")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fj7yv"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_hqtel"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_036b0")
+states/Move/position = Vector2(565, 100)
+states/Start/position = Vector2(337, 100)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_fj7yv")]
+
 [node name="Player" type="Player"]
 stats_attack_power = 15
 stats_next_exp = 30
+visual_node_path = NodePath("Warrior")
+camera_arm_path = NodePath("SpringArm3D")
+anim_tree_path = NodePath("AnimationTree")
 
 [node name="Warrior" parent="." instance=ExtResource("1_4flbx")]
 
 [node name="Skeleton3D" parent="Warrior/CharacterArmature" index="0"]
 bones/1/rotation = Quaternion(5.8898786e-06, 0.70295197, 0.7112374, 5.918958e-06)
+bones/2/position = Vector3(0.0021530236, 1.1054796, 0.07522926)
 bones/2/rotation = Quaternion(-3.5526934e-15, 1.1920933e-07, -8.470341e-22, 1)
 bones/4/rotation = Quaternion(0.23118804, 3.1015122e-07, 1.7024259e-07, 0.9729091)
-bones/5/rotation = Quaternion(-0.06267118, -8.3069693e-07, -1.4000712e-08, 0.99803424)
-bones/6/rotation = Quaternion(-0.03625019, 6.775707e-07, -2.517563e-09, 0.99934274)
-bones/7/rotation = Quaternion(4.6566173e-09, -0.0002754752, -8.0519884e-13, 1)
-bones/8/position = Vector3(0.12610292, 0.14141414, 0.012646053)
-bones/9/rotation = Quaternion(0.5736993, 0.44941136, 0.5137075, -0.45277286)
-bones/10/rotation = Quaternion(-0.25967035, 0.21711265, -0.19342077, 0.9208811)
-bones/11/rotation = Quaternion(0.019800318, 0.017442659, -0.00852202, 0.9996155)
-bones/12/rotation = Quaternion(-0.06264131, -0.018810429, -0.0011808387, 0.99785817)
-bones/13/rotation = Quaternion(-0.14578031, 2.4814879e-08, 3.2529023e-08, 0.989317)
-bones/14/rotation = Quaternion(-0.1710575, 0.08374462, -0.43297884, 0.8810536)
-bones/15/rotation = Quaternion(-0.078931734, -0.2979136, 0.14166275, 0.94071734)
-bones/16/position = Vector3(-0.12482625, 0.14141423, 0.012646188)
-bones/16/rotation = Quaternion(-0.03302081, 0.014954072, 0.41228098, 0.91033536)
-bones/17/rotation = Quaternion(0.5736992, -0.44941154, -0.51370746, -0.45277295)
-bones/18/rotation = Quaternion(-0.25967044, -0.21711268, 0.19342078, 0.9208811)
-bones/19/rotation = Quaternion(0.019800324, -0.01744265, 0.008522029, 0.9996155)
-bones/20/rotation = Quaternion(-0.06264138, 0.01881044, 0.0011808296, 0.99785817)
-bones/21/rotation = Quaternion(-0.14578034, -2.2351742e-08, -3.1664968e-08, 0.98931706)
-bones/22/rotation = Quaternion(9.499492e-08, -7.147901e-08, 3.7252825e-09, 1)
-bones/23/rotation = Quaternion(-0.17105757, -0.08374457, 0.43297896, 0.88105357)
+bones/5/rotation = Quaternion(-0.026250968, -8.3204594e-07, -5.8555725e-09, 0.99965537)
+bones/6/rotation = Quaternion(-0.036250193, 6.775707e-07, -2.517566e-09, 0.99934274)
+bones/7/rotation = Quaternion(-0.020714467, -0.0002754161, 5.690843e-06, 0.9997855)
+bones/9/rotation = Quaternion(0.7459364, 0.46893126, 0.38632438, -0.27282956)
+bones/10/rotation = Quaternion(-0.2479424, 0.20990074, -0.19158345, 0.92615455)
+bones/11/rotation = Quaternion(0.019800318, 0.017442655, -0.0085220495, 0.9996155)
+bones/12/rotation = Quaternion(-0.06264131, -0.018810429, -0.001180835, 0.99785817)
+bones/13/rotation = Quaternion(-0.14578031, 3.0886195e-08, 3.539991e-08, 0.989317)
+bones/14/rotation = Quaternion(-0.17105748, 0.08374462, -0.43297887, 0.8810536)
+bones/15/rotation = Quaternion(-0.07893174, -0.2979136, 0.14166276, 0.94071734)
+bones/17/rotation = Quaternion(0.7154182, -0.49804017, -0.3874081, -0.30007952)
+bones/18/rotation = Quaternion(-0.24361049, -0.21794444, 0.19049166, 0.92567116)
+bones/19/rotation = Quaternion(0.01980032, -0.017442642, 0.008522035, 0.9996155)
+bones/20/rotation = Quaternion(-0.06264138, 0.01881043, 0.0011808302, 0.99785817)
+bones/21/rotation = Quaternion(-0.74059683, -0.032689344, 0.058509063, 0.6685989)
+bones/23/rotation = Quaternion(-0.17105757, -0.08374459, 0.43297896, 0.88105357)
 bones/24/rotation = Quaternion(-0.07893175, 0.29791364, -0.14166285, 0.9407172)
-bones/25/rotation = Quaternion(0.99547255, 0.0085583525, -0.00094076886, 0.094659306)
-bones/26/rotation = Quaternion(0.20197842, 0.0020951966, 0.007814432, 0.9793566)
-bones/27/rotation = Quaternion(0.99547255, -0.008558444, 0.0009414736, 0.09465886)
-bones/28/rotation = Quaternion(0.20197761, -0.0020951768, -0.007814433, 0.9793567)
+bones/25/rotation = Quaternion(0.9922665, 0.008450028, -0.00070982287, 0.12383699)
+bones/26/rotation = Quaternion(0.25733227, 0.0025360908, 0.0076826722, 0.9662892)
+bones/27/rotation = Quaternion(0.99226314, -0.008450037, 0.00071031775, 0.12386275)
+bones/28/rotation = Quaternion(0.2573316, -0.0025360724, -0.0076826746, 0.9662894)
 bones/29/rotation = Quaternion(-3.5526934e-15, 1.1920937e-07, -8.470344e-22, 1)
 bones/30/rotation = Quaternion(-6.143804e-06, 0.70295197, 0.7112374, -5.5837636e-06)
 bones/31/rotation = Quaternion(-3.552734e-15, -5.9604645e-07, 3.3881257e-21, 1)
 
 [node name="Head" parent="Warrior/CharacterArmature/Skeleton3D" index="0"]
-transform = Transform3D(0.99999976, 4.9990355e-12, -0.000550203, -2.1675538e-05, 0.9992239, -0.039395515, 0.0005497759, 0.03939558, 0.99922365, -0.00063837686, 2.1050334, 0.03971745)
+transform = Transform3D(0.99999976, 2.952305e-12, -0.00055020297, -3.897144e-05, 0.9974885, -0.070831016, 0.00054882106, 0.07083106, 0.99748826, -0.00063837686, 2.0842562, 0.08092582)
 
 [node name="UpperArm_L" parent="Warrior/CharacterArmature/Skeleton3D" index="1"]
-transform = Transform3D(0.08296439, 0.5071231, 0.85787094, -0.057263803, -0.8569906, 0.5121409, 0.994906, -0.091614485, -0.0420599, 0.31953597, 1.846708, 0.020563431)
+transform = Transform3D(0.5400062, 0.29132673, 0.7896338, 0.03162019, -0.9445451, 0.32685593, 0.84106684, -0.15153597, -0.5192721, 0.31953597, 1.8280126, 0.043003142)
 
 [node name="Weapon_R" parent="Warrior/CharacterArmature/Skeleton3D" index="2"]
-transform = Transform3D(-0.4223873, 0.14637882, -0.8945178, -0.21849881, -0.97421473, -0.056246143, -0.87968594, 0.1716934, 0.44347978, -0.4981047, 0.9593318, 0.078801855)
+transform = Transform3D(-0.0025919718, 0.07391536, -0.9972612, -0.36656216, -0.92791814, -0.067822866, -0.93039024, 0.36538228, 0.029499881, -0.4819798, 0.93938667, 0.16327019)
 
 [node name="UpperArm_R" parent="Warrior/CharacterArmature/Skeleton3D" index="3"]
-transform = Transform3D(0.08296437, -0.5071236, -0.85787076, 0.057263765, -0.85699016, 0.5121411, -0.99490595, -0.09161432, -0.042059757, -0.3195364, 1.846708, 0.020563375)
+transform = Transform3D(0.49524638, -0.3800172, -0.7812285, -0.06687746, -0.9132614, 0.40184703, -0.86617476, -0.1467667, -0.4777039, -0.3195362, 1.8280126, 0.043003116)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("CapsuleShape3D_onrkg")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.8660254, 0.5, 0, -0.5, 0.8660254, 0, 4, 5)
+shape = SubResource("SphereShape3D_4flbx")
+
+[node name="Camera3D" type="Camera3D" parent="SpringArm3D"]
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Warrior")
+tree_root = SubResource("AnimationNodeStateMachine_hqtel")
+anim_player = NodePath("../Warrior/AnimationPlayer")
+parameters/Move/blend_position = 0.0
 
 [editable path="Warrior"]
