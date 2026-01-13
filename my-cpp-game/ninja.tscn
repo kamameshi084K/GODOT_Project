@@ -434,16 +434,16 @@ _data = {
 [sub_resource type="SphereShape3D" id="SphereShape3D_25rb4"]
 radius = 1.328469
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_lbaip"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_buaqa"]
 animation = &"Idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_bvjue"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_25rb4"]
 animation = &"Walk"
 
 [sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_dwbse"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_lbaip")
+blend_point_0/node = SubResource("AnimationNodeAnimation_buaqa")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_bvjue")
+blend_point_1/node = SubResource("AnimationNodeAnimation_25rb4")
 blend_point_1/pos = 1.0
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pkg7o"]
@@ -451,7 +451,7 @@ advance_mode = 2
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_g5hew"]
 states/Move/node = SubResource("AnimationNodeBlendSpace1D_dwbse")
-states/Move/position = Vector2(418, 91)
+states/Move/position = Vector2(419, 91)
 states/Start/position = Vector2(202, 91)
 transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_pkg7o")]
 
@@ -470,14 +470,6 @@ metadata/_edit_lock_ = true
 [node name="Ninja" parent="." instance=ExtResource("1_buaqa")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
-[node name="Skeleton3D" parent="Ninja/CharacterArmature" index="0"]
-bones/0/position = Vector3(0, 0.00010974442, -0.0006649312)
-bones/0/rotation = Quaternion(0.00017315685, 0, 0, 1)
-bones/1/position = Vector3(0, 0.51497257, 0)
-bones/1/rotation = Quaternion(0.00010435918, -5.602131e-22, -2.9566582e-20, 1)
-bones/2/rotation = Quaternion(0, 4.814825e-35, 3.85186e-34, 1)
-bones/3/rotation = Quaternion(6.416842e-05, 5.995608e-07, 0.009299448, 0.9999568)
-
 [node name="AnimationPlayer" parent="Ninja" index="1"]
 libraries = {
 &"": SubResource("AnimationLibrary_buaqa")
@@ -491,6 +483,6 @@ shape = SubResource("SphereShape3D_25rb4")
 root_node = NodePath("../Ninja")
 tree_root = SubResource("AnimationNodeStateMachine_g5hew")
 anim_player = NodePath("../Ninja/AnimationPlayer")
-parameters/Move/blend_position = 0.0029851198
+parameters/Move/blend_position = 0.0
 
 [editable path="Ninja"]

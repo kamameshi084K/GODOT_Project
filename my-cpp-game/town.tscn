@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=3 uid="uid://b1y27wad8uwsk"]
+[gd_scene load_steps=13 format=3 uid="uid://b1y27wad8uwsk"]
 
 [ext_resource type="PackedScene" uid="uid://brdbcjpt3kjef" path="res://assets/Market_SecondAge_Level1.gltf" id="1_gwqsq"]
 [ext_resource type="PackedScene" uid="uid://c0x3e4hwtdwvf" path="res://assets/Market_FirstAge_Level1.gltf" id="2_nki3b"]
 [ext_resource type="PackedScene" uid="uid://x6elfcedlioa" path="res://assets/Market_FirstAge_Level2.gltf" id="3_tkreh"]
 [ext_resource type="PackedScene" uid="uid://c8ylt6pd4vuqk" path="res://player.tscn" id="4_525j1"]
 [ext_resource type="PackedScene" uid="uid://c0kloj63efgfi" path="res://assets/WonderWalls_SecondAge.gltf" id="5_nki3b"]
+[ext_resource type="PackedScene" uid="uid://ehefqu81itmf" path="res://hud.tscn" id="6_tkreh"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xtgmq"]
 albedo_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
@@ -23,7 +24,7 @@ data = PackedVector3Array(0.6209, 0.24159999, 0.2879, 0.5625, 0.24689999, 0.2440
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_tkreh"]
 
-[node name="Node3D" type="Node3D"]
+[node name="town" type="Node3D"]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_nfg6w")
@@ -91,6 +92,8 @@ transform = Transform3D(-25, 0, -2.1855694e-06, 0, 25, 0, 2.1855694e-06, 0, -25,
 [node name="CollisionShape3D" type="CollisionShape3D" parent="WarpArea"]
 transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, -19.002)
 shape = SubResource("BoxShape3D_tkreh")
+
+[node name="HUD" parent="." instance=ExtResource("6_tkreh")]
 
 [connection signal="body_entered" from="WarpArea" to="WarpArea" method="_on_body_entered"]
 

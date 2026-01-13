@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3 uid="uid://ehefqu81itmf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n2snw"]
+bg_color = Color(0, 0.9490196, 0, 1)
+
+[node name="HUD" type="HUD"]
+hp_bar_path = NodePath("Container/HpBar")
+level_label_path = NodePath("Container/LevelLabel")
+exp_label_path = NodePath("Container/ExpLabel")
+
+[node name="Container" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HpBar" type="ProgressBar" parent="Container"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 72.0
+offset_right = 339.0
+offset_bottom = 117.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_n2snw")
+value = 50.0
+
+[node name="LevelLabel" type="Label" parent="Container"]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 18.0
+offset_right = 104.0
+offset_bottom = 64.0
+theme_override_font_sizes/font_size = 32
+text = "Lv. 1"
+
+[node name="ExpLabel" type="Label" parent="Container"]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 31.0
+offset_right = 331.0
+offset_bottom = 65.0
+theme_override_font_sizes/font_size = 24
+text = "Exp: 0 / 100"
