@@ -2,7 +2,7 @@
 #include "gdexample.h" // 自作クラスをインクルード
 #include "player.hpp"
 #include "enemy.hpp"
-#include "portal.hpp"
+#include "warp_area.hpp"
 #include "battle_ui.hpp"
 #include "game_manager.hpp"
 
@@ -22,7 +22,7 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     ClassDB::register_class<GDExample>();
     ClassDB::register_class<Player>();
     ClassDB::register_class<Enemy>();   // 敵クラスを登録
-    ClassDB::register_class<Portal>(); // ポータルクラスを登録
+    ClassDB::register_class<WarpArea>(); // ワープエリアクラスを登録
     ClassDB::register_class<BattleUI>(); // バトルUIクラスを登録
     ClassDB::register_class<GameManager>(); // ゲームマネージャークラスを登録
 }
