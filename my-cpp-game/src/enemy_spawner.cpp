@@ -31,11 +31,42 @@ EnemySpawner::~EnemySpawner()
 
 void EnemySpawner::_process(double delta)
 {
-    // 1. すでに敵がいるかチェック
-    // （子ノードがいなくなったら倒されたとみなす簡易判定）
+    // 1. すでに敵がいる場合：デスポーン判定
     if (get_child_count() > 0)
     {
-        return; // 敵がいる間は何もしない
+        Viewport* viewport = get_viewport();
+        if (!viewport) return;
+        Camera3D* camera = viewport->get_camera_3d();
+        if (!camera) return;
+
+        Node3D* enemy = Object::cast_to<Node3D>(get_child(0));
+        if (enemy)
+        {
+            // 距離を計算（カメラと敵の距離）
+            double dist = camera->get_global_position().distance_to(enemy->get_global_position());
+            
+            // 画面に映っているか？
+            bool is_visible = camera->is_position_in_frustum(enemy->get_global_position());
+
+            // --- デスポーン条件の設定 ---
+            
+            // 条件A: 「画面外」かつ「20m以上離れている」
+            bool condition_soft = (!is_visible && dist > 20.0);
+            
+            // 条件B: 「（見ていても）50m以上離れている」
+            // ※ここを20.0にすると、目の前で消えてしまいます！お好みで調整してください。
+            bool condition_hard = (dist >= 30.0);
+
+            // どちらか（OR）を満たしたら消去
+            if (condition_soft || condition_hard)
+            {
+                enemy->queue_free(); // 消去
+                
+                respawn_timer = 0.0; // すぐに次が湧ける状態にする（必要なら数秒待つ設定へ）
+                UtilityFunctions::print("Enemy despawned. Dist: ", dist, " Visible: ", is_visible);
+            }
+        }
+        return; 
     }
     
     // 2. リスポーン待ち時間中ならカウントダウン
@@ -54,19 +85,20 @@ void EnemySpawner::_process(double delta)
         // ここでは「カメラが見ているか」を最優先するため、一旦距離チェックはスキップしても動きますが、
         // 念のため記述
     }
-    
-    // 現在のビューポート（画面）を取得
+
     Viewport* viewport = get_viewport();
     if (!viewport) return;
-
-    // 現在のアクティブなカメラを取得
     Camera3D* camera = viewport->get_camera_3d();
     if (!camera) return;
 
-    // 「このスポナーの位置」がカメラの視界（フラスタム）に入っているか？
-    if (camera->is_position_in_frustum(get_global_position()))
+    // 自分（スポナー）とカメラの距離を測る
+    double dist_to_spawner = camera->get_global_position().distance_to(get_global_position());
+
+    // 湧く条件：
+    // 1. カメラに映っている
+    // 2. 「消える距離(50m)」よりも内側に入り込んでいる（例: 40m以内）
+    if (camera->is_position_in_frustum(get_global_position()) && dist_to_spawner < 30.0)
     {
-        // 視界に入った！かつ、敵がいない！ -> 生成！
         spawn_random_enemy();
     }
 }
