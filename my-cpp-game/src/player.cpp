@@ -138,6 +138,29 @@ void Player::_ready()
         hitbox = get_node<Area3D>(hitbox_path);
     }
 
+    // RayCast3Dノードの作成と設定
+    interaction_ray = memnew(RayCast3D);
+    // visual_node（モデル）があるなら、その子にすることで回転に追従させる
+    if (visual_node)
+    {
+        visual_node->add_child(interaction_ray);
+    }
+    else
+    {
+        // モデルがない場合は仕方なくPlayer直下に追加
+        add_child(interaction_ray);
+    }
+
+    // 設定: プレイヤーの目の前 2メートルまで検知
+    // (Z軸マイナス方向が正面)
+    interaction_ray->set_target_position(Vector3(0, 0, 2.0));
+    
+    // 重要: デフォルトではオフになっているので有効化する
+    interaction_ray->set_enabled(true);
+    
+    // 足元(0,0,0)ではなく、胸のあたり(高さ1.0)から飛ばす
+    interaction_ray->set_position(Vector3(0, 1.0, 0));
+
     // GameManagerのチェック（バトル帰りかどうか）
     GameManager *gm = GameManager::get_singleton();
     if (gm)
@@ -182,12 +205,6 @@ void Player::_physics_process(double delta)
     if (!is_on_floor())
     {
         velocity.y -= gravity * delta;
-    }
-
-    // 2. ジャンプ
-    if (input->is_action_just_pressed("ui_accept") && is_on_floor())
-    {
-        velocity.y = jump_velocity;
     }
 
     // 3. カメラ操作
@@ -283,6 +300,35 @@ void Player::_physics_process(double delta)
 
     set_velocity(velocity);
     move_and_slide();
+}
+
+void Player::_input(const Ref<InputEvent>& event)
+{
+    // エディタ上での実行を防ぐ
+    if (Engine::get_singleton()->is_editor_hint())
+    {
+        return;
+    }
+
+    // "ui_accept" (Enter, Space, Aボタン等) が押されたかチェック
+    if (event->is_action_pressed("ui_accept"))
+    {
+        // レイキャストが存在し、何かに衝突しているか？
+        if (interaction_ray && interaction_ray->is_colliding())
+        {
+            // 当たったオブジェクトを取得
+            Object* collider = interaction_ray->get_collider();
+            Node* hit_node = Object::cast_to<Node>(collider);
+
+            if (hit_node)
+            {
+                // デバッグ用: 当たったものの名前を表示
+                UtilityFunctions::print("Hit object: ", hit_node->get_name());
+
+                // ここに後で「会話処理」などを追加します
+            }
+        }
+    }
 }
 
 // --- セッター・ゲッターの実装 ---

@@ -7,6 +7,8 @@
 #include <godot_cpp/classes/spring_arm3d.hpp>
 #include <godot_cpp/classes/area3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/input_event.hpp> // 入力イベント用
+#include <godot_cpp/classes/ray_cast3d.hpp>  // RayCast用
 
 namespace godot
 {
@@ -30,6 +32,8 @@ namespace godot
         int current_exp;
         int exp_to_next_level;
 
+        RayCast3D* interaction_ray;
+
         // ノードパス（エディタで設定用）
         NodePath visual_node_path;
         NodePath camera_arm_path;
@@ -51,7 +55,20 @@ namespace godot
         ~Player();
 
         virtual void _ready() override;
+        /**
+         * @brief 物理フレームごとの処理
+         * 
+         * @param delta 
+         * @note なんでoverrideするのかというと、CharacterBody3Dの_move_and_slide()を使いたいから。
+         */
         virtual void _physics_process(double delta) override;
+        /**
+         * @brief 入力イベント処理
+         * 
+         * @param event 
+         * @note 入力イベントを直接処理したい場合のためにoverrideしておく。
+         */
+        virtual void _input(const Ref<InputEvent>& event) override;
 
         // セッター・ゲッター（エディタ設定用）
         void set_speed(double p_speed);
