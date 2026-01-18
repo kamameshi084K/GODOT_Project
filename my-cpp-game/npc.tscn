@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://f6udbn6juvkk"]
+
+[ext_resource type="PackedScene" uid="uid://bmacufgmg176y" path="res://assets/Casual_Male.gltf" id="1_ideak"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xxcha"]
+margin = 0.0
+radius = 0.75
+height = 3.0
+
+[node name="NPC" type="NPC"]
+
+[node name="Casual_Male" parent="." instance=ExtResource("1_ideak")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CapsuleShape3D_xxcha")

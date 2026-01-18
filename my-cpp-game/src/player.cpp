@@ -322,8 +322,11 @@ void Player::_input(const Ref<InputEvent>& event)
 
             if (hit_node)
             {
-                // デバッグ用: 当たったものの名前を表示
-                UtilityFunctions::print("Hit object: ", hit_node->get_name());
+                // interactメソッドがあるかチェックして呼び出す
+                if (hit_node->has_method("interact"))
+                {
+                    hit_node->call("interact");
+                }
 
                 // ここに後で「会話処理」などを追加します
             }
