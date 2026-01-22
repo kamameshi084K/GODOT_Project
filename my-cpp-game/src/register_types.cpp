@@ -8,6 +8,7 @@
 #include "hud.hpp"
 #include "enemy_spawner.hpp"
 #include "npc.hpp"
+#include "dialogue_box.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -31,6 +32,7 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     ClassDB::register_class<HUD>(); // HUDクラスを登録
     ClassDB::register_class<EnemySpawner>(); // 敵スポーン管理クラスを登録
     ClassDB::register_class<NPC>(); // NPCクラスを登録
+    ClassDB::register_class<DialogueBox>(); // ダイアログボックスクラスを登録
 }
 
 void uninitialize_gdexample_module(ModuleInitializationLevel p_level) 

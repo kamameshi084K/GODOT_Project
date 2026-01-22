@@ -14,6 +14,7 @@ namespace godot
 
     private:
         static GameManager *singleton; // 自分自身（シングルトン）へのポインタ
+        String last_scene_path;        // 最後にいたシーンのパス
         
         Vector3 last_player_position;       // プレイヤーの座標
         bool is_returning_from_battle;      // バトルから帰ってきたかフラグ
@@ -257,5 +258,18 @@ namespace godot
          * @param amount 獲得量
          */
         void gain_experience(int amount);
+
+        /**
+         * @brief プレイヤーが最後にいたシーンのパスを設定する
+         * 
+         * @param path シーンのパス
+         */
+        void set_last_scene_path(const String &path);
+        /**
+         * @brief プレイヤーが最後にいたシーンのパスを取得する
+         * 
+         * @return String シーンのパス
+         */
+        String get_last_scene_path() const;
     };
 }

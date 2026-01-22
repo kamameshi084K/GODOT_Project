@@ -226,8 +226,20 @@ void BattleUI::_on_run_button_pressed()
 
     show_message(String::utf8("プレイヤーは にげだした！"));
     
-    // 即座に逃げる（本来はここもシーケンサーでやるとカッコいいですが今回は省略）
-    get_tree()->change_scene_to_file("res://world.tscn");
+    GameManager *gm = GameManager::get_singleton();
+    if (gm)
+    {
+        String return_path = gm->get_last_scene_path();
+        if (!return_path.is_empty())
+        {
+            get_tree()->change_scene_to_file(return_path);
+        }
+        else
+        {
+            // 念のため、パスが取れなかったら world.tscn へ
+            get_tree()->change_scene_to_file("res://world.tscn");
+        }
+    }
 }
 
 // プレイヤーのアニメが終わった時（＝剣を振り終わった時）
@@ -247,6 +259,7 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
     {
         UtilityFunctions::print("You Win!");
         GameManager *gm = GameManager::get_singleton();
+        String return_path = "res://world.tscn";
         if (gm)
         {
             String current_id = gm->get_current_enemy_id();
@@ -258,9 +271,15 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
             }
             int reward = gm->get_next_enemy_exp_reward();
             gm->gain_experience(reward);
+            // 戻り先を取得
+            String saved_path = gm->get_last_scene_path();
+            if (!saved_path.is_empty())
+            {
+                return_path = saved_path;
+            }
         }
         // 本来はここもシーケンサーで「勝利ファンファーレ→画面遷移」とやると良い
-        get_tree()->change_scene_to_file("res://world.tscn");
+        get_tree()->change_scene_to_file(return_path);
     }
     else if (anim_name == String("HitReact"))
     {

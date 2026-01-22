@@ -45,6 +45,11 @@ void GameManager::_bind_methods()
 
     // 初期化用
     ClassDB::bind_method(D_METHOD("init_player_stats", "max_hp", "attack", "defense", "level", "exp", "next_exp"), &GameManager::init_player_stats);
+
+    // セットアップ用
+    ClassDB::bind_method(D_METHOD("set_last_scene_path", "path"), &GameManager::set_last_scene_path);
+    // ゲット用
+    ClassDB::bind_method(D_METHOD("get_last_scene_path"), &GameManager::get_last_scene_path);
 }
 
 GameManager::GameManager()
@@ -230,6 +235,16 @@ int GameManager::get_player_exp() const
 int GameManager::get_player_next_exp() const
 {
     return player_next_exp;
+}
+
+void GameManager::set_last_scene_path(const String &path)
+{
+    last_scene_path = path;
+}
+
+String GameManager::get_last_scene_path() const
+{
+    return last_scene_path;
 }
 
 void GameManager::gain_experience(int amount)

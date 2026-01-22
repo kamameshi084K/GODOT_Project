@@ -1,6 +1,7 @@
 #include "npc.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 
 using namespace godot;
 
@@ -34,7 +35,19 @@ void NPC::interact()
 {
     UtilityFunctions::print("NPC says: ", dialogue_text);
     
-    // ※ここに後で「UIを表示する処理」を追加します
+    // シーン内にある "dialogue_ui" グループの最初のノードを探す
+    Node* ui_node = get_tree()->get_first_node_in_group("dialogue_ui");
+    
+    if (ui_node)
+    {
+        // もし見つかったら、show_message関数を呼ぶ
+        // (callメソッドを使うと、型を知らなくても関数名だけで呼べます)
+        ui_node->call("show_message", dialogue_text);
+    }
+    else
+    {
+        UtilityFunctions::print("Error: DialogueBox not found in scene!");
+    }
 }
 
 // --- セッター・ゲッター ---
