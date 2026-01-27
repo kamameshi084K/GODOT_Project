@@ -72,6 +72,9 @@ void BattleUI::_ready()
         player_attack_power = gm->get_player_attack();
         player_defense_power = gm->get_player_defense();
 
+        max_player_hp = gm->get_player_max_hp(); 
+        player_hp = gm->get_player_current_hp();
+
         String next_enemy = gm->get_next_enemy_scene_path();
         
         // もしGameManagerに「次の敵」がセットされていたら
@@ -271,6 +274,23 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
             }
             int reward = gm->get_next_enemy_exp_reward();
             gm->gain_experience(reward);
+
+            Ref<MonsterData> new_monster;
+            new_monster.instantiate();
+            
+            // 名前とステータスを保存
+            new_monster->set_monster_name(gm->get_next_enemy_name());
+            // ※ここでは敵のステータスをそのまま使っていますが、乱数を入れたりしても面白いです
+            new_monster->set_stats(
+                gm->get_next_enemy_max_hp(), 
+                gm->get_next_enemy_attack(), 
+                gm->get_next_enemy_defense(), 
+                5 // 素早さ（とりあえず固定値）
+            );
+            
+            // マネージャーに追加（パーティor倉庫へ）
+            gm->add_monster(new_monster);
+
             // 戻り先を取得
             String saved_path = gm->get_last_scene_path();
             if (!saved_path.is_empty())

@@ -25,13 +25,6 @@ namespace godot
         double acceleration;
         double friction;
 
-        int max_hp;
-        int attack_power;
-        int defense_power;
-        int level;
-        int current_exp;
-        int exp_to_next_level;
-
         RayCast3D* interaction_ray;
 
         // ノードパス（エディタで設定用）
@@ -100,13 +93,5 @@ namespace godot
 
         void set_hitbox_path(const NodePath &path);
         NodePath get_hitbox_path() const;
-
-        void set_max_hp(int val); int get_max_hp() const;
-        void set_attack_power(int val); int get_attack_power() const;
-        void set_defense_power(int val); int get_defense_power() const;
-        
-        void set_level(int val); int get_level() const;
-        void set_current_exp(int val); int get_current_exp() const;
-        void set_exp_to_next_level(int val); int get_exp_to_next_level() const;
     };
 }

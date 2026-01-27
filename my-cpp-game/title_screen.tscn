@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3 uid="uid://dc5dfoe03q7g5"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_1s85s"]
+font_size = 50
+
+[node name="TitleScreen" type="TitleScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 1, 1)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2825521
+anchor_top = 0.28549382
+anchor_right = 0.71744794
+anchor_bottom = 0.3919753
+grow_horizontal = 2
+text = "モンスター育成対戦ゲーム"
+label_settings = SubResource("LabelSettings_1s85s")
+metadata/_edit_use_anchors_ = true
+
+[node name="StartButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.41145834
+anchor_top = 0.45910493
+anchor_right = 0.5885417
+anchor_bottom = 0.54089504
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "GAME START"
+metadata/_edit_use_anchors_ = true
+
+[node name="QuitButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.46310765
+anchor_top = 0.5486111
+anchor_right = 0.53689235
+anchor_bottom = 0.63040125
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "QUIT"
+metadata/_edit_use_anchors_ = true
+
+[connection signal="pressed" from="StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="QuitButton" to="." method="_on_quit_button_pressed"]

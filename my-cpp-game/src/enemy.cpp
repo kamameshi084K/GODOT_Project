@@ -229,6 +229,9 @@ void Enemy::_physics_process(double delta)
                 gm->set_next_enemy_stats(enemy_name, max_hp, attack_power);
                 gm->set_next_enemy_defense(defense_power);
                 gm->set_next_enemy_exp_reward(exp_reward);
+
+                // バトル用ステータスの準備
+                gm->prepare_battle_stats();
                 gm->set_last_scene_path(get_tree()->get_current_scene()->get_scene_file_path());
             }
 

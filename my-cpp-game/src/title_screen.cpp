@@ -1,4 +1,6 @@
 #include "title_screen.hpp"
+#include "game_manager.hpp"
+
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
@@ -20,6 +22,12 @@ TitleScreen::~TitleScreen()
 
 void TitleScreen::_on_start_button_pressed()
 {
+    GameManager* gm = GameManager::get_singleton();
+    if (gm)
+    {
+        // 0:炎, 1:水, 2:草 (GameManagerの実装に合わせて)
+        gm->select_starter_monster(0); 
+    }
     // ゲーム開始！町へ移動します
     get_tree()->change_scene_to_file("res://town.tscn");
 }

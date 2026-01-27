@@ -39,31 +39,6 @@ void Player::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_friction"), &Player::get_friction);
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "friction"), "set_friction", "get_friction");
 
-    // --- ステータスの登録 ---
-    ClassDB::bind_method(D_METHOD("set_max_hp", "val"), &Player::set_max_hp);
-    ClassDB::bind_method(D_METHOD("get_max_hp"), &Player::get_max_hp);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_max_hp"), "set_max_hp", "get_max_hp");
-
-    ClassDB::bind_method(D_METHOD("set_attack_power", "val"), &Player::set_attack_power);
-    ClassDB::bind_method(D_METHOD("get_attack_power"), &Player::get_attack_power);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_attack_power"), "set_attack_power", "get_attack_power");
-
-    ClassDB::bind_method(D_METHOD("set_defense_power", "val"), &Player::set_defense_power);
-    ClassDB::bind_method(D_METHOD("get_defense_power"), &Player::get_defense_power);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_defense_power"), "set_defense_power", "get_defense_power");
-
-    ClassDB::bind_method(D_METHOD("set_level", "val"), &Player::set_level);
-    ClassDB::bind_method(D_METHOD("get_level"), &Player::get_level);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_level"), "set_level", "get_level");
-
-    ClassDB::bind_method(D_METHOD("set_current_exp", "val"), &Player::set_current_exp);
-    ClassDB::bind_method(D_METHOD("get_current_exp"), &Player::get_current_exp);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_current_exp"), "set_current_exp", "get_current_exp");
-
-    ClassDB::bind_method(D_METHOD("set_exp_to_next_level", "val"), &Player::set_exp_to_next_level);
-    ClassDB::bind_method(D_METHOD("get_exp_to_next_level"), &Player::get_exp_to_next_level);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "stats_next_exp"), "set_exp_to_next_level", "get_exp_to_next_level");
-
     // --- ノードパスの登録 ---
 
     ClassDB::bind_method(D_METHOD("set_visual_node_path", "path"), &Player::set_visual_node_path);
@@ -92,13 +67,6 @@ Player::Player()
     camera_sensitivity = 0.005;
     acceleration = 40.0;
     friction = 30.0;
-
-    max_hp = 20;
-    attack_power = 5;
-    defense_power = 2;
-    level = 1;
-    current_exp = 0;
-    exp_to_next_level = 50;
 
     visual_node = nullptr;
     camera_arm = nullptr;
@@ -165,28 +133,23 @@ void Player::_ready()
     GameManager *gm = GameManager::get_singleton();
     if (gm)
     {
-        // バトルから帰ってきたか？
         if (gm->get_is_returning_from_battle())
         {
-            // ■ パターンA: バトルから帰還時
-            // 位置を復元する
+            // バトルからの帰還時のみ位置を戻す
             set_global_position(gm->get_last_player_position());
             gm->set_is_returning_from_battle(false);
-            
             UtilityFunctions::print("Welcome back from battle!");
             
-            // 【重要】
-            // 帰ってきた時は、ステータスを初期化したくない！（レベル1に戻ってしまうから）
-            // 本当はここで「今のHP」などをGameManagerから読み込む処理が入ります（次回実装）
+            // 重要: バトル用ステータスのセットアップはGameManagerが管理するので、Playerからは何もしなくてOK
+            // 必要なら、ここでパーティがいるか確認してセットするだけでも良い
+            gm->prepare_battle_stats();
         }
         else
         {
-            // ■ パターンB: ゲーム開始時（または初回起動）
-            // ここで初めてエディタの設定値(20など)をGameManagerに送る！
-            
-            gm->init_player_stats(max_hp, attack_power, defense_power, level, current_exp, exp_to_next_level);
-            
-            UtilityFunctions::print("Game Start! Sending Editor Stats to GM. Attack: ", attack_power);
+            // ゲーム開始時。
+            // プレイヤーがステータスを持っていないので、GMに送信する処理はもう不要！
+            // 念のためバトル用ステータスを準備させておく
+            gm->prepare_battle_stats();
         }
     }
 }
@@ -365,21 +328,3 @@ NodePath Player::get_anim_tree_path() const { return anim_tree_path; }
 
 void Player::set_hitbox_path(const NodePath &path) { hitbox_path = path; }
 NodePath Player::get_hitbox_path() const { return hitbox_path; }
-
-void Player::set_max_hp(int val) { max_hp = val; }
-int Player::get_max_hp() const { return max_hp; }
-
-void Player::set_attack_power(int val) { attack_power = val; }
-int Player::get_attack_power() const { return attack_power; }
-
-void Player::set_defense_power(int val) { defense_power = val; }
-int Player::get_defense_power() const { return defense_power; }
-
-void Player::set_level(int val) { level = val; }
-int Player::get_level() const { return level; }
-
-void Player::set_current_exp(int val) { current_exp = val; }
-int Player::get_current_exp() const { return current_exp; }
-
-void Player::set_exp_to_next_level(int val) { exp_to_next_level = val; }
-int Player::get_exp_to_next_level() const { return exp_to_next_level; }
