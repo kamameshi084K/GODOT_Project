@@ -8,6 +8,9 @@
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 
+#include <godot_cpp/classes/e_net_multiplayer_peer.hpp>
+#include <godot_cpp/classes/multiplayer_api.hpp>
+
 namespace godot
 {
 
@@ -41,9 +44,10 @@ namespace godot
         int player_attack;      // プレイヤー攻撃力
         int player_defense;     // プレイヤー防御力
 
-        // ▼▼▼ 新機能: モンスター管理 ▼▼▼
         TypedArray<MonsterData> party_monsters;   // 現在のパーティ（最大3体）
         TypedArray<MonsterData> standby_monsters; // 控え（倉庫）
+
+        Ref<ENetMultiplayerPeer> peer; // ネットワークピア
 
     protected:
         /**
@@ -60,7 +64,20 @@ namespace godot
         // どこからでも GameManager を呼べるようにする
         static GameManager *get_singleton();
 
-        // --- 新機能: モンスター操作 ---
+        /**
+         * @brief サーバー（ホスト）としてゲームを開始する
+         * @param port ポート番号（デフォルト8910）
+         */
+        void host_game(int port = 8910);
+
+        /**
+         * @brief クライアントとしてサーバーに参加する
+         * @param address サーバーのIPアドレス（"127.0.0.1"など）
+         * @param port ポート番号
+         */
+        void join_game(const String& address, int port = 8910);
+
+        // --- モンスター操作 ---
         
         /**
          * @brief モンスターをコレクションに追加する

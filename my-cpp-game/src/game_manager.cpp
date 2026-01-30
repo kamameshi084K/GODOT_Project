@@ -1,6 +1,7 @@
 #include "game_manager.hpp"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 
 using namespace godot;
 
@@ -9,6 +10,9 @@ GameManager *GameManager::singleton = nullptr;
 
 void GameManager::_bind_methods()
 {
+    // ネットワーク関連メソッドのバインド
+    ClassDB::bind_method(D_METHOD("host_game", "port"), &GameManager::host_game, DEFVAL(8910));
+    ClassDB::bind_method(D_METHOD("join_game", "address", "port"), &GameManager::join_game, DEFVAL(8910));
     // メソッドのバインド
     ClassDB::bind_method(D_METHOD("set_last_player_position", "pos"), &GameManager::set_last_player_position);
     ClassDB::bind_method(D_METHOD("get_last_player_position"), &GameManager::get_last_player_position);
@@ -99,6 +103,43 @@ GameManager::~GameManager()
 GameManager *GameManager::get_singleton()
 {
     return singleton;
+}
+
+
+void GameManager::host_game(int port)
+{
+    peer.instantiate();
+    // サーバーを作成（最大4人まで）
+    Error err = peer->create_server(port, 4);
+    
+    if (err != OK)
+    {
+        UtilityFunctions::print("Failed to create server! Error: ", err);
+        return;
+    }
+
+    UtilityFunctions::print("Server Created! Listening on port: ", port);
+    
+    // GodotのマルチプレイヤーシステムにこのPeerをセット
+    get_tree()->get_multiplayer()->set_multiplayer_peer(peer);
+}
+
+void GameManager::join_game(const String& address, int port)
+{
+    peer.instantiate();
+    // クライアントとしてサーバーに参加
+    Error err = peer->create_client(address, port);
+    
+    if (err != OK)
+    {
+        UtilityFunctions::print("Failed to create client! Error: ", err);
+        return;
+    }
+
+    UtilityFunctions::print("Joining server at: ", address, ":", port);
+    
+    // GodotのマルチプレイヤーシステムにこのPeerをセット
+    get_tree()->get_multiplayer()->set_multiplayer_peer(peer);
 }
 
 void GameManager::add_monster(const Ref<MonsterData>& monster)

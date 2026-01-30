@@ -4,6 +4,10 @@
 font_size = 50
 
 [node name="TitleScreen" type="TitleScreen"]
+main_menu_path = NodePath("MainMenu")
+selection_menu_path = NodePath("SelectionMenu")
+network_menu_path = NodePath("NetworkMenu")
+ip_input_path = NodePath("NetworkMenu/IPInput")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -31,31 +35,156 @@ text = "モンスター育成対戦ゲーム"
 label_settings = SubResource("LabelSettings_1s85s")
 metadata/_edit_use_anchors_ = true
 
-[node name="StartButton" type="Button" parent="."]
+[node name="MainMenu" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="StartButton" type="Button" parent="MainMenu"]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.41145834
 anchor_top = 0.45910493
 anchor_right = 0.5885417
 anchor_bottom = 0.54089504
+offset_left = 457.54166
+offset_top = 279.1358
+offset_right = 654.4583
+offset_bottom = 328.8642
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 32
 text = "GAME START"
 metadata/_edit_use_anchors_ = true
 
-[node name="QuitButton" type="Button" parent="."]
+[node name="MultiplayerButton" type="Button" parent="MainMenu"]
+layout_mode = 0
+offset_left = 468.0
+offset_top = 361.0
+offset_right = 690.0
+offset_bottom = 414.0
+theme_override_font_sizes/font_size = 32
+text = "MULTIPLAYER"
+
+[node name="QuitButton" type="Button" parent="MainMenu"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.46310765
-anchor_top = 0.5486111
-anchor_right = 0.53689235
-anchor_bottom = 0.63040125
+anchor_left = 0.4631073
+anchor_top = 2.3736115
+anchor_right = 0.5368927
+anchor_bottom = 2.4554017
+offset_left = 514.9757
+offset_top = 333.55554
+offset_right = 597.0243
+offset_bottom = 383.28394
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 32
 text = "QUIT"
 metadata/_edit_use_anchors_ = true
 
-[connection signal="pressed" from="StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="QuitButton" to="." method="_on_quit_button_pressed"]
+[node name="SelectionMenu" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FireButton" type="Button" parent="SelectionMenu"]
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -118.0
+offset_right = 118.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "fire"
+
+[node name="WaterButton" type="Button" parent="SelectionMenu"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 248.0
+grow_vertical = 2
+text = "mizu"
+
+[node name="GrassButton" type="Button" parent="SelectionMenu"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -233.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "kusa"
+
+[node name="NetworkMenu" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HostButton" type="Button" parent="NetworkMenu"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -115.5
+offset_top = -60.5
+offset_right = 115.5
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "HOST GAME"
+
+[node name="IPInput" type="LineEdit" parent="NetworkMenu"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2934028
+anchor_top = 0.6527778
+anchor_right = 0.7118056
+anchor_bottom = 0.7345679
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 32
+placeholder_text = "IP Address"
+metadata/_edit_use_anchors_ = true
+
+[node name="JoinButton" type="Button" parent="NetworkMenu"]
+layout_mode = 0
+offset_left = 462.0
+offset_top = 350.0
+offset_right = 693.0
+offset_bottom = 418.0
+theme_override_font_sizes/font_size = 32
+text = "JOIN GAME"
+
+[node name="BackButton" type="Button" parent="NetworkMenu"]
+layout_mode = 0
+offset_left = 489.0
+offset_top = 526.0
+offset_right = 672.0
+offset_bottom = 580.0
+theme_override_font_sizes/font_size = 32
+text = "BACK"
+
+[connection signal="pressed" from="MainMenu/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="MainMenu/MultiplayerButton" to="." method="_on_multiplayer_button_pressed"]
+[connection signal="pressed" from="MainMenu/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/FireButton" to="." method="_on_fire_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/WaterButton" to="." method="_on_water_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/GrassButton" to="." method="_on_grass_button_pressed"]
+[connection signal="pressed" from="NetworkMenu/HostButton" to="." method="_on_host_button_pressed"]
+[connection signal="pressed" from="NetworkMenu/JoinButton" to="." method="_on_join_button_pressed"]
+[connection signal="pressed" from="NetworkMenu/BackButton" to="." method="_on_back_button_pressed"]
