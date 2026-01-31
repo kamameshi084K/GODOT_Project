@@ -67,6 +67,24 @@ void GameManager::_bind_methods()
     // 互換性維持
     ClassDB::bind_method(D_METHOD("add_collected_monster", "monster"), &GameManager::add_collected_monster);
     ClassDB::bind_method(D_METHOD("get_collected_monsters"), &GameManager::get_collected_monsters);
+
+    // --- ゲーム進行用メソッドの登録 ---
+    
+    // _processを有効にするにはこれを忘れない
+    // (Nodeクラスのメソッドなので通常は自動ですが、明示的にバインドは不要でもオーバーライドは必要)
+
+    ClassDB::bind_method(D_METHOD("get_time_remaining"), &GameManager::get_time_remaining);
+    ClassDB::bind_method(D_METHOD("start_collection_phase"), &GameManager::start_collection_phase);
+    ClassDB::bind_method(D_METHOD("set_player_ready"), &GameManager::set_player_ready);
+
+    // ▼▼▼ RPC（通信用関数）の登録 ▼▼▼
+    // "call_local" = 自分でも実行する + 相手にも実行させる
+    
+    ClassDB::bind_method(D_METHOD("_rpc_start_collection"), &GameManager::_rpc_start_collection);
+    ClassDB::bind_method(D_METHOD("_rpc_sync_timer", "time"), &GameManager::_rpc_sync_timer);
+    ClassDB::bind_method(D_METHOD("_rpc_go_to_town"), &GameManager::_rpc_go_to_town);
+    ClassDB::bind_method(D_METHOD("_rpc_notify_ready"), &GameManager::_rpc_notify_ready);
+    ClassDB::bind_method(D_METHOD("_rpc_start_battle"), &GameManager::_rpc_start_battle);
 }
 
 GameManager::GameManager()
@@ -90,6 +108,45 @@ GameManager::GameManager()
     player_level = 1;
     player_exp = 0;
     player_next_exp = 50;
+
+    current_state = STATE_LOBBY;
+    time_remaining = 0.0f;
+    is_timer_active = false;
+    ready_player_count = 0;
+
+    // 1. _rpc_start_collection
+    Dictionary rpc_config_collection;
+    rpc_config_collection["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    // ★修正箇所: MultiplayerAPI ではなく MultiplayerPeer を使う
+    rpc_config_collection["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    rpc_config_collection["call_local"] = true;
+    rpc_config("_rpc_start_collection", rpc_config_collection); // ★この行で適用！
+
+    // 2. _rpc_sync_timer
+    Dictionary rpc_config_timer;
+    rpc_config_timer["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    rpc_config_timer["call_local"] = true;
+    rpc_config("_rpc_sync_timer", rpc_config_timer);
+
+    // 3. _rpc_go_to_town
+    Dictionary rpc_config_town;
+    rpc_config_town["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    rpc_config_town["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE; // 移動命令は確実に届ける
+    rpc_config_town["call_local"] = true;
+    rpc_config("_rpc_go_to_town", rpc_config_town);
+
+    // 4. _rpc_notify_ready
+    Dictionary rpc_config_ready;
+    rpc_config_ready["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    rpc_config_ready["call_local"] = false;
+    rpc_config("_rpc_notify_ready", rpc_config_ready);
+
+    // 5. _rpc_start_battle
+    Dictionary rpc_config_battle;
+    rpc_config_battle["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    rpc_config_battle["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    rpc_config_battle["call_local"] = true;
+    rpc_config("_rpc_start_battle", rpc_config_battle);
 }
 
 GameManager::~GameManager()
@@ -437,4 +494,107 @@ TypedArray<MonsterData> GameManager::get_collected_monsters() const
     // パーティと倉庫を合わせたリストを返す（必要に応じて）
     // 現状はパーティだけ返しておく、あるいはパーティ＋スタンバイを結合しても良い
     return party_monsters;
+}
+
+void GameManager::_process(double delta)
+{
+    // サーバー（ホスト）だけがタイマーを減らす
+    if (is_timer_active && get_tree()->get_multiplayer()->is_server())
+    {
+        time_remaining -= delta;
+
+        // タイマー情報を全員に同期（頻繁すぎると重いので、1秒に1回など間引くのが理想ですが、今は毎フレ同期はせず、UI側で推定させてもOK）
+        // ここでは簡易的に「0になった瞬間」だけ確実に処理します
+        
+        if (time_remaining <= 0.0f)
+        {
+            time_remaining = 0.0f;
+            is_timer_active = false;
+            
+            // 時間切れ！町へ移動せよ！
+            rpc("_rpc_go_to_town");
+        }
+    }
+}
+
+// --- ゲームロジック ---
+
+void GameManager::start_collection_phase()
+{
+    // ホストしか呼んではいけない
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    // ゲーム開始！制限時間は 60秒（テスト用に短くしてもOK）
+    time_remaining = 60.0f;
+    is_timer_active = true;
+    ready_player_count = 0; // リセット
+
+    // 全員に通知
+    rpc("_rpc_start_collection");
+}
+
+void GameManager::_rpc_start_collection()
+{
+    current_state = STATE_COLLECTION;
+
+    time_remaining = 60.0f; // ※start_collection_phaseと同じ秒数にする
+    is_timer_active = true; 
+
+    UtilityFunctions::print("Collection Phase Started!");
+    get_tree()->change_scene_to_file("res://world.tscn");
+}
+
+void GameManager::_rpc_sync_timer(float time)
+{
+    time_remaining = time;
+}
+
+void GameManager::_rpc_go_to_town()
+{
+    current_state = STATE_TOWN;
+    is_timer_active = false;
+    UtilityFunctions::print("Time's up! Moving to Town...");
+
+    // 町へ移動
+    get_tree()->change_scene_to_file("res://town.tscn");
+}
+
+void GameManager::set_player_ready()
+{
+    // ボタンを押したクライアントがサーバーに報告する
+    rpc_id(1, "_rpc_notify_ready"); // ID 1 は常にサーバー
+}
+
+void GameManager::_rpc_notify_ready()
+{
+    // サーバーで実行される
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    ready_player_count++;
+    UtilityFunctions::print("Player Ready! Count: ", ready_player_count);
+
+    // 接続しているプレイヤー数を確認（簡易版：2人プレイと仮定して 2になったら開始）
+    // 本来は get_tree()->get_multiplayer()->get_peers().size() + 1 (ホスト分) と比較します
+    int total_players = get_tree()->get_multiplayer()->get_peers().size() + 1;
+
+    if (ready_player_count >= total_players)
+    {
+        // 全員準備完了！バトル開始
+        rpc("_rpc_start_battle");
+    }
+}
+
+void GameManager::_rpc_start_battle()
+{
+    current_state = STATE_BATTLE;
+    UtilityFunctions::print("Battle Start!");
+    
+    // バトルシーンへ（まだシーンがない場合はエラーになるので注意）
+    // get_tree()->change_scene_to_file("res://battle.tscn"); 
+    // まだバトルシーンがないならログだけ
+}
+
+float GameManager::get_time_remaining() const
+{
+    return time_remaining;
 }

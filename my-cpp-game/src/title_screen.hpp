@@ -26,6 +26,9 @@ namespace godot
         Control* network_menu; // 通信メニュー用コンテナ
         LineEdit* ip_input;    // IPアドレス入力欄
 
+        // ゲーム開始を試みる
+        void _attempt_start_game();
+
     protected:
         static void _bind_methods();
 
@@ -70,6 +73,18 @@ namespace godot
          * 
          */
         void _on_back_button_pressed();
+
+        // ネットワークコールバック
+        /**
+         * @brief サーバーが起動した時の処理
+         * 
+         */
+        void _on_connected_to_server();
+        /**
+         * @brief サーバーへの接続に失敗した時の処理
+         * 
+         */
+        void _on_connection_failed();
 
         // 3択ボタン用
         void _on_fire_button_pressed();

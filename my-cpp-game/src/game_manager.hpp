@@ -13,6 +13,13 @@
 
 namespace godot
 {
+    // ゲームの進行状態を定義
+    enum GameState {
+        STATE_LOBBY,      // ロビー（タイトルなど）
+        STATE_COLLECTION, // モンスター集め（制限時間あり）
+        STATE_TOWN,       // 町（対戦準備）
+        STATE_BATTLE      // 対戦中
+    };
 
     class GameManager : public Node
     {
@@ -49,6 +56,15 @@ namespace godot
 
         Ref<ENetMultiplayerPeer> peer; // ネットワークピア
 
+        // --- ゲーム進行管理用 ---
+        GameState current_state;
+        float time_remaining;      // 残り時間（秒）
+        bool is_timer_active;      // タイマーが動いているか
+
+        // プレイヤーの準備完了状態（IDごとのマップ）
+        // ※今回は簡易的に「準備完了した人数」で管理します
+        int ready_player_count;
+
     protected:
         /**
          * @brief Godot にメソッドを登録する
@@ -63,6 +79,8 @@ namespace godot
 
         // どこからでも GameManager を呼べるようにする
         static GameManager *get_singleton();
+
+        virtual void _process(double delta) override; // タイマー更新用
 
         /**
          * @brief サーバー（ホスト）としてゲームを開始する
@@ -312,5 +330,33 @@ namespace godot
          * @deprecated 以前の仕様。get_party または get_standby を使用してください。
          */
         TypedArray<MonsterData> get_collected_monsters() const;
+
+        // ゲームサイクルを開始する（ホストが呼ぶ）
+        void start_collection_phase();
+
+        // [RPC] 全員に「収集フェーズ開始」を伝える
+        void _rpc_start_collection();
+
+        /**
+         * @brief タイマーを同期する（ホストが呼ぶ）
+         * 
+         * @param time 残り時間（秒）
+         */
+        void _rpc_sync_timer(float time);
+
+        // [RPC] 全員に「町へ移動」を命令する
+        void _rpc_go_to_town();
+
+        // プレイヤーが「準備完了」ボタンを押したときに呼ぶ
+        void set_player_ready();
+
+        // [RPC] サーバーに「準備できたよ」と伝える
+        void _rpc_notify_ready();
+
+        // [RPC] 全員に「バトル開始」を命令する
+        void _rpc_start_battle();
+        
+        // 現在の残り時間を取得（UI表示用）
+        float get_time_remaining() const;
     };
 }
