@@ -554,6 +554,7 @@ void GameManager::_rpc_go_to_town()
     current_state = STATE_TOWN;
     is_timer_active = false;
     UtilityFunctions::print("Time's up! Moving to Town...");
+    ready_player_count = 0;
 
     // 町へ移動
     get_tree()->change_scene_to_file("res://town.tscn");
@@ -561,8 +562,16 @@ void GameManager::_rpc_go_to_town()
 
 void GameManager::set_player_ready()
 {
-    // ボタンを押したクライアントがサーバーに報告する
-    rpc_id(1, "_rpc_notify_ready"); // ID 1 は常にサーバー
+    if (get_tree()->get_multiplayer()->is_server())
+    {
+        // 自分自身（サーバー）なので、RPCを使わず直接呼ぶ
+        _rpc_notify_ready();
+    }
+    else
+    {
+        // クライアントなので、サーバー(ID:1)へ送る
+        rpc_id(1, "_rpc_notify_ready"); 
+    }
 }
 
 void GameManager::_rpc_notify_ready()
@@ -588,6 +597,7 @@ void GameManager::_rpc_start_battle()
 {
     current_state = STATE_BATTLE;
     UtilityFunctions::print("Battle Start!");
+    get_tree()->change_scene_to_file("res://battle.tscn");
     
     // バトルシーンへ（まだシーンがない場合はエラーになるので注意）
     // get_tree()->change_scene_to_file("res://battle.tscn"); 

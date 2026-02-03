@@ -13,6 +13,7 @@
 #include "monster_data.hpp"
 #include "world.hpp" 
 #include "town.hpp"  
+#include "battle_scene.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -41,6 +42,7 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     ClassDB::register_class<MonsterData>(); // モンスター情報クラスを登録
     ClassDB::register_class<World>(); // ワールドクラスを登録
     ClassDB::register_class<Town>(); // タウンクラスを登録
+    ClassDB::register_class<BattleScene>(); // バトルシーンクラスを登録
 }
 
 void uninitialize_gdexample_module(ModuleInitializationLevel p_level) 
