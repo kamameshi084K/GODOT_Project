@@ -3,6 +3,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 
+
 using namespace godot;
 
 // 静的変数の初期化
@@ -34,6 +35,10 @@ void GameManager::_bind_methods()
     // --- ステータス関連 ---
     ClassDB::bind_method(D_METHOD("get_player_attack"), &GameManager::get_player_attack);
     ClassDB::bind_method(D_METHOD("get_player_defense"), &GameManager::get_player_defense);
+
+    ClassDB::bind_method(D_METHOD("get_player_speed"), &GameManager::get_player_speed);
+    ClassDB::bind_method(D_METHOD("get_next_enemy_speed"), &GameManager::get_next_enemy_speed);
+    ClassDB::bind_method(D_METHOD("set_next_enemy_speed", "spd"), &GameManager::set_next_enemy_speed);
 
     // バトルUIなどがHPバーを表示するために使う
     ClassDB::bind_method(D_METHOD("get_player_max_hp"), &GameManager::get_player_max_hp);
@@ -98,6 +103,7 @@ GameManager::GameManager()
     next_enemy_max_hp = 3;
     next_enemy_attack = 1;
     next_enemy_defense = 0;
+    next_enemy_speed = 1;
     next_enemy_exp_reward = 10; // デフォルト値
 
     // プレイヤーの初期値
@@ -105,6 +111,7 @@ GameManager::GameManager()
     player_current_hp = 10;
     player_attack = 5;
     player_defense = 0;
+    player_speed = 5;
     player_level = 1;
     player_exp = 0;
     player_next_exp = 50;
@@ -262,11 +269,11 @@ void GameManager::prepare_battle_stats()
         if (leader.is_valid())
         {
             player_max_hp = leader->get_max_hp();
-            // バトル開始時は全快で始める仕様とする
             player_current_hp = leader->get_max_hp(); 
             
             player_attack = leader->get_attack();
             player_defense = leader->get_defense();
+            player_speed = leader->get_speed(); 
             
             UtilityFunctions::print("Battle Ready! Active Monster: ", leader->get_monster_name());
         }
@@ -607,4 +614,19 @@ void GameManager::_rpc_start_battle()
 float GameManager::get_time_remaining() const
 {
     return time_remaining;
+}
+
+int GameManager::get_player_speed() const
+{
+    return player_speed;
+}
+
+int GameManager::get_next_enemy_speed() const
+{
+    return next_enemy_speed;
+}
+
+void GameManager::set_next_enemy_speed(int spd)
+{
+    next_enemy_speed = spd;
 }

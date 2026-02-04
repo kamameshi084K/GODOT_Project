@@ -39,6 +39,7 @@ namespace godot
         int next_enemy_max_hp;      // 次に戦う敵の最大HP
         int next_enemy_attack;      // 次に戦う敵の攻撃力
         int next_enemy_defense;     // 次に戦う敵の防御力
+        int next_enemy_speed;       // 次に戦う敵の素早さ
         int next_enemy_exp_reward;  // 次に戦う敵の経験値報酬
 
         // --- プレイヤー（バトル時）ステータス ---
@@ -50,6 +51,7 @@ namespace godot
         int player_next_exp;    // 次のレベルまでの必要経験
         int player_attack;      // プレイヤー攻撃力
         int player_defense;     // プレイヤー防御力
+        int player_speed;       // プレイヤー素早さ
 
         TypedArray<MonsterData> party_monsters;   // 現在のパーティ（最大3体）
         TypedArray<MonsterData> standby_monsters; // 控え（倉庫）
@@ -141,6 +143,8 @@ namespace godot
          * @param next_exp 次のレベルまでの必要経験値
          */
         void init_player_stats(int max_hp, int attack, int defense, int level, int exp, int next_exp);
+
+        int get_player_speed() const; // プレイヤーの素早さを取得する
 
         // データのセット・ゲット
         /**
@@ -257,6 +261,13 @@ namespace godot
          * * @return int 敵の防御力
          */
         int get_next_enemy_defense() const;
+
+        /**
+         * @brief 次に戦う敵の素早さを設定する
+         * * @param spd 敵の素早さ
+         */
+        void set_next_enemy_speed(int spd);
+        int get_next_enemy_speed() const; // 次に戦う敵の素早さを取得する
         
         /**
          * @brief 次に戦う敵の経験値報酬を設定する

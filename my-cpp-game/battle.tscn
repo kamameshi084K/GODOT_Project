@@ -27,3 +27,57 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
 
 [node name="EnemySpawnPos" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="AttackButton" type="Button" parent="CanvasLayer"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -517.0
+offset_top = -205.0
+offset_right = -282.0
+offset_bottom = -115.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "こうげき"
+
+[node name="RockButton" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 381.0
+offset_top = 52.0
+offset_right = 431.0
+offset_bottom = 102.0
+grow_vertical = 2
+text = "グー"
+
+[node name="ScissorsButton" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 330.0
+offset_top = 128.0
+offset_right = 380.0
+offset_bottom = 178.0
+grow_vertical = 2
+text = "チョキ"
+
+[node name="PaperButton" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 439.0
+offset_top = 128.0
+offset_right = 489.0
+offset_bottom = 178.0
+grow_vertical = 2
+text = "パー"
+
+[connection signal="pressed" from="CanvasLayer/AttackButton" to="." method="_on_attack_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/RockButton" to="." method="_on_rock_pressed"]
+[connection signal="pressed" from="CanvasLayer/ScissorsButton" to="." method="_on_scissors_pressed"]
+[connection signal="pressed" from="CanvasLayer/PaperButton" to="." method="_on_paper_pressed"]
