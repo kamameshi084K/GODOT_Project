@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d1sfxgwpae6my"]
+
+[ext_resource type="MonsterData" uid="uid://xooje65mwoh3" path="res://Resources/Monsters/new_monster_data.tres" id="1_70yv6"]
+
+[node name="GameManager" type="GameManager"]
+party_monsters = Array[MonsterData]([ExtResource("1_70yv6")])

@@ -40,6 +40,9 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_next_enemy_speed"), &GameManager::get_next_enemy_speed);
     ClassDB::bind_method(D_METHOD("set_next_enemy_speed", "spd"), &GameManager::set_next_enemy_speed);
 
+    ClassDB::bind_method(D_METHOD("set_next_enemy_data", "data"), &GameManager::set_next_enemy_data);
+    ClassDB::bind_method(D_METHOD("get_next_enemy_data"), &GameManager::get_next_enemy_data);
+
     // バトルUIなどがHPバーを表示するために使う
     ClassDB::bind_method(D_METHOD("get_player_max_hp"), &GameManager::get_player_max_hp);
     ClassDB::bind_method(D_METHOD("get_player_current_hp"), &GameManager::get_player_current_hp);
@@ -66,8 +69,10 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("select_starter_monster", "type_index"), &GameManager::select_starter_monster);
     ClassDB::bind_method(D_METHOD("prepare_battle_stats"), &GameManager::prepare_battle_stats);
     
+    ClassDB::bind_method(D_METHOD("set_party", "party"), &GameManager::set_party);
     ClassDB::bind_method(D_METHOD("get_party"), &GameManager::get_party);
     ClassDB::bind_method(D_METHOD("get_standby"), &GameManager::get_standby);
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "party_monsters", PROPERTY_HINT_RESOURCE_TYPE, "24/17:MonsterData"), "set_party", "get_party");
 
     // 互換性維持
     ClassDB::bind_method(D_METHOD("add_collected_monster", "monster"), &GameManager::add_collected_monster);
@@ -286,6 +291,11 @@ void GameManager::prepare_battle_stats()
         player_attack = 1;
         player_defense = 0;
     }
+}
+
+void GameManager::set_party(const TypedArray<MonsterData>& p_party)
+{
+    party_monsters = p_party;
 }
 
 TypedArray<MonsterData> GameManager::get_party() const
@@ -548,7 +558,7 @@ void GameManager::_rpc_start_collection()
     is_timer_active = true; 
 
     UtilityFunctions::print("Collection Phase Started!");
-    get_tree()->change_scene_to_file("res://world.tscn");
+    get_tree()->change_scene_to_file("res://scenes/world.tscn");
 }
 
 void GameManager::_rpc_sync_timer(float time)
@@ -564,7 +574,7 @@ void GameManager::_rpc_go_to_town()
     ready_player_count = 0;
 
     // 町へ移動
-    get_tree()->change_scene_to_file("res://town.tscn");
+    get_tree()->change_scene_to_file("res://scenes/town.tscn");
 }
 
 void GameManager::set_player_ready()
@@ -604,7 +614,7 @@ void GameManager::_rpc_start_battle()
 {
     current_state = STATE_BATTLE;
     UtilityFunctions::print("Battle Start!");
-    get_tree()->change_scene_to_file("res://battle.tscn");
+    get_tree()->change_scene_to_file("res://scenes/battle.tscn");
     
     // バトルシーンへ（まだシーンがない場合はエラーになるので注意）
     // get_tree()->change_scene_to_file("res://battle.tscn"); 
@@ -629,4 +639,27 @@ int GameManager::get_next_enemy_speed() const
 void GameManager::set_next_enemy_speed(int spd)
 {
     next_enemy_speed = spd;
+}
+
+void GameManager::set_next_enemy_data(const Ref<MonsterData>& data)
+{
+    next_enemy_data = data;
+    
+    // 互換性のため、データがある場合は古い変数にも値を入れておくと安全です
+    if (next_enemy_data.is_valid())
+    {
+        next_enemy_name = next_enemy_data->get_monster_name();
+        next_enemy_max_hp = next_enemy_data->get_max_hp();
+        next_enemy_attack = next_enemy_data->get_attack();
+        next_enemy_defense = next_enemy_data->get_defense();
+        next_enemy_speed = next_enemy_data->get_speed();
+        
+        // 経験値報酬の取得関数があればそれも（今はMonsterDataに無いかも）
+        // next_enemy_exp_reward = ... 
+    }
+}
+
+Ref<MonsterData> GameManager::get_next_enemy_data() const
+{
+    return next_enemy_data;
 }

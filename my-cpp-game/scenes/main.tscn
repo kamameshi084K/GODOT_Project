@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://diyyqsp1m23wo"]
+
+[ext_resource type="PackedScene" uid="uid://cmxx0tea40vwu" path="res://scenes/gd_example.tscn" id="1_ig7tw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0xm2m"]
+size = Vector2(1036, 183)
+
+[node name="main" type="Node2D"]
+
+[node name="GDExample" parent="." instance=ExtResource("1_ig7tw")]
+position = Vector2(180.02261, 341.48392)
+velocity = Vector2(0, 0)
+
+[node name="wall" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="wall"]
+position = Vector2(519, 91)
+shape = SubResource("RectangleShape2D_0xm2m")
+
+[node name="ColorRect" type="ColorRect" parent="wall"]
+offset_right = 1035.0
+offset_bottom = 182.0

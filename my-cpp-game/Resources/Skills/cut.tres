@@ -1,0 +1,6 @@
+[gd_resource type="SkillData" format=3 uid="uid://ca87x6r5yxox"]
+
+[resource]
+skill_name = "Cut"
+hand_type = 1
+power = 8

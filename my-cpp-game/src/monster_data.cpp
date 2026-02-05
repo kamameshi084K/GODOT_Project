@@ -5,37 +5,52 @@ using namespace godot;
 
 void MonsterData::_bind_methods()
 {
-    // 名前
+    // --- 既存のプロパティ ---
     ClassDB::bind_method(D_METHOD("set_monster_name", "name"), &MonsterData::set_monster_name);
     ClassDB::bind_method(D_METHOD("get_monster_name"), &MonsterData::get_monster_name);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "monster_name"), "set_monster_name", "get_monster_name");
 
-    // ID
     ClassDB::bind_method(D_METHOD("set_id", "id"), &MonsterData::set_id);
     ClassDB::bind_method(D_METHOD("get_id"), &MonsterData::get_id);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "id"), "set_id", "get_id");
 
-    // HP
     ClassDB::bind_method(D_METHOD("set_max_hp", "val"), &MonsterData::set_max_hp);
     ClassDB::bind_method(D_METHOD("get_max_hp"), &MonsterData::get_max_hp);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "max_hp"), "set_max_hp", "get_max_hp");
 
-    // 攻撃力
     ClassDB::bind_method(D_METHOD("set_attack", "val"), &MonsterData::set_attack);
     ClassDB::bind_method(D_METHOD("get_attack"), &MonsterData::get_attack);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "attack"), "set_attack", "get_attack");
 
-    // 防御力
     ClassDB::bind_method(D_METHOD("set_defense", "val"), &MonsterData::set_defense);
     ClassDB::bind_method(D_METHOD("get_defense"), &MonsterData::get_defense);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "defense"), "set_defense", "get_defense");
 
-    // 素早さ
     ClassDB::bind_method(D_METHOD("set_speed", "val"), &MonsterData::set_speed);
     ClassDB::bind_method(D_METHOD("get_speed"), &MonsterData::get_speed);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "speed"), "set_speed", "get_speed");
 
-    // 便利関数（GDScriptから呼べるようにするなら登録）
+    // --- ★追加: 特性 ---
+    ClassDB::bind_method(D_METHOD("set_ability", "val"), &MonsterData::set_ability);
+    ClassDB::bind_method(D_METHOD("get_ability"), &MonsterData::get_ability);
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "ability", PROPERTY_HINT_ENUM, "None,Physical Boost,Special Boost"), "set_ability", "get_ability");
+
+    // --- ★追加: 3Dモデルのパス ---
+    ClassDB::bind_method(D_METHOD("set_model_path", "path"), &MonsterData::set_model_path);
+    ClassDB::bind_method(D_METHOD("get_model_path"), &MonsterData::get_model_path);
+    // ファイル選択ダイアログが出るように PROPERTY_HINT_FILE を指定
+    ADD_PROPERTY(PropertyInfo(Variant::STRING, "model_path", PROPERTY_HINT_FILE, "*.tscn,*.scm"), "set_model_path", "get_model_path");
+
+    // --- ★追加: 技リスト ---
+    ClassDB::bind_method(D_METHOD("set_skills", "p_skills"), &MonsterData::set_skills);
+    ClassDB::bind_method(D_METHOD("get_skills"), &MonsterData::get_skills);
+    
+    // エディタ上で SkillData のみを配列に入れられるようにする設定
+    // "24/17:SkillData" は Godot 4.x GDExtension の特殊記法で、「Object型(24)かつResource(17)でクラス名がSkillData」を意味します
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "skills", PROPERTY_HINT_RESOURCE_TYPE, "24/17:SkillData"), "set_skills", "get_skills");
+
+
+    // 便利関数
     ClassDB::bind_method(D_METHOD("set_stats", "hp", "atk", "def", "spd"), &MonsterData::set_stats);
 }
 
@@ -47,6 +62,10 @@ MonsterData::MonsterData()
     attack = 1;
     defense = 0;
     speed = 1;
+
+    // 初期化
+    ability = ABILITY_NONE;
+    model_path = "";
 }
 
 MonsterData::~MonsterData()
@@ -61,64 +80,32 @@ void MonsterData::set_stats(int p_hp, int p_atk, int p_def, int p_spd)
     speed = p_spd;
 }
 
-// --- セッター・ゲッターの実装 ---
+// --- 既存の実装 ---
+void MonsterData::set_monster_name(const String& name) { monster_name = name; }
+String MonsterData::get_monster_name() const { return monster_name; }
 
-void MonsterData::set_monster_name(const String& name)
-{
-    monster_name = name;
-}
+void MonsterData::set_id(const String& p_id) { id = p_id; }
+String MonsterData::get_id() const { return id; }
 
-String MonsterData::get_monster_name() const
-{
-    return monster_name;
-}
+void MonsterData::set_max_hp(int val) { max_hp = val; }
+int MonsterData::get_max_hp() const { return max_hp; }
 
-void MonsterData::set_id(const String& p_id)
-{
-    id = p_id;
-}
+void MonsterData::set_attack(int val) { attack = val; }
+int MonsterData::get_attack() const { return attack; }
 
-String MonsterData::get_id() const
-{
-    return id;
-}
+void MonsterData::set_defense(int val) { defense = val; }
+int MonsterData::get_defense() const { return defense; }
 
-void MonsterData::set_max_hp(int val)
-{
-    max_hp = val;
-}
+void MonsterData::set_speed(int val) { speed = val; }
+int MonsterData::get_speed() const { return speed; }
 
-int MonsterData::get_max_hp() const
-{
-    return max_hp;
-}
+// --- ★追加分の実装 ---
 
-void MonsterData::set_attack(int val)
-{
-    attack = val;
-}
+void MonsterData::set_ability(int val) { ability = val; }
+int MonsterData::get_ability() const { return ability; }
 
-int MonsterData::get_attack() const
-{
-    return attack;
-}
+void MonsterData::set_skills(const TypedArray<SkillData>& p_skills) { skills = p_skills; }
+TypedArray<SkillData> MonsterData::get_skills() const { return skills; }
 
-void MonsterData::set_defense(int val)
-{
-    defense = val;
-}
-
-int MonsterData::get_defense() const
-{
-    return defense;
-}
-
-void MonsterData::set_speed(int val)
-{
-    speed = val;
-}
-
-int MonsterData::get_speed() const
-{
-    return speed;
-}
+void MonsterData::set_model_path(const String& path) { model_path = path; }
+String MonsterData::get_model_path() const { return model_path; }

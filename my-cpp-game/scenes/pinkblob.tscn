@@ -1,0 +1,51 @@
+[gd_scene load_steps=9 format=3 uid="uid://bcpxs3ujpgdkn"]
+
+[ext_resource type="MonsterData" uid="uid://d0kf4ji2ytsdw" path="res://Resources/Monsters/pinkblob.tres" id="1_h1xq4"]
+[ext_resource type="PackedScene" uid="uid://co06avs7ryd6k" path="res://assets/models/blob/PinkBlob.fbx" id="2_q0mrw"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_h1xq4"]
+animation = &"CharacterArmature|Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_q0mrw"]
+animation = &"CharacterArmature|Walk"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_c1rvo"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_h1xq4")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_q0mrw")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_rl6gq"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_n0dmg"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_c1rvo")
+states/Move/position = Vector2(329, 72)
+states/Start/position = Vector2(168, 72)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_rl6gq")]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5fuqc"]
+radius = 0.75
+
+[node name="Enemy" type="Enemy"]
+monster_data = ExtResource("1_h1xq4")
+visual_node_path = NodePath("PinkBlob")
+anim_tree_path = NodePath("AnimationTree")
+
+[node name="PinkBlob" parent="." instance=ExtResource("2_q0mrw")]
+
+[node name="Skeleton3D" parent="PinkBlob/CharacterArmature" index="0"]
+bones/2/position = Vector3(0, 0, 0.0048319353)
+bones/4/rotation = Quaternion(6.7479003e-20, 3.5471476e-10, -0.0026400522, 0.99999654)
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../PinkBlob")
+tree_root = SubResource("AnimationNodeStateMachine_n0dmg")
+anim_player = NodePath("../PinkBlob/AnimationPlayer")
+parameters/Move/blend_position = 0.0018315315
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_5fuqc")
+
+[editable path="PinkBlob"]

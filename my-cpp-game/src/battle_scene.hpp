@@ -1,5 +1,8 @@
 #pragma once
 
+#include "skill_data.hpp" // SkillData を使うので必須
+#include "monster_data.hpp" // MonsterData も必要
+
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/marker3d.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
@@ -15,9 +18,11 @@ namespace godot
         Marker3D* player_spawn_pos;
         Marker3D* enemy_spawn_pos;
 
-        Button* rock_button;     // グー
-        Button* scissors_button; // チョキ
-        Button* paper_button;    // パー
+        Button* skill_button_1;
+        Button* skill_button_2;
+        Button* skill_button_3;
+
+        TypedArray<SkillData> current_skills;
 
         /**
          * @brief モンスター名に基づいて対応するモデルのパスを取得する
@@ -26,6 +31,15 @@ namespace godot
          * @return モデルのパス
          */
         String _get_model_path_by_name(const String& name);
+
+        /**
+         * @brief じゃんけんの手のタイプを文字列に変換する
+         * 
+         * @param type HandType のいずれか
+         * @return 変換された文字列 ("rock", "scissors", "paper")
+         */
+        String _hand_type_to_string(int type);
+        void _update_ui_buttons(); // ボタンのテキスト更新用
 
         int player_hp; // プレイヤーの体力
         int enemy_hp; // 敵の体力
@@ -57,9 +71,9 @@ namespace godot
         void _rpc_spawn_enemy(const String& monster_name, bool is_player); // 引数を追加
 
         // ボタン処理
-        void _on_rock_pressed(); // グー
-        void _on_scissors_pressed(); // チョキ
-        void _on_paper_pressed(); // パー
+        void _on_skill_1_pressed();
+        void _on_skill_2_pressed();
+        void _on_skill_3_pressed();
         /**
          * @brief プレイヤーの手をサーバーに送信する
          * 

@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://btanpiy1aikct"]
+
+[ext_resource type="PackedScene" uid="uid://c44rk0r37n5ym" path="res://assets/models/blob/Yeti.fbx" id="1_323nj"]
+[ext_resource type="MonsterData" uid="uid://dkllbgsji7xxc" path="res://Resources/Monsters/yeti.tres" id="1_jgaxg"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_jgaxg"]
+radius = 1.25
+height = 2.5
+
+[node name="yeti" type="Enemy"]
+monster_data = ExtResource("1_jgaxg")
+visual_node_path = NodePath("Yeti")
+
+[node name="Yeti" parent="." instance=ExtResource("1_323nj")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+shape = SubResource("CapsuleShape3D_jgaxg")
+
+[editable path="Yeti"]

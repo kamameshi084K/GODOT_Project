@@ -1,0 +1,9 @@
+[gd_resource type="MonsterData" format=3 uid="uid://d0kf4ji2ytsdw"]
+
+[resource]
+monster_name = "ピンクスライム"
+max_hp = 25
+attack = 5
+defense = 2
+speed = 4
+model_path = "uid://bcpxs3ujpgdkn"

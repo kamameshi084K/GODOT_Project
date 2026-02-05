@@ -1,0 +1,6 @@
+[gd_resource type="MonsterData" format=3 uid="uid://elfrjq6gomp6"]
+
+[resource]
+monster_name = "青怪鳥"
+max_hp = 12
+model_path = "uid://cen7rdjfd05uh"

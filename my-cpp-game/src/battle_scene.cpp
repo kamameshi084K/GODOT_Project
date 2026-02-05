@@ -1,6 +1,7 @@
 #include "battle_scene.hpp"
 #include "game_manager.hpp"
 #include "monster_data.hpp"
+#include "skill_data.hpp"
 
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/multiplayer_api.hpp>
@@ -16,9 +17,9 @@ void BattleScene::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_start_spawning"), &BattleScene::_rpc_start_spawning);
     ClassDB::bind_method(D_METHOD("_rpc_spawn_enemy", "monster_name", "is_player"), &BattleScene::_rpc_spawn_enemy);
     
-    ClassDB::bind_method(D_METHOD("_on_rock_pressed"), &BattleScene::_on_rock_pressed);
-    ClassDB::bind_method(D_METHOD("_on_scissors_pressed"), &BattleScene::_on_scissors_pressed);
-    ClassDB::bind_method(D_METHOD("_on_paper_pressed"), &BattleScene::_on_paper_pressed);
+    ClassDB::bind_method(D_METHOD("_on_skill_1_pressed"), &BattleScene::_on_skill_1_pressed);
+    ClassDB::bind_method(D_METHOD("_on_skill_2_pressed"), &BattleScene::_on_skill_2_pressed);
+    ClassDB::bind_method(D_METHOD("_on_skill_3_pressed"), &BattleScene::_on_skill_3_pressed);
     
     ClassDB::bind_method(D_METHOD("_rpc_submit_hand", "hand"), &BattleScene::_rpc_submit_hand);
     ClassDB::bind_method(D_METHOD("_rpc_resolve_janken", "h_hand", "c_hand", "winner_side", "first_attacker"), &BattleScene::_rpc_resolve_janken);
@@ -29,9 +30,9 @@ BattleScene::BattleScene()
 {
     player_spawn_pos = nullptr;
     enemy_spawn_pos = nullptr;
-    rock_button = nullptr;
-    scissors_button = nullptr;
-    paper_button = nullptr;
+    skill_button_1 = nullptr;
+    skill_button_2 = nullptr;
+    skill_button_3 = nullptr;
     
     loaded_player_count = 0;
     player_hp = 10;
@@ -72,21 +73,60 @@ BattleScene::~BattleScene()
 void BattleScene::_ready()
 {
     Node* p_node = find_child("PlayerSpawnPos");
-    if (p_node) player_spawn_pos = Object::cast_to<Marker3D>(p_node);
+    if (p_node)
+    {
+        player_spawn_pos = Object::cast_to<Marker3D>(p_node);
+    }
     Node* e_node = find_child("EnemySpawnPos");
-    if (e_node) enemy_spawn_pos = Object::cast_to<Marker3D>(e_node);
+    if (e_node)
+    {
+        enemy_spawn_pos = Object::cast_to<Marker3D>(e_node);
+    }
+    Node* b1 = find_child("SkillButton1");
+    if (b1)
+    {
+        skill_button_1 = Object::cast_to<Button>(b1);
+    }
+    
+    Node* b2 = find_child("SkillButton2");
+    if (b2)
+    {
+        skill_button_2 = Object::cast_to<Button>(b2);
+    }
+    
+    Node* b3 = find_child("SkillButton3");
+    if (b3)
+    {
+        skill_button_3 = Object::cast_to<Button>(b3);
+    }
 
-    Node* b1 = find_child("RockButton");
-    if (b1) rock_button = Object::cast_to<Button>(b1);
-    Node* b2 = find_child("ScissorsButton");
-    if (b2) scissors_button = Object::cast_to<Button>(b2);
-    Node* b3 = find_child("PaperButton");
-    if (b3) paper_button = Object::cast_to<Button>(b3);
+    // ボタンにシグナルを接続 (エディタで接続していない場合、ここですると確実です)
+    if (skill_button_1 && !skill_button_1->is_connected("pressed", Callable(this, "_on_skill_1_pressed")))
+    {
+        skill_button_1->connect("pressed", Callable(this, "_on_skill_1_pressed"));
+    }
+    if (skill_button_2 && !skill_button_2->is_connected("pressed", Callable(this, "_on_skill_2_pressed")))
+    {
+        skill_button_2->connect("pressed", Callable(this, "_on_skill_2_pressed"));
+    }
+    if (skill_button_3 && !skill_button_3->is_connected("pressed", Callable(this, "_on_skill_3_pressed")))
+    {
+        skill_button_3->connect("pressed", Callable(this, "_on_skill_3_pressed"));
+    }
 
-    if(rock_button) rock_button->set_disabled(true);
-    if(scissors_button) scissors_button->set_disabled(true);
-    if(paper_button) paper_button->set_disabled(true);
-
+    // 初期状態は無効化
+    if(skill_button_1)
+    {
+        skill_button_1->set_disabled(true);
+    }
+    if(skill_button_2)
+    {
+        skill_button_2->set_disabled(true);
+    }
+    if(skill_button_3)
+    {
+        skill_button_3->set_disabled(true);
+    }
     rpc("_rpc_notify_loaded");
 }
 
@@ -105,7 +145,6 @@ void BattleScene::_rpc_notify_loaded()
 
 void BattleScene::_rpc_start_spawning()
 {
-    // この関数は AUTHORITY (サーバー) から全員に RPC で呼ばれます
     GameManager* gm = GameManager::get_singleton();
     if (gm)
     {
@@ -116,22 +155,29 @@ void BattleScene::_rpc_start_spawning()
         if (party.size() > 0)
         {
             Ref<MonsterData> leader = party[0];
-            String my_monster_name = leader->get_monster_name();
             
-            // 自分のモンスターを自分の「PlayerPos」に配置
-            _rpc_spawn_enemy(my_monster_name, true); 
+            if (leader.is_valid())
+            {
+                String name = leader->get_monster_name();
+                
+                // ★追加: 技リストを保持してUIを更新
+                current_skills = leader->get_skills();
+                _update_ui_buttons();
 
-            // 相手の画面では、自分のモンスターを「EnemyPos」に配置させる
-            rpc("_rpc_spawn_enemy", my_monster_name, false);
+                // スポーン処理
+                _rpc_spawn_enemy(name, true); 
+                rpc("_rpc_spawn_enemy", name, true);
+            }
         }
     }
 
     has_selected = false;
-    if (rock_button) rock_button->set_disabled(false);
-    if (scissors_button) scissors_button->set_disabled(false);
-    if (paper_button) paper_button->set_disabled(false);
+    // ★修正: 新しいボタン変数を有効化
+    if (skill_button_1) skill_button_1->set_disabled(false);
+    if (skill_button_2) skill_button_2->set_disabled(false);
+    if (skill_button_3) skill_button_3->set_disabled(false);
     
-    UtilityFunctions::print("Janken Start!");
+    UtilityFunctions::print("Janken Start with Skills!");
 }
 
 void BattleScene::_rpc_spawn_enemy(const String& monster_name, bool is_player)
@@ -195,21 +241,60 @@ void BattleScene::_rpc_spawn_enemy(const String& monster_name, bool is_player)
 String BattleScene::_get_model_path_by_name(const String& name)
 {
     // 将来的には name に応じてパスを変える
-    return "res://battler_bird.tscn"; 
+    return "res://scenes/battler_bird.tscn"; 
 }
 
-void BattleScene::_on_rock_pressed()     { _submit_hand("rock"); }
-void BattleScene::_on_scissors_pressed() { _submit_hand("scissors"); }
-void BattleScene::_on_paper_pressed()    { _submit_hand("paper"); }
+void BattleScene::_on_skill_1_pressed()
+{
+    if (current_skills.size() > 0)
+    {
+        Ref<SkillData> skill = current_skills[0];
+        if (skill.is_valid())
+        {
+            String hand = _hand_type_to_string(skill->get_hand_type());
+            UtilityFunctions::print("Used Skill 1: ", skill->get_skill_name());
+            _submit_hand(hand);
+        }
+    }
+}
+
+void BattleScene::_on_skill_2_pressed()
+{
+    if (current_skills.size() > 1)
+    {
+        Ref<SkillData> skill = current_skills[1];
+        if (skill.is_valid())
+        {
+            String hand = _hand_type_to_string(skill->get_hand_type());
+            UtilityFunctions::print("Used Skill 2: ", skill->get_skill_name());
+            _submit_hand(hand);
+        }
+    }
+}
+
+void BattleScene::_on_skill_3_pressed()
+{
+    if (current_skills.size() > 2)
+    {
+        Ref<SkillData> skill = current_skills[2];
+        if (skill.is_valid())
+        {
+            String hand = _hand_type_to_string(skill->get_hand_type());
+            UtilityFunctions::print("Used Skill 3: ", skill->get_skill_name());
+            _submit_hand(hand);
+        }
+    }
+}
 
 void BattleScene::_submit_hand(const String& hand)
 {
     if(has_selected) return;
     has_selected = true;
     
-    if(rock_button) rock_button->set_disabled(true);
-    if(scissors_button) scissors_button->set_disabled(true);
-    if(paper_button) paper_button->set_disabled(true);
+    // ★修正: 新しいボタンを無効化
+    if(skill_button_1) skill_button_1->set_disabled(true);
+    if(skill_button_2) skill_button_2->set_disabled(true);
+    if(skill_button_3) skill_button_3->set_disabled(true);
     
     if (get_tree()->get_multiplayer()->is_server())
     {
@@ -266,7 +351,7 @@ void BattleScene::_rpc_submit_hand(const String& hand)
 void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand, int winner_side, int first_attacker)
 {
     bool is_server = get_tree()->get_multiplayer()->is_server();
-    int damage_val = 100; // テスト用
+    int damage_val = 100;
 
     if (winner_side != 0)
     {
@@ -276,10 +361,11 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
     }
     else
     {
+        // あいこ等の処理（既存通り）
         bool am_i_first = (is_server && first_attacker == 1) || (!is_server && first_attacker == 2);
         if (am_i_first) enemy_hp -= damage_val;
         else player_hp -= damage_val;
-
+        
         if (player_hp > 0 && enemy_hp > 0)
         {
             if (am_i_first) player_hp -= damage_val;
@@ -291,25 +377,101 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
     {
         player_hp = 0;
         if (is_server) rpc("_rpc_notify_defeat");
-        get_tree()->call_deferred("change_scene_to_file", "res://town.tscn");
+        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
     }
     else if (enemy_hp <= 0)
     {
         enemy_hp = 0;
         UtilityFunctions::print("I WON! Returning to town...");
-        get_tree()->call_deferred("change_scene_to_file", "res://town.tscn");
+        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
     }
     else
     {
+        // 次のターンへ
         has_selected = false;
-        if (rock_button) rock_button->set_disabled(false);
-        if (scissors_button) scissors_button->set_disabled(false);
-        if (paper_button) paper_button->set_disabled(false);
+        // ★修正: ボタンを再有効化
+        // （単純に set_disabled(false) するだけでなく、技がないスロットは無効のままにするため _update_ui_buttons を呼ぶのが安全です）
+        _update_ui_buttons();
     }
 }
 
 void BattleScene::_rpc_notify_defeat()
 {
     UtilityFunctions::print("VICTORY! Returning to town...");
-    get_tree()->call_deferred("change_scene_to_file", "res://town.tscn");
+    get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+}
+
+void BattleScene::_update_ui_buttons()
+{
+    // スキル1
+    if (skill_button_1)
+    {
+        if (current_skills.size() > 0)
+        {
+            Ref<SkillData> skill = current_skills[0];
+            if (skill.is_valid())
+            {
+                String type_str = _hand_type_to_string(skill->get_hand_type());
+                skill_button_1->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
+                skill_button_1->set_disabled(false);
+            }
+        }
+        else
+        {
+            skill_button_1->set_text("- No Skill -");
+            skill_button_1->set_disabled(true);
+        }
+    }
+
+    // スキル2
+    if (skill_button_2)
+    {
+        if (current_skills.size() > 1)
+        {
+            Ref<SkillData> skill = current_skills[1];
+            if (skill.is_valid())
+            {
+                String type_str = _hand_type_to_string(skill->get_hand_type());
+                skill_button_2->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
+                skill_button_2->set_disabled(false);
+            }
+        }
+        else
+        {
+            skill_button_2->set_text("- Empty -");
+            skill_button_2->set_disabled(true);
+        }
+    }
+
+    // スキル3
+    if (skill_button_3)
+    {
+        if (current_skills.size() > 2)
+        {
+            Ref<SkillData> skill = current_skills[2];
+            if (skill.is_valid())
+            {
+                String type_str = _hand_type_to_string(skill->get_hand_type());
+                skill_button_3->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
+                skill_button_3->set_disabled(false);
+            }
+        }
+        else
+        {
+            skill_button_3->set_text("- Empty -");
+            skill_button_3->set_disabled(true);
+        }
+    }
+}
+
+// UI更新などで使うヘルパー関数
+String BattleScene::_hand_type_to_string(int type)
+{
+    switch(type)
+    {
+        case 0: return "rock";     // SkillData::HAND_ROCK
+        case 1: return "scissors"; // SkillData::HAND_SCISSORS
+        case 2: return "paper";    // SkillData::HAND_PAPER
+        default: return "rock";
+    }
 }

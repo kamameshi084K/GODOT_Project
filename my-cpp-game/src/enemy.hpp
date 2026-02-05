@@ -1,7 +1,9 @@
 #pragma once
 
+#include "monster_data.hpp" // ★追加
+
 #include <godot_cpp/classes/character_body3d.hpp>
-#include <godot_cpp/classes/animation_tree.hpp> // アニメーション用
+#include <godot_cpp/classes/animation_tree.hpp>
 #include <godot_cpp/classes/engine.hpp>
 
 namespace godot
@@ -11,29 +13,24 @@ namespace godot
         GDCLASS(Enemy, CharacterBody3D)
 
     private:
-        // パラメータ
+        // パラメータ（フィールド上の動き用）
         double speed;
-        double detection_range; // 気づく距離
+        double detection_range;
         double gravity;
         
-        // 遷移先のバトルシーン（例: "res://battle.tscn"）
-        String battle_scene_path; // バトルシーンのパス
-        String battler_visual_path; // バトラーのビジュアルシーンのパス
-        String enemy_id; // 敵のID
+        // ★追加: これ1つですべてのデータ（ステータス・バトル時の見た目）を管理
+        Ref<MonsterData> monster_data;
 
-        // ノードパス（エディタ設定用）
+        // 遷移先のバトルシーン（例: "res://battle.tscn"）
+        String battle_scene_path;
+        String enemy_id;
+
+        // フィールド上の見た目用ノードパス
         NodePath visual_node_path;
         NodePath anim_tree_path;
 
-        // 実際のノードへのポインタ
         Node3D* visual_node;
         AnimationTree* anim_tree;
-
-        String enemy_name; // 表示名（例: "ゴブリン"）
-        int max_hp;        // 戦闘時の体力
-        int attack_power;  // 攻撃力
-        int defense_power; // 防御力
-        int exp_reward; // 倒した時に与える経験値
 
     protected:
         static void _bind_methods();
@@ -46,43 +43,109 @@ namespace godot
         virtual void _physics_process(double delta) override;
 
         // --- セッター・ゲッター ---
+        
+        /**
+         * @brief モンスターのデータを設定・取得する
+         * 
+         * @param data MonsterData リソース
+         */
+        void set_monster_data(const Ref<MonsterData>& data);
+        /**
+         * @brief モンスターのデータを取得する
+         * 
+         * @return Ref<MonsterData> モンスターのデータ
+         */
+        Ref<MonsterData> get_monster_data() const;
+
+        /**
+         * @brief 速度の設定・取得
+         * 
+         * @param p_speed 速度
+         */
         void set_speed(double p_speed);
+        /**
+         * @brief 速度の取得
+         * 
+         * @return double 速度
+         */
         double get_speed() const;
 
+        /**
+         * @brief 発見範囲の設定・取得
+         * 
+         * @param p_range 発見範囲
+         */
         void set_detection_range(double p_range);
+        /**
+         * @brief 発見範囲の取得
+         * 
+         * @return double 発見範囲
+         */
         double get_detection_range() const;
 
+        /**
+         * @brief 重力の設定・取得
+         * 
+         * @param p_gravity 重力
+         */
         void set_gravity(double p_gravity);
+        /**
+         * @brief 重力の取得
+         * 
+         * @return double 重力
+         */
         double get_gravity() const;
 
+        /**
+         * @brief バトルシーンのパスの設定・取得
+         * 
+         * @param p_path バトルシーンのパス
+         */
         void set_battle_scene_path(const String &p_path);
+        /**
+         * @brief バトルシーンのパスの取得
+         * 
+         * @return String バトルシーンのパス
+         */
         String get_battle_scene_path() const;
 
+        /**
+         * @brief フィールド上の見た目ノードパスの設定・取得
+         * 
+         * @param path 見た目ノードパス
+         */
         void set_visual_node_path(const NodePath &path);
+        /**
+         * @brief フィールド上の見た目ノードパスの取得
+         * 
+         * @return NodePath 見た目ノードパス
+         */
         NodePath get_visual_node_path() const;
 
+        /**
+         * @brief アニメーションツリーパスの設定・取得
+         * 
+         * @param path アニメーションツリーパス
+         */
         void set_anim_tree_path(const NodePath &path);
+        /**
+         * @brief アニメーションツリーパスの取得
+         * 
+         * @return NodePath アニメーションツリーパス
+         */
         NodePath get_anim_tree_path() const;
 
-        void set_battler_visual_path(const String &p_path);
-        String get_battler_visual_path() const;
-
+        /**
+         * @brief 敵IDの設定・取得
+         * 
+         * @param p_id 敵ID
+         */
         void set_enemy_id(const String &p_id);
+        /**
+         * @brief 敵IDの取得
+         * 
+         * @return String 敵ID
+         */
         String get_enemy_id() const;
-
-        void set_enemy_name(const String &p_name);
-        String get_enemy_name() const;
-
-        void set_max_hp(int p_hp);
-        int get_max_hp() const;
-
-        void set_attack_power(int p_power);
-        int get_attack_power() const;
-
-        void set_defense_power(int p_def);
-        int get_defense_power() const;
-
-        void set_exp_reward(int p_exp);
-        int get_exp_reward() const;
     };
 }

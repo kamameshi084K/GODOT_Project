@@ -34,6 +34,7 @@ namespace godot
         String next_enemy_scene_path;       // 次に戦う敵のシーンパス
         String current_enemy_id;            // 今戦っている敵のID
         PackedStringArray defeated_enemies; // 倒された敵のIDリスト
+        Ref<MonsterData> next_enemy_data;      // --- 敵ステータス（バトル時） ---
 
         String next_enemy_name;     // 次に戦う敵の名前
         int next_enemy_max_hp;      // 次に戦う敵の最大HP
@@ -123,6 +124,8 @@ namespace godot
          * @return TypedArray<MonsterData> パーティモンスターの配列
          */
         TypedArray<MonsterData> get_party() const;
+
+        void set_party(const TypedArray<MonsterData>& p_party);
 
         /**
          * @brief 控え（倉庫）のモンスターリストを取得する
@@ -233,6 +236,17 @@ namespace godot
          * * @return int 敵の攻撃力
          */
         int get_next_enemy_attack() const;
+
+        /**
+         * @brief 次に戦う敵のデータを設定する
+         * * @param data 敵のモンスターリソースデータ
+         */
+        void set_next_enemy_data(const Ref<MonsterData>& data);
+        /**
+         * @brief 次に戦う敵のデータを取得する
+         * * @return Ref<MonsterData> 敵のモンスターリソースデータ
+         */
+        Ref<MonsterData> get_next_enemy_data() const;
 
         /**
          * @brief プレイヤーのステータスを設定する

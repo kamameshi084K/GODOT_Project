@@ -240,7 +240,7 @@ void BattleUI::_on_run_button_pressed()
         else
         {
             // 念のため、パスが取れなかったら world.tscn へ
-            get_tree()->change_scene_to_file("res://world.tscn");
+            get_tree()->change_scene_to_file("res://scenes/world.tscn");
         }
     }
 }
@@ -262,7 +262,7 @@ void BattleUI::_on_enemy_animation_finished(const StringName &anim_name)
     {
         UtilityFunctions::print("You Win!");
         GameManager *gm = GameManager::get_singleton();
-        String return_path = "res://world.tscn";
+        String return_path = "res://scenes/world.tscn";
         if (gm)
         {
             String current_id = gm->get_current_enemy_id();
@@ -385,7 +385,7 @@ void BattleUI::seq_enemy_deal_damage()
 
     if (player_hp <= 0)
     {
-        get_tree()->change_scene_to_file("res://world.tscn");
+        get_tree()->change_scene_to_file("res://scenes/world.tscn");
     }
     else
     {

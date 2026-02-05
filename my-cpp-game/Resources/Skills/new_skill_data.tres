@@ -1,0 +1,4 @@
+[gd_resource type="SkillData" format=3 uid="uid://dwg7hyhad4s1n"]
+
+[resource]
+skill_name = "testSkill"

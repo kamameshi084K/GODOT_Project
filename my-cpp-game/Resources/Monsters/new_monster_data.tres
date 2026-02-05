@@ -1,0 +1,10 @@
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://xooje65mwoh3"]
+
+[ext_resource type="SkillData" uid="uid://dwg7hyhad4s1n" path="res://Resources/Skills/new_skill_data.tres" id="1_oxpfq"]
+[ext_resource type="SkillData" uid="uid://ca87x6r5yxox" path="res://Resources/Skills/cut.tres" id="2_mq4ht"]
+[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/punch.tres" id="3_py8ob"]
+
+[resource]
+monster_name = "My Fighter"
+max_hp = 20
+skills = Array[SkillData]([ExtResource("1_oxpfq"), ExtResource("2_mq4ht"), ExtResource("3_py8ob")])

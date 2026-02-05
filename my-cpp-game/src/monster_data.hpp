@@ -1,17 +1,24 @@
 #pragma once
+#include "skill_data.hpp"
 
-#include <godot_cpp/classes/ref_counted.hpp>
-#include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/classes/resource.hpp> // RefCounted ではなく Resource を使う
+#include <godot_cpp/variant/typed_array.hpp> // 配列を使うために必要
 
 namespace godot
 {
-    // RefCountedを継承することで、Ref<MonsterData> としてスマートポインタで管理できるようになる
-    // RefCountedを継承するとは、Godotの参照カウント型オブジェクトとして扱うことを意味します。
-    // これにより、Ref<MonsterData> のようなスマートポインタでMonsterDataオブジェクトを管理でき、
-    // メモリ管理が自動化され、メモリリークのリスクが軽減されます。
-    class MonsterData : public RefCounted
+    // モンスターの特性
+    enum MonsterAbility
     {
-        GDCLASS(MonsterData, RefCounted)
+        ABILITY_NONE = 0,
+        ABILITY_PHYSICAL_BOOST = 1, // 物理技の威力 1.5倍
+        ABILITY_SPECIAL_BOOST = 2   // 特殊技の威力 1.5倍
+    };
+
+    // モンスターのデータクラス
+    // resourceとして扱うことで、.tres や .res ファイルに保存できるようにする
+    class MonsterData : public Resource
+    {
+        GDCLASS(MonsterData, Resource)
 
     private:
         String monster_name; // モンスターの名前
@@ -20,6 +27,15 @@ namespace godot
         int attack;          // 攻撃力
         int defense;         // 防御力
         int speed;           // 素早さ
+
+        // 特性
+        int ability;
+
+        // 技リスト（SkillDataのリソース配列）
+        TypedArray<SkillData> skills;
+
+        // 3Dモデルのパス（シーンの読み込み用）
+        String model_path;
 
     protected:
         /**
@@ -109,5 +125,38 @@ namespace godot
          * @return int 素早さ
          */
         int get_speed() const;
+
+        /**
+         * @brief 特性の設定・取得
+         * @param val MonsterAbility のいずれか
+         */
+        void set_ability(int val);
+        /**
+         * @brief 特性の取得
+         * @return int 特性
+         */
+        int get_ability() const;
+
+        /**
+         * @brief 技リストの設定・取得
+         * @param p_skills SkillData の配列
+         */
+        void set_skills(const TypedArray<SkillData>& p_skills);
+        /**
+         * @brief 技リストの取得
+         * @return TypedArray<SkillData> 技リスト
+         */
+        TypedArray<SkillData> get_skills() const;
+
+        /**
+         * @brief 3Dモデルのパス設定・取得
+         * @param path シーンファイルのパス
+         */
+        void set_model_path(const String& path);
+        /**
+         * @brief 3Dモデルのパス取得
+         * @return String シーンファイルのパス
+         */
+        String get_model_path() const;
     };
 }

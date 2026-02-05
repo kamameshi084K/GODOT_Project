@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=3 uid="uid://bibskgs0n504k"]
+
+[sub_resource type="Environment" id="Environment_w7wwj"]
+background_mode = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ip7xm"]
+size = Vector2(20, 20)
+
+[node name="BattleScene" type="BattleScene"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_w7wwj")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, -0.46368933, 9.036392, -0.8837156)
+shadow_enabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_ip7xm")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.70710677, -0.35355338, 0.6123724, 0, 0.8660254, 0.5, -0.70710677, -0.35355338, 0.6123724, 5, 5, 5)
+current = true
+
+[node name="PlayerSpawnPos" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
+
+[node name="EnemySpawnPos" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="AttackButton" type="Button" parent="CanvasLayer"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -517.0
+offset_top = -205.0
+offset_right = -282.0
+offset_bottom = -115.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "こうげき"
+
+[node name="SkillButton1" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 381.0
+offset_top = 52.0
+offset_right = 431.0
+offset_bottom = 102.0
+grow_vertical = 2
+text = "グー"
+
+[node name="SkillButton2" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 330.0
+offset_top = 128.0
+offset_right = 380.0
+offset_bottom = 178.0
+grow_vertical = 2
+text = "チョキ"
+
+[node name="SkillButton3" type="Button" parent="CanvasLayer"]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 439.0
+offset_top = 128.0
+offset_right = 489.0
+offset_bottom = 178.0
+grow_vertical = 2
+text = "パー"
+
+[connection signal="pressed" from="CanvasLayer/AttackButton" to="." method="_on_attack_button_pressed"]

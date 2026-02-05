@@ -1,0 +1,9 @@
+[gd_resource type="MonsterData" format=3 uid="uid://dkllbgsji7xxc"]
+
+[resource]
+monster_name = "イエティ"
+max_hp = 30
+attack = 4
+defense = 3
+speed = 2
+model_path = "uid://btanpiy1aikct"
