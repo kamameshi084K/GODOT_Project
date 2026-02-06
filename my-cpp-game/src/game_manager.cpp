@@ -74,6 +74,18 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_standby"), &GameManager::get_standby);
     ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "party_monsters", PROPERTY_HINT_RESOURCE_TYPE, "24/17:MonsterData"), "set_party", "get_party");
 
+    ClassDB::bind_method(D_METHOD("set_starter_option_1", "data"), &GameManager::set_starter_option_1);
+    ClassDB::bind_method(D_METHOD("get_starter_option_1"), &GameManager::get_starter_option_1);
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "starter_option_1", PROPERTY_HINT_RESOURCE_TYPE, "MonsterData"), "set_starter_option_1", "get_starter_option_1");
+
+    ClassDB::bind_method(D_METHOD("set_starter_option_2", "data"), &GameManager::set_starter_option_2);
+    ClassDB::bind_method(D_METHOD("get_starter_option_2"), &GameManager::get_starter_option_2);
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "starter_option_2", PROPERTY_HINT_RESOURCE_TYPE, "MonsterData"), "set_starter_option_2", "get_starter_option_2");
+
+    ClassDB::bind_method(D_METHOD("set_starter_option_3", "data"), &GameManager::set_starter_option_3);
+    ClassDB::bind_method(D_METHOD("get_starter_option_3"), &GameManager::get_starter_option_3);
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "starter_option_3", PROPERTY_HINT_RESOURCE_TYPE, "MonsterData"), "set_starter_option_3", "get_starter_option_3");
+
     // 互換性維持
     ClassDB::bind_method(D_METHOD("add_collected_monster", "monster"), &GameManager::add_collected_monster);
     ClassDB::bind_method(D_METHOD("get_collected_monsters"), &GameManager::get_collected_monsters);
@@ -230,39 +242,6 @@ void GameManager::add_monster(const Ref<MonsterData>& monster)
         standby_monsters.append(monster);
         UtilityFunctions::print("Party full! Sent to Standby: ", monster->get_monster_name());
     }
-}
-
-void GameManager::select_starter_monster(int type_index)
-{
-    // リセット
-    party_monsters.clear();
-    standby_monsters.clear();
-
-    Ref<MonsterData> starter;
-    starter.instantiate();
-
-    // 初期選択ロジック（0:炎, 1:水, その他:草）
-    switch (type_index)
-    {
-    case 0:
-        starter->set_monster_name("Flame Lizard");
-        starter->set_stats(20, 6, 2, 5); // HP, Atk, Def, Spd
-        break;
-    case 1:
-        starter->set_monster_name("Aqua Turtle");
-        starter->set_stats(25, 4, 5, 2);
-        break;
-    default:
-        starter->set_monster_name("Leaf Cat");
-        starter->set_stats(22, 5, 3, 6);
-        break;
-    }
-
-    // 作ったモンスターを追加
-    add_monster(starter);
-
-    // バトルステータスを即反映
-    prepare_battle_stats();
 }
 
 void GameManager::prepare_battle_stats()
@@ -662,4 +641,43 @@ void GameManager::set_next_enemy_data(const Ref<MonsterData>& data)
 Ref<MonsterData> GameManager::get_next_enemy_data() const
 {
     return next_enemy_data;
+}
+
+void GameManager::set_starter_option_1(const Ref<MonsterData>& data) { starter_option_1 = data; }
+Ref<MonsterData> GameManager::get_starter_option_1() const { return starter_option_1; }
+
+void GameManager::set_starter_option_2(const Ref<MonsterData>& data) { starter_option_2 = data; }
+Ref<MonsterData> GameManager::get_starter_option_2() const { return starter_option_2; }
+
+void GameManager::set_starter_option_3(const Ref<MonsterData>& data) { starter_option_3 = data; }
+Ref<MonsterData> GameManager::get_starter_option_3() const { return starter_option_3; }
+
+void GameManager::select_starter_monster(int type_index)
+{
+    // リセット
+    party_monsters.clear();
+    standby_monsters.clear();
+
+    Ref<MonsterData> source_data;
+
+    // 以前の switch 文を、この短いロジックに置き換えます
+    switch (type_index)
+    {
+    case 0: source_data = starter_option_1; break; // Speed
+    case 1: source_data = starter_option_2; break; // Tank
+    default: source_data = starter_option_3; break; // Balance
+    }
+
+    if (source_data.is_valid())
+    {
+        // ★重要: duplicate(true) で複製して使う
+        // これをしないと、レベルアップしたときに元のファイル(.tres)まで書き換わってしまいます
+        add_monster(source_data->duplicate(true));
+        
+        prepare_battle_stats();
+    }
+    else
+    {
+        UtilityFunctions::print("Error: Starter monster data is not set in GameManager!");
+    }
 }

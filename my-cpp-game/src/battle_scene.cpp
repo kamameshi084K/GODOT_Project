@@ -151,6 +151,7 @@ void BattleScene::_rpc_start_spawning()
         player_hp = gm->get_player_max_hp();
         enemy_hp = gm->get_next_enemy_max_hp(); 
         
+        // --- 自分のモンスターの表示 ---
         TypedArray<MonsterData> party = gm->get_party();
         if (party.size() > 0)
         {
@@ -158,83 +159,87 @@ void BattleScene::_rpc_start_spawning()
             
             if (leader.is_valid())
             {
-                String name = leader->get_monster_name();
+                // ★修正: 名前ではなく、データ内のパスを取得する
+                String model_path = leader->get_model_path();
                 
-                // ★追加: 技リストを保持してUIを更新
                 current_skills = leader->get_skills();
                 _update_ui_buttons();
 
-                // スポーン処理
-                _rpc_spawn_enemy(name, true); 
-                rpc("_rpc_spawn_enemy", name, true);
+                // パスを渡してスポーンさせる
+                _rpc_spawn_enemy(model_path, true); 
+                rpc("_rpc_spawn_enemy", model_path, true);
+            }
+        }
+
+        // --- ★追加: 敵モンスターの表示 ---
+        // サーバー側（ホスト）が責任を持って敵情報を取得し、全員に通知する
+        if (get_tree()->get_multiplayer()->is_server())
+        {
+            Ref<MonsterData> enemy_data = gm->get_next_enemy_data();
+            if (enemy_data.is_valid())
+            {
+                String enemy_path = enemy_data->get_model_path();
+                
+                // 自分（ホスト）の画面に出す
+                _rpc_spawn_enemy(enemy_path, false);
+                // 相手（クライアント）の画面にも出す
+                rpc("_rpc_spawn_enemy", enemy_path, false);
             }
         }
     }
 
     has_selected = false;
-    // ★修正: 新しいボタン変数を有効化
     if (skill_button_1) skill_button_1->set_disabled(false);
     if (skill_button_2) skill_button_2->set_disabled(false);
     if (skill_button_3) skill_button_3->set_disabled(false);
     
-    UtilityFunctions::print("Janken Start with Skills!");
+    UtilityFunctions::print("Janken Start with Skills and Models!");
 }
 
-void BattleScene::_rpc_spawn_enemy(const String& monster_name, bool is_player)
+void BattleScene::_rpc_spawn_enemy(const String& model_path, bool is_player)
 {
-    String path = _get_model_path_by_name(monster_name);
-    Ref<PackedScene> scene = ResourceLoader::get_singleton()->load(path);
+    // ★修正: _get_model_path_by_name を通さず、直接ロードする
+    // String path = _get_model_path_by_name(monster_name); 
+    
+    Ref<PackedScene> scene = ResourceLoader::get_singleton()->load(model_path);
     
     if (scene.is_valid())
     {
         Node* instance = scene->instantiate();
         Node3D* model_3d = Object::cast_to<Node3D>(instance);
         
-        // 配置場所の決定
         Marker3D* target_pos = is_player ? player_spawn_pos : enemy_spawn_pos;
         
         if (target_pos && model_3d)
         {
-            // 1. 古いモデルの削除
             for (int i = 0; i < target_pos->get_child_count(); ++i)
             {
                 target_pos->get_child(i)->queue_free();
             }
             
-            // 2. 向きの調整
-            // プレイヤーは敵（奥）を向き、敵はプレイヤー（手前）を向くように設定
-            // モデルの初期方向が「正面」を向いていると仮定して調整します
             if (is_player)
             {
-                // プレイヤー側：そのまま、あるいは必要に応じて180度回転
                 model_3d->set_rotation_degrees(Vector3(0, 180, 0));
             }
             else
             {
-                // 敵側：プレイヤーの方を向くように180度回転
                 model_3d->set_rotation_degrees(Vector3(0, 0, 0));
             }
 
-            // 3. アニメーションの再生
-            // モデル内のどこかにある AnimationPlayer を探す
-            // "AnimationPlayer" という名前で配置されていることを想定
             AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(model_3d->find_child("AnimationPlayer", true, false));
             if (anim)
             {
-                // 待機モーション（例: "Idle" や "idle"）をループ再生
-                if (anim->has_animation("Idle"))
-                {
-                    anim->play("Idle");
-                }
-                else if (anim->has_animation("idle"))
-                {
-                    anim->play("idle");
-                }
+                if (anim->has_animation("Idle")) anim->play("Idle");
+                else if (anim->has_animation("idle")) anim->play("idle");
             }
             
             target_pos->call_deferred("add_child", model_3d);
-            UtilityFunctions::print("Spawned and Animated: ", monster_name);
+            UtilityFunctions::print("Spawned Model: ", model_path);
         }
+    }
+    else
+    {
+        UtilityFunctions::print("Error: Failed to load model at ", model_path);
     }
 }
 
@@ -351,47 +356,86 @@ void BattleScene::_rpc_submit_hand(const String& hand)
 void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand, int winner_side, int first_attacker)
 {
     bool is_server = get_tree()->get_multiplayer()->is_server();
-    int damage_val = 100;
+    
+    // GameMangerからステータスを取得
+    GameManager* gm = GameManager::get_singleton();
+    int my_atk = gm->get_player_attack();
+    int my_def = gm->get_player_defense();
+    int enemy_atk = gm->get_next_enemy_attack();
+    int enemy_def = gm->get_next_enemy_defense();
+
+    // 最低保証ダメージ（防御が高すぎても1は通るようにする）
+    // 計算式: 攻撃力 - 防御力
+    int damage_to_enemy = MAX(1, my_atk - enemy_def);
+    int damage_to_player = MAX(1, enemy_atk - my_def);
 
     if (winner_side != 0)
     {
+        // どちらかが勝った場合
         bool i_won = (is_server && winner_side == 1) || (!is_server && winner_side == 2);
-        if (i_won) enemy_hp -= damage_val;
-        else player_hp -= damage_val;
+        
+        if (i_won)
+        {
+            // 自分の勝ち -> 敵にダメージ
+            enemy_hp -= damage_to_enemy;
+            UtilityFunctions::print("Hit! Damage: ", damage_to_enemy, " (Enemy HP: ", enemy_hp, ")");
+        }
+        else
+        {
+            // 自分の負け -> 自分にダメージ
+            player_hp -= damage_to_player;
+            UtilityFunctions::print("Ouch! Took: ", damage_to_player, " (Player HP: ", player_hp, ")");
+        }
     }
     else
     {
-        // あいこ等の処理（既存通り）
+        // あいこの場合（素早さ判定）
         bool am_i_first = (is_server && first_attacker == 1) || (!is_server && first_attacker == 2);
-        if (am_i_first) enemy_hp -= damage_val;
-        else player_hp -= damage_val;
         
-        if (player_hp > 0 && enemy_hp > 0)
+        if (am_i_first)
         {
-            if (am_i_first) player_hp -= damage_val;
-            else enemy_hp -= damage_val;
+             // 自分が先制攻撃
+             enemy_hp -= damage_to_enemy;
+             UtilityFunctions::print("Draw but Fast! Hit: ", damage_to_enemy);
+             
+             // 敵が生きていれば反撃（ターン制っぽくするなら）
+             // 今回は「あいこは速い方が一方的に殴れる」または「両方殴る」など仕様次第ですが、
+             // 一旦「速い方だけ攻撃」のままにしておきます
+        }
+        else 
+        {
+             // 敵が先制攻撃
+             player_hp -= damage_to_player;
+             UtilityFunctions::print("Draw and Slow... Took: ", damage_to_player);
         }
     }
+
+    // --- 以下、勝敗判定とシーン遷移（変更なし） ---
 
     if (player_hp <= 0)
     {
         player_hp = 0;
         if (is_server) rpc("_rpc_notify_defeat");
+        
+        // 負けたので町に戻る
+        UtilityFunctions::print("DEFEATED...");
         get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
     }
     else if (enemy_hp <= 0)
     {
         enemy_hp = 0;
-        UtilityFunctions::print("I WON! Returning to town...");
+        UtilityFunctions::print("VICTORY! Returning to town...");
+        
+        // 経験値獲得などの処理をここに挟むことも可能です
+        if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward());
+
         get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
     }
     else
     {
         // 次のターンへ
         has_selected = false;
-        // ★修正: ボタンを再有効化
-        // （単純に set_disabled(false) するだけでなく、技がないスロットは無効のままにするため _update_ui_buttons を呼ぶのが安全です）
-        _update_ui_buttons();
+        _update_ui_buttons(); // ボタンを再有効化
     }
 }
 

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bdiiu5o4tfs3j"]
+
+[ext_resource type="PackedScene" uid="uid://ch16y17v2phfe" path="res://assets/models/blob/Chicken.fbx" id="1_6vg6p"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Chicken" parent="." instance=ExtResource("1_6vg6p")]

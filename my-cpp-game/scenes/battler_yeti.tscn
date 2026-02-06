@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxrhbn0kctpl3"]
+
+[ext_resource type="PackedScene" uid="uid://c44rk0r37n5ym" path="res://assets/models/blob/Yeti.fbx" id="1_guv4b"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Yeti" parent="." instance=ExtResource("1_guv4b")]

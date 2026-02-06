@@ -76,6 +76,10 @@ namespace godot
          */
         static void _bind_methods();
 
+        Ref<MonsterData> starter_option_1; // Speed (0)
+        Ref<MonsterData> starter_option_2; // Tank (1)
+        Ref<MonsterData> starter_option_3; // Balance (2)
+
     public:
         GameManager();
         ~GameManager();
@@ -383,5 +387,14 @@ namespace godot
         
         // 現在の残り時間を取得（UI表示用）
         float get_time_remaining() const;
+
+        void set_starter_option_1(const Ref<MonsterData>& data);
+        Ref<MonsterData> get_starter_option_1() const;
+
+        void set_starter_option_2(const Ref<MonsterData>& data);
+        Ref<MonsterData> get_starter_option_2() const;
+
+        void set_starter_option_3(const Ref<MonsterData>& data);
+        Ref<MonsterData> get_starter_option_3() const;
     };
 }

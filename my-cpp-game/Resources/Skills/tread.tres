@@ -1,0 +1,5 @@
+[gd_resource type="SkillData" format=3 uid="uid://lvtlsxcaw4l6"]
+
+[resource]
+skill_name = "ふみつける"
+hand_type = 2

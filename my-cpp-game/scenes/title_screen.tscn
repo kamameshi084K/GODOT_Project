@@ -92,7 +92,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="FireButton" type="Button" parent="SelectionMenu"]
+[node name="SpeedButton" type="Button" parent="SelectionMenu"]
 layout_mode = 1
 anchors_preset = 13
 anchor_left = 0.5
@@ -102,17 +102,17 @@ offset_left = -118.0
 offset_right = 118.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "fire"
+text = "スピードタイプ"
 
-[node name="WaterButton" type="Button" parent="SelectionMenu"]
+[node name="TankButton" type="Button" parent="SelectionMenu"]
 layout_mode = 1
 anchors_preset = 9
 anchor_bottom = 1.0
 offset_right = 248.0
 grow_vertical = 2
-text = "mizu"
+text = "耐久タイプ"
 
-[node name="GrassButton" type="Button" parent="SelectionMenu"]
+[node name="BalanceButton" type="Button" parent="SelectionMenu"]
 layout_mode = 1
 anchors_preset = 11
 anchor_left = 1.0
@@ -121,7 +121,7 @@ anchor_bottom = 1.0
 offset_left = -233.0
 grow_horizontal = 0
 grow_vertical = 2
-text = "kusa"
+text = "バランスタイプ"
 
 [node name="NetworkMenu" type="Control" parent="."]
 visible = false
@@ -182,9 +182,9 @@ text = "BACK"
 [connection signal="pressed" from="MainMenu/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="MainMenu/MultiplayerButton" to="." method="_on_multiplayer_button_pressed"]
 [connection signal="pressed" from="MainMenu/QuitButton" to="." method="_on_quit_button_pressed"]
-[connection signal="pressed" from="SelectionMenu/FireButton" to="." method="_on_fire_button_pressed"]
-[connection signal="pressed" from="SelectionMenu/WaterButton" to="." method="_on_water_button_pressed"]
-[connection signal="pressed" from="SelectionMenu/GrassButton" to="." method="_on_grass_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/SpeedButton" to="." method="_on_speed_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/TankButton" to="." method="_on_tank_button_pressed"]
+[connection signal="pressed" from="SelectionMenu/BalanceButton" to="." method="_on_balance_button_pressed"]
 [connection signal="pressed" from="NetworkMenu/HostButton" to="." method="_on_host_button_pressed"]
 [connection signal="pressed" from="NetworkMenu/JoinButton" to="." method="_on_join_button_pressed"]
 [connection signal="pressed" from="NetworkMenu/BackButton" to="." method="_on_back_button_pressed"]

@@ -22,9 +22,9 @@ void TitleScreen::_bind_methods()
     ClassDB::bind_method(D_METHOD("_on_connection_failed"), &TitleScreen::_on_connection_failed);
     
     // 3択ボタンの登録
-    ClassDB::bind_method(D_METHOD("_on_fire_button_pressed"), &TitleScreen::_on_fire_button_pressed);
-    ClassDB::bind_method(D_METHOD("_on_water_button_pressed"), &TitleScreen::_on_water_button_pressed);
-    ClassDB::bind_method(D_METHOD("_on_grass_button_pressed"), &TitleScreen::_on_grass_button_pressed);
+    ClassDB::bind_method(D_METHOD("_on_speed_button_pressed"), &TitleScreen::_on_speed_button_pressed);
+    ClassDB::bind_method(D_METHOD("_on_tank_button_pressed"), &TitleScreen::_on_tank_button_pressed);
+    ClassDB::bind_method(D_METHOD("_on_balance_button_pressed"), &TitleScreen::_on_balance_button_pressed);
 
     // エディタ設定用パス
     ClassDB::bind_method(D_METHOD("set_main_menu_path", "path"), &TitleScreen::set_main_menu_path);
@@ -117,18 +117,18 @@ void TitleScreen::_ready()
 
 void TitleScreen::_on_start_button_pressed()
 {
-    // いきなりゲーム開始せず、メニューを切り替える
     if (main_menu) main_menu->hide();
     if (selection_menu) 
     {
         selection_menu->show();
         
-        // 選択肢の最初のボタンにフォーカスを当てる
-        Node* btn = selection_menu->find_child("FireButton", true, false);
+        // ★修正: 探すボタンの名前を "FireButton" から "SpeedButton" に変更
+        // （後でエディタ側もリネームします）
+        Node* btn = selection_menu->find_child("SpeedButton", true, false);
         if (btn)
         {
-            Button* fire_btn = Object::cast_to<Button>(btn);
-            if (fire_btn) fire_btn->grab_focus();
+            Button* first_btn = Object::cast_to<Button>(btn);
+            if (first_btn) first_btn->grab_focus();
         }
     }
 }
@@ -214,30 +214,27 @@ void TitleScreen::_on_back_button_pressed()
     }
 }
 
-void TitleScreen::_on_fire_button_pressed()
+void TitleScreen::_on_speed_button_pressed()
 {
     GameManager* gm = GameManager::get_singleton();
-    if (gm) gm->select_starter_monster(0); // 0:炎
+    if (gm) gm->select_starter_monster(0); // 0番＝Starter Option 1 (Speed)
 
-    // ゲーム開始処理へ
     _attempt_start_game();
 }
 
-void TitleScreen::_on_water_button_pressed()
+void TitleScreen::_on_tank_button_pressed()
 {
     GameManager* gm = GameManager::get_singleton();
-    if (gm) gm->select_starter_monster(1); // 1:水
+    if (gm) gm->select_starter_monster(1); // 1番＝Starter Option 2 (Tank)
 
-    // ゲーム開始処理へ
     _attempt_start_game();
 }
 
-void TitleScreen::_on_grass_button_pressed()
+void TitleScreen::_on_balance_button_pressed()
 {
     GameManager* gm = GameManager::get_singleton();
-    if (gm) gm->select_starter_monster(2); // 2:草
+    if (gm) gm->select_starter_monster(2); // 2番＝Starter Option 3 (Balance)
 
-    // ゲーム開始処理へ
     _attempt_start_game();
 }
 

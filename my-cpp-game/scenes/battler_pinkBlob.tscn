@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://g4vbnanyt8ku"]
+
+[ext_resource type="PackedScene" uid="uid://co06avs7ryd6k" path="res://assets/models/blob/PinkBlob.fbx" id="1_yh5b0"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="PinkBlob" parent="." instance=ExtResource("1_yh5b0")]

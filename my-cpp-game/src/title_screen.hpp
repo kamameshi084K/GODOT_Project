@@ -87,9 +87,9 @@ namespace godot
         void _on_connection_failed();
 
         // 3択ボタン用
-        void _on_fire_button_pressed();
-        void _on_water_button_pressed();
-        void _on_grass_button_pressed();
+        void _on_speed_button_pressed();   // 旧: fire
+        void _on_tank_button_pressed();    // 旧: water
+        void _on_balance_button_pressed(); // 旧: grass
         
         // セッター・ゲッター
         void set_main_menu_path(const NodePath& path);

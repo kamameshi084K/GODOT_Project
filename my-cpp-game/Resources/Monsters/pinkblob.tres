@@ -1,4 +1,8 @@
-[gd_resource type="MonsterData" format=3 uid="uid://d0kf4ji2ytsdw"]
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://d0kf4ji2ytsdw"]
+
+[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/punch.tres" id="1_4sx7g"]
+[ext_resource type="SkillData" uid="uid://foroe408lpms" path="res://Resources/Skills/bite.tres" id="2_vm5d5"]
+[ext_resource type="SkillData" uid="uid://lvtlsxcaw4l6" path="res://Resources/Skills/tread.tres" id="3_3v6ct"]
 
 [resource]
 monster_name = "ピンクスライム"
@@ -6,4 +10,5 @@ max_hp = 25
 attack = 5
 defense = 2
 speed = 4
-model_path = "uid://bcpxs3ujpgdkn"
+model_path = "uid://g4vbnanyt8ku"
+skills = Array[SkillData]([ExtResource("1_4sx7g"), ExtResource("2_vm5d5"), ExtResource("3_3v6ct")])
