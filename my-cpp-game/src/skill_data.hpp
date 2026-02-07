@@ -28,6 +28,8 @@ namespace godot
         int hand_type;   // HandType を int で保存（インスペクター用）
         int attack_type; // AttackType を int で保存
         int power;       // 技の威力
+        String animation_name; // 再生するアニメーション名（例: "Punch", "Magic"）
+        bool is_physical;      // 相手の目の前まで移動するかどうか（true=移動する, false=その場で撃つ）
 
     protected:
         static void _bind_methods();
@@ -72,5 +74,23 @@ namespace godot
         void set_power(int value);
         // 技の威力を取得
         int get_power() const;
+
+        /**
+         * @brief 再生するアニメーション名を設定・取得
+         * 
+         * @param name アニメーション名
+         */
+        void set_animation_name(const String& name);
+        // 再生するアニメーション名を取得
+        String get_animation_name() const;
+
+        /**
+         * @brief 再生するアニメーション名を設定・取得
+         * 
+         * @param name アニメーション名
+         */
+        void set_is_physical(bool is_phys);
+        // 技が物理攻撃かどうかを取得
+        bool get_is_physical() const;
     };
 }

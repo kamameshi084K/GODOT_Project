@@ -68,6 +68,9 @@ namespace godot
         // ※今回は簡易的に「準備完了した人数」で管理します
         int ready_player_count;
 
+        Dictionary p1_data; // ホストの情報
+        Dictionary p2_data; // クライアントの情報
+
     protected:
         /**
          * @brief Godot にメソッドを登録する
@@ -384,6 +387,21 @@ namespace godot
 
         // [RPC] 全員に「バトル開始」を命令する
         void _rpc_start_battle();
+
+        /**
+         * @brief サーバーに自分のモンスター情報を登録するRPC
+         * 
+         * @param peer_id プレイヤーのピアID
+         * @param monster_data_path モンスターデータのリソースパス
+         * @param model_path モデルのリソースパス
+         * @param hp モンスターのHP
+         * @param speed モンスターの素早さ
+         * 
+         */
+        void _rpc_register_battle_ready(int peer_id, const String& monster_data_path, const String& model_path, int hp, int speed);
+
+        // 全員の準備が整ったか確認し、整っていればバトル開始RPCを呼ぶ
+        void _check_and_start_battle();
         
         // 現在の残り時間を取得（UI表示用）
         float get_time_remaining() const;

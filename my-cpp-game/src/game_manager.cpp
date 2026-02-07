@@ -2,6 +2,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
 
 
 using namespace godot;
@@ -107,6 +108,8 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_go_to_town"), &GameManager::_rpc_go_to_town);
     ClassDB::bind_method(D_METHOD("_rpc_notify_ready"), &GameManager::_rpc_notify_ready);
     ClassDB::bind_method(D_METHOD("_rpc_start_battle"), &GameManager::_rpc_start_battle);
+    ClassDB::bind_method(D_METHOD("_rpc_register_battle_ready", "peer_id", "monster_data_path", "model_path", "hp", "speed"), &GameManager::_rpc_register_battle_ready);
+    ClassDB::bind_method(D_METHOD("_check_and_start_battle"), &GameManager::_check_and_start_battle);
 }
 
 GameManager::GameManager()
@@ -137,6 +140,9 @@ GameManager::GameManager()
     time_remaining = 0.0f;
     is_timer_active = false;
     ready_player_count = 0;
+
+    p1_data.clear();
+    p2_data.clear();
 
     // 1. _rpc_start_collection
     Dictionary rpc_config_collection;
@@ -171,6 +177,12 @@ GameManager::GameManager()
     rpc_config_battle["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
     rpc_config_battle["call_local"] = true;
     rpc_config("_rpc_start_battle", rpc_config_battle);
+
+    Dictionary rpc_config_any;
+    rpc_config_any["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER; // 誰からでもOK
+    rpc_config_any["call_local"] = true; // 自分自身も実行する
+    rpc_config_any["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE; // 確実に届ける
+    rpc_config("_rpc_register_battle_ready", rpc_config_any);
 }
 
 GameManager::~GameManager()
@@ -679,5 +691,51 @@ void GameManager::select_starter_monster(int type_index)
     else
     {
         UtilityFunctions::print("Error: Starter monster data is not set in GameManager!");
+    }
+}
+
+void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_data_path, const String& model_path, int hp, int speed)
+{
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    Dictionary info;
+    info["id"] = peer_id;
+    info["monster_data_path"] = monster_data_path; // ★追加：MonsterDataのリソースパス
+    info["path"] = model_path;
+    info["hp"] = hp;
+    info["speed"] = speed;
+
+    if (peer_id == 1) { p1_data = info; }
+    else { p2_data = info; }
+
+    _check_and_start_battle();
+}
+
+void GameManager::_check_and_start_battle()
+{
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    // データが両方揃っているか確認
+    if (!p1_data.is_empty() && !p2_data.is_empty())
+    {
+        // ルートから BattleScene を探す
+        Node* battle_scene = get_tree()->get_root()->get_node_or_null("BattleScene");
+        
+        if (battle_scene)
+        {
+            UtilityFunctions::print("GameManager: All players ready. Sending setup RPC...");
+            
+            // ★修正: call_deferred を外して「即座に」送る
+            // これにより、下の clear() が走る前に、中身が入った状態で確実に送信されます。
+            battle_scene->rpc("_rpc_setup_battle", p1_data, p2_data);
+            
+            // 送信し終わったので、ここで初めてデータをクリア
+            p1_data.clear();
+            p2_data.clear();
+        }
+        else
+        {
+             UtilityFunctions::print("Waiting for BattleScene to appear...");
+        }
     }
 }

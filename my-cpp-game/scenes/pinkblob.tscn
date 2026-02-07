@@ -35,11 +35,11 @@ anim_tree_path = NodePath("AnimationTree")
 [node name="PinkBlob" parent="." instance=ExtResource("2_q0mrw")]
 
 [node name="Skeleton3D" parent="PinkBlob/CharacterArmature" index="0"]
-bones/0/position = Vector3(0, 1.4741222e-06, 1.6512462e-07)
-bones/0/rotation = Quaternion(0.7071288, 0, 0, 0.7070847)
-bones/2/position = Vector3(0, 0, 0.0048322733)
-bones/2/rotation = Quaternion(0.7071482, 0, 0, 0.70706534)
-bones/4/rotation = Quaternion(1.3352542e-05, 1.4416145e-07, 0.010769412, 0.999942)
+bones/0/position = Vector3(0, 1.7137339e-07, 6.2586437e-06)
+bones/0/rotation = Quaternion(0.70711064, 0, 0, 0.707103)
+bones/2/position = Vector3(0, 0, 0.004832554)
+bones/2/rotation = Quaternion(0.7070485, 0, 0, 0.70716506)
+bones/4/rotation = Quaternion(-0.00021922632, -2.3830883e-06, 0.010871421, 0.99994093)
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../PinkBlob")

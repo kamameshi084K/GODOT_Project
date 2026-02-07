@@ -3,3 +3,4 @@
 [resource]
 skill_name = "かみつく"
 hand_type = 1
+animation_name = "Bite_Front"

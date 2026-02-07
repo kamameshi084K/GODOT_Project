@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/marker3d.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/button.hpp>
+#include <godot_cpp/classes/tween.hpp>
 
 namespace godot
 {
@@ -52,6 +53,40 @@ namespace godot
         String server_host_hand;   
         String server_client_hand;
 
+        /**
+         * @brief 攻撃アニメーションとダメージ処理を実行する内部関数
+         * 
+         * @param attacker 攻撃者のNode3D
+         * @param target 攻撃対象のNode3D
+         * @param skill 使用する技のデータ
+         */
+        void _perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill);
+
+        /**
+         * @brief 手の文字列に基づいて対応するSkillDataを取得する
+         * 
+         * @param skills プレイヤーのスキルリスト
+         * @param hand_str "rock", "scissors", "paper" のいずれか
+         * @return 対応するSkillDataの参照
+         */
+        Ref<SkillData> _get_skill_by_hand(const TypedArray<SkillData>& skills, const String& hand_str);
+
+        /**
+         * @brief 指定されたパスのモデルを指定ノードにスポーンさせる
+         * 
+         * @param path モデルのリソースパス
+         * @param parent_node スポーン先の親ノード
+         * @param is_player プレイヤー側か敵側か
+         */
+        void _spawn_model_at(const String& path, Node3D* parent_node, bool is_player);
+
+        Dictionary p1_data; // ホストの情報
+        Dictionary p2_data; // クライアントの情報
+        Dictionary enemy_player_info; 
+        TypedArray<SkillData> enemy_player_skills; // 相手の技判定用
+        
+        bool battle_ready; // 戦闘開始準備完了フラグ
+
     protected:
         static void _bind_methods();
 
@@ -63,12 +98,13 @@ namespace godot
         
         void _rpc_notify_loaded(); // 読み込み完了報告用RPC
         void _rpc_start_spawning(); // スポーン開始合図用RPC
-        /**
-         * @brief 指定されたモンスター名に基づいて敵をスポーンさせる
-         * * @param monster_name スポーンさせるモンスターの名前
-         * @param is_player プレイヤー側か敵側か
-         */
-        void _rpc_spawn_enemy(const String& monster_name, bool is_player); // 引数を追加
+
+        // 自分のモンスター情報をホストに送るRPC
+        void _rpc_register_player_data(int peer_id, const String& model_path, int hp, int speed);
+
+        // ホストから全員へ、バトルの配役を伝えるRPC
+        // host_path: ホストのモデル, client_path: クライアントのモデル
+        void _rpc_setup_battle(const Dictionary& host_info, const Dictionary& client_info);
 
         // ボタン処理
         void _on_skill_1_pressed();
