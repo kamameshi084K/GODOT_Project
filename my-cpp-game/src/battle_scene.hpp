@@ -131,5 +131,7 @@ namespace godot
 
         // [RPC] 決着通知
         void _rpc_notify_defeat();
+
+        void request_battle_data();
     };
 }

@@ -37,6 +37,8 @@ namespace godot
         // 3Dモデルのパス（シーンの読み込み用）
         String model_path;
 
+        String resource_path;
+
     protected:
         /**
          * @brief Godotのクラスバインディングメソッド
@@ -158,5 +160,8 @@ namespace godot
          * @return String シーンファイルのパス
          */
         String get_model_path() const;
+
+        void set_resource_path(const String& path);
+        String get_resource_path() const;
     };
 }

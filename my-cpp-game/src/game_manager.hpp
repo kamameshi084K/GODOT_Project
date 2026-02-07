@@ -71,6 +71,8 @@ namespace godot
         Dictionary p1_data; // ホストの情報
         Dictionary p2_data; // クライアントの情報
 
+        bool battle_data_ready = false; // データが揃っているか
+
     protected:
         /**
          * @brief Godot にメソッドを登録する
@@ -399,6 +401,8 @@ namespace godot
          * 
          */
         void _rpc_register_battle_ready(int peer_id, const String& monster_data_path, const String& model_path, int hp, int speed);
+
+        void _rpc_request_battle_setup();
 
         // 全員の準備が整ったか確認し、整っていればバトル開始RPCを呼ぶ
         void _check_and_start_battle();

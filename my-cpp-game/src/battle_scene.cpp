@@ -30,6 +30,8 @@ void BattleScene::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_submit_hand", "hand"), &BattleScene::_rpc_submit_hand);
     ClassDB::bind_method(D_METHOD("_rpc_resolve_janken", "h_hand", "c_hand", "winner_side", "first_attacker"), &BattleScene::_rpc_resolve_janken);
     ClassDB::bind_method(D_METHOD("_rpc_notify_defeat"), &BattleScene::_rpc_notify_defeat);
+
+    ClassDB::bind_method(D_METHOD("request_battle_data"), &BattleScene::request_battle_data);
 }
 
 BattleScene::BattleScene()
@@ -129,7 +131,12 @@ void BattleScene::_ready()
     {
         skill_button_3->set_disabled(true);
     }
-    rpc("_rpc_notify_loaded");
+    // 1. まず自分の情報をサーバーに登録する
+    _rpc_notify_loaded();
+
+    // 2. サーバーに対して「準備ができたのでセットアップ情報をください」とリクエスト
+    // call_deferred を使うことで、ノードが完全に登録された次のフレームで実行され、より確実になります
+    call_deferred("request_battle_data");
 }
 
 void BattleScene::_rpc_notify_loaded()
@@ -152,8 +159,9 @@ void BattleScene::_rpc_notify_loaded()
         Ref<MonsterData> m = party[0];
         if (m.is_valid())
         {
-            monster_data_path = m->get_path(); 
-            my_model_path = m->get_model_path(); // ここで上書きされるはず
+            // get_path() ではなく保持しておいたパスを送る
+            monster_data_path = m->get_resource_path(); 
+            my_model_path = m->get_model_path();
             my_hp = m->get_max_hp();
             my_speed = m->get_speed();
             
@@ -707,5 +715,23 @@ void BattleScene::_spawn_model_at(const String& path, Node3D* parent_node, bool 
     {
         // パスが間違っているか、ファイルが存在しない
         UtilityFunctions::print("Error: Failed to load resource at: ", path);
+    }
+}
+
+void BattleScene::request_battle_data()
+{
+    GameManager* gm = GameManager::get_singleton();
+    if (!gm) return;
+
+    if (get_tree()->get_multiplayer()->is_server())
+    {
+        // ホスト自身なら直接チェック
+        gm->_check_and_start_battle();
+    }
+    else
+    {
+        // クライアントならサーバーに「データ送信」を依頼する
+        // GameManagerにリクエスト用のRPCを作るか、単に自身のロード完了を通知する
+        rpc_id(1, "_rpc_notify_loaded"); 
     }
 }

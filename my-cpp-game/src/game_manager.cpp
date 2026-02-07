@@ -110,6 +110,7 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_start_battle"), &GameManager::_rpc_start_battle);
     ClassDB::bind_method(D_METHOD("_rpc_register_battle_ready", "peer_id", "monster_data_path", "model_path", "hp", "speed"), &GameManager::_rpc_register_battle_ready);
     ClassDB::bind_method(D_METHOD("_check_and_start_battle"), &GameManager::_check_and_start_battle);
+    ClassDB::bind_method(D_METHOD("_rpc_request_battle_setup"), &GameManager::_rpc_request_battle_setup);
 }
 
 GameManager::GameManager()
@@ -183,7 +184,12 @@ GameManager::GameManager()
     rpc_config_any["call_local"] = true; // 自分自身も実行する
     rpc_config_any["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE; // 確実に届ける
     rpc_config("_rpc_register_battle_ready", rpc_config_any);
-}
+
+    Dictionary rpc_config_req;
+    rpc_config_req["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    rpc_config_req["call_local"] = true;
+    rpc_config("_rpc_request_battle_setup", rpc_config_req);
+    }
 
 GameManager::~GameManager()
 {
@@ -562,6 +568,9 @@ void GameManager::_rpc_go_to_town()
     current_state = STATE_TOWN;
     is_timer_active = false;
     UtilityFunctions::print("Time's up! Moving to Town...");
+    p1_data.clear();
+    p2_data.clear();
+    battle_data_ready = false;
     ready_player_count = 0;
 
     // 町へ移動
@@ -682,10 +691,13 @@ void GameManager::select_starter_monster(int type_index)
 
     if (source_data.is_valid())
     {
-        // ★重要: duplicate(true) で複製して使う
-        // これをしないと、レベルアップしたときに元のファイル(.tres)まで書き換わってしまいます
-        add_monster(source_data->duplicate(true));
+        String original_path = source_data->get_path(); // 元の .tres パスを取得
+        Ref<MonsterData> new_monster = source_data->duplicate(true);
         
+        // 複製した個体にパスを書き込む
+        new_monster->set_resource_path(original_path); 
+        
+        add_monster(new_monster);
         prepare_battle_stats();
     }
     else
@@ -700,7 +712,7 @@ void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_
 
     Dictionary info;
     info["id"] = peer_id;
-    info["monster_data_path"] = monster_data_path; // ★追加：MonsterDataのリソースパス
+    info["monster_data_path"] = monster_data_path;
     info["path"] = model_path;
     info["hp"] = hp;
     info["speed"] = speed;
@@ -708,34 +720,44 @@ void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_
     if (peer_id == 1) { p1_data = info; }
     else { p2_data = info; }
 
-    _check_and_start_battle();
+    // 両方のデータが揃ったらフラグを立てる
+    if (!p1_data.is_empty() && !p2_data.is_empty()) {
+        battle_data_ready = true;
+        _check_and_start_battle(); // 既にシーンがあるなら送る
+    }
 }
 
+void GameManager::_rpc_request_battle_setup()
+{
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    int requester_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+
+    // 両方のデータが揃っている場合のみ、リクエストした人にだけデータを送る
+    if (!p1_data.is_empty() && !p2_data.is_empty())
+    {
+        Node* battle_scene = get_tree()->get_root()->get_node_or_null("BattleScene");
+        if (battle_scene)
+        {
+            UtilityFunctions::print("GameManager: Sending setup data to peer ", requester_id);
+            // rpc_id を使い、リクエストしてきた特定のクライアント（または自分）にだけ送る
+            battle_scene->rpc_id(requester_id, "_rpc_setup_battle", p1_data, p2_data);
+        }
+    }
+}
+
+// 既存の _check_and_start_battle も念のためブロードキャストを維持（または削除してもOK）
 void GameManager::_check_and_start_battle()
 {
     if (!get_tree()->get_multiplayer()->is_server()) return;
 
-    // データが両方揃っているか確認
     if (!p1_data.is_empty() && !p2_data.is_empty())
     {
-        // ルートから BattleScene を探す
         Node* battle_scene = get_tree()->get_root()->get_node_or_null("BattleScene");
-        
         if (battle_scene)
         {
-            UtilityFunctions::print("GameManager: All players ready. Sending setup RPC...");
-            
-            // ★修正: call_deferred を外して「即座に」送る
-            // これにより、下の clear() が走る前に、中身が入った状態で確実に送信されます。
+            // 全員に送る（これまでの処理）
             battle_scene->rpc("_rpc_setup_battle", p1_data, p2_data);
-            
-            // 送信し終わったので、ここで初めてデータをクリア
-            p1_data.clear();
-            p2_data.clear();
-        }
-        else
-        {
-             UtilityFunctions::print("Waiting for BattleScene to appear...");
         }
     }
 }

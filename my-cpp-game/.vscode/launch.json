@@ -10,7 +10,7 @@
             "args": [
                 "--path",
                 "${workspaceFolder}", // プロジェクトの場所
-                "--editor"            // これを消すとゲームがいきなり始まります
+                //"--editor"            // これを消すとゲームがいきなり始まります
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
