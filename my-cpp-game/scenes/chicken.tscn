@@ -1,49 +1,13 @@
-[gd_scene load_steps=8 format=3 uid="uid://dtql3n15mxi00"]
+[gd_scene load_steps=2 format=3 uid="uid://dtql3n15mxi00"]
 
-[ext_resource type="MonsterData" uid="uid://bo7us8fuppfat" path="res://Resources/Monsters/chicken.tres" id="1_1yv3s"]
 [ext_resource type="PackedScene" uid="uid://ch16y17v2phfe" path="res://assets/models/blob/Chicken.fbx" id="1_8lku0"]
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_1yv3s"]
-animation = &"CharacterArmature|Idle"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_nutj5"]
-animation = &"CharacterArmature|Walk"
-
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_rc7ma"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_1yv3s")
-blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_nutj5")
-blend_point_1/pos = 1.0
-
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_0du8g"]
-states/Move/node = SubResource("AnimationNodeBlendSpace1D_rc7ma")
-states/Move/position = Vector2(351, 100)
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bti8l"]
-radius = 0.8
-height = 2.2
-
-[node name="Enemy" type="Enemy"]
-monster_data = ExtResource("1_1yv3s")
-visual_node_path = NodePath("Chicken")
-anim_tree_path = NodePath("AnimationTree")
+[node name="Node3D" type="Node3D"]
 
 [node name="Chicken" parent="." instance=ExtResource("1_8lku0")]
 
 [node name="Skeleton3D" parent="Chicken/CharacterArmature" index="0"]
-bones/3/position = Vector3(0, 0.005165857, 0)
-bones/4/position = Vector3(0, 0.00390075, 0)
-bones/4/rotation = Quaternion(0, 0, 0, 1)
-bones/4/scale = Vector3(1, 1, 1)
-
-[node name="AnimationTree" type="AnimationTree" parent="."]
-root_node = NodePath("../Chicken")
-tree_root = SubResource("AnimationNodeStateMachine_0du8g")
-anim_player = NodePath("../Chicken/AnimationPlayer")
-parameters/Move/blend_position = 0.0
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
-shape = SubResource("CapsuleShape3D_bti8l")
+bones/2/position = Vector3(0, 0, 0.0048319353)
+bones/4/rotation = Quaternion(2.4776536e-19, 3.547149e-10, -0.002640053, 0.99999654)
 
 [editable path="Chicken"]

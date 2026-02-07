@@ -5,3 +5,9 @@
 [node name="Node3D" type="Node3D"]
 
 [node name="Chicken" parent="." instance=ExtResource("1_6vg6p")]
+
+[node name="Skeleton3D" parent="Chicken/CharacterArmature" index="0"]
+bones/2/position = Vector3(0, 0, 0.0048319353)
+bones/4/rotation = Quaternion(2.4776536e-19, 3.547149e-10, -0.002640053, 0.99999654)
+
+[editable path="Chicken"]

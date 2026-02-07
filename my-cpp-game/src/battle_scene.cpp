@@ -624,70 +624,124 @@ Ref<SkillData> BattleScene::_get_skill_by_hand(const TypedArray<SkillData>& skil
     return nullptr;
 }
 
-// ★追加: 攻撃演出の実装
+String resolve_anim_name(AnimationPlayer* anim, String name)
+{
+    if (name.is_empty())
+    {
+        return "";
+    }
+    String prefixed = "CharacterArmature|" + name;
+    if (anim->has_animation(prefixed))
+    {
+        return prefixed;
+    }
+    return name;
+}
+
 void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill)
 {
-    if (!attacker || !target || skill.is_null()) return;
-
-    // 1. モデル内の AnimationPlayer を探す
-    AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(attacker->find_child("AnimationPlayer", true, false));
-    if (!anim) 
+    if (!attacker || !target || skill.is_null())
     {
-        UtilityFunctions::print("Error: AnimationPlayer not found in model!");
         return;
     }
 
-    // 2. Tweenを作成 (アニメーションや移動を管理する機能)
-    Ref<Tween> tween = create_tween();
-    if (tween.is_null()) return;
-
-    if (skill->get_is_physical())
+    AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(attacker->find_child("AnimationPlayer", true, false));
+    if (!anim) 
     {
-        // --- 物理攻撃の場合（敵の目の前まで移動する） ---
-
-        // ターゲットの手前(1.5m)の位置を計算
-        Vector3 start_pos = attacker->get_global_position();
-        Vector3 target_pos = target->get_global_position();
-        Vector3 dir = (target_pos - start_pos).normalized();
-        Vector3 attack_pos = target_pos - (dir * 1.5); 
-
-        // A. 敵の目の前へ移動 (0.3秒)
-        tween->tween_property(attacker, "global_position", attack_pos, 0.3);
-        
-        // B. 到着したら攻撃アニメーション再生
-        // (Callableを使って play メソッドを予約します)
-        tween->tween_callback(Callable(anim, "play").bind(skill->get_animation_name()));
-
-        // C. アニメーションが終わるくらい待つ (0.8秒待機)
-        tween->tween_interval(0.8);
-
-        // D. 元の位置に戻る (0.3秒)
-        tween->tween_property(attacker, "global_position", start_pos, 0.3);
-
-        // E. 戻ったら Idle (待機) アニメーションに戻す
-        tween->tween_callback(Callable(anim, "play").bind("Idle"));
+        return;
     }
+
+    // 以前の Tween が残っていると誤作動するため、新しく作成
+    Ref<Tween> tween = create_tween();
+    if (tween.is_null())
+    {
+        return;
+    }
+
+    String skill_anim = resolve_anim_name(anim, skill->get_animation_name());
+    String idle_anim = resolve_anim_name(anim, "Idle");
+    String jump_anim = resolve_anim_name(anim, "Jump");
+
+    Vector3 start_pos = attacker->get_global_position();
+    Vector3 target_pos = target->get_global_position();
+    Vector3 dir = (target_pos - start_pos).normalized();
+
+    String skill_name = skill->get_skill_name();
+
+    if (skill_name == "たいあたり")
+    {
+        // --- たいあたり演出 ---
+        Vector3 attack_pos = target_pos - (dir * 0.4);
+
+        // 1. 高速突進（0.15秒で移動）
+        tween->tween_property(attacker, "global_position", attack_pos, 0.15)->set_trans(Tween::TRANS_SINE);
+        
+        // 2. 突進と同時にアニメーション開始
+        tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
+
+        // 3. ヒットの余韻（移動が終わった後、0.4秒止まる）
+        tween->tween_interval(0.4);
+
+        // 4. 元の位置へ戻る（0.3秒）
+        tween->tween_property(attacker, "global_position", start_pos, 0.3);
+        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+    }
+    else if (skill_name == "のしかかる")
+{
+    // --- のしかかる演出 ---
+    // 頂点を少し高め（3.5mなど）に設定すると放物線が綺麗に見えます
+    Vector3 peak_pos = (start_pos + target_pos) / 2.0 + Vector3(0, 3.5, 0);
+
+    // 1. ジャンプ上昇：徐々に遅くなる（EASE_OUT）
+    tween->tween_callback(Callable(anim, "play").bind(jump_anim));
+    tween->tween_property(attacker, "global_position", peak_pos, 0.4)
+        ->set_trans(Tween::TRANS_QUAD)
+        ->set_ease(Tween::EASE_OUT);
+
+    // 2. 落下：徐々に速くなる（EASE_IN）
+    tween->tween_callback(Callable(anim, "play").bind(skill_anim));
+    tween->tween_property(attacker, "global_position", target_pos, 0.3)
+        ->set_trans(Tween::TRANS_QUAD)
+        ->set_ease(Tween::EASE_IN);
+
+    // 3. ヒット時の停止
+    tween->tween_interval(0.5);
+
+    // 4. 元の位置へ戻る（ここも放物線にするとより自然です）
+    Vector3 return_peak = (target_pos + start_pos) / 2.0 + Vector3(0, 2.0, 0);
+    tween->tween_property(attacker, "global_position", return_peak, 0.25)
+        ->set_trans(Tween::TRANS_QUAD)
+        ->set_ease(Tween::EASE_OUT);
+    tween->tween_property(attacker, "global_position", start_pos, 0.2)
+        ->set_trans(Tween::TRANS_QUAD)
+        ->set_ease(Tween::EASE_IN);
+    
+    tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+}
     else
     {
-        // --- 特殊攻撃の場合（その場で魔法などを撃つ） ---
+        // --- デフォルト：かみつく等の物理移動 ---
+        Vector3 attack_pos = target_pos - (dir * 1.2); 
+
+        tween->tween_property(attacker, "global_position", attack_pos, 0.2);
+        tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
         
-        // A. その場でアニメーション再生
-        anim->play(skill->get_animation_name());
-
-        // B. 演出が終わるまで待つ (1.0秒)
-        tween->tween_interval(1.0);
-
-        // C. Idle に戻す
-        tween->tween_callback(Callable(anim, "play").bind("Idle"));
+        tween->tween_interval(0.7);
+        
+        tween->tween_property(attacker, "global_position", start_pos, 0.2);
+        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
 }
 
 void BattleScene::_spawn_model_at(const String& path, Node3D* parent_node, bool is_player)
 {
-    if (!parent_node || path.is_empty()) return;
+    if (!parent_node || path.is_empty())
+    {
+        return;
+    }
 
-    // ★追加: すでにいるモデル（子供）をすべて消す
-    for (int i = 0; i < parent_node->get_child_count(); ++i) {
+    for (int i = 0; i < parent_node->get_child_count(); ++i)
+    {
         parent_node->get_child(i)->queue_free();
     }
 
@@ -698,14 +752,28 @@ void BattleScene::_spawn_model_at(const String& path, Node3D* parent_node, bool 
         Node3D* model_3d = Object::cast_to<Node3D>(instance);
         if (model_3d)
         {
-            if (is_player) model_3d->set_rotation_degrees(Vector3(0, 180, 0));
+            if (is_player)
+            {
+                model_3d->set_rotation_degrees(Vector3(0, 180, 0));
+            }
             parent_node->add_child(model_3d);
             model_3d->set_position(Vector3(0, 0, 0)); 
 
-            // ★追加: 生成直後に AnimationPlayer を探して Idle を再生
             AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(model_3d->find_child("AnimationPlayer", true, false));
-            if (anim && anim->has_animation("Idle")) {
-                anim->play("Idle");
+            if (anim)
+            {
+                // --- 自動プレフィックス判定 ---
+                String base_name = "Idle";
+                String prefixed_name = "CharacterArmature|" + base_name;
+
+                if (anim->has_animation(prefixed_name))
+                {
+                    anim->play(prefixed_name);
+                }
+                else
+                {
+                    anim->play(base_name); // プレフィックスなしを試す
+                }
             }
         }
     }

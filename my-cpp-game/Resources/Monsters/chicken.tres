@@ -1,6 +1,6 @@
 [gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://bo7us8fuppfat"]
 
-[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/punch.tres" id="1_y3vka"]
+[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/attack.tres" id="1_y3vka"]
 [ext_resource type="SkillData" uid="uid://foroe408lpms" path="res://Resources/Skills/bite.tres" id="2_q6ml2"]
 [ext_resource type="SkillData" uid="uid://lvtlsxcaw4l6" path="res://Resources/Skills/tread.tres" id="3_vfe07"]
 
