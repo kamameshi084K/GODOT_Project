@@ -12,6 +12,7 @@
 #include <godot_cpp/classes/property_tweener.hpp>
 #include <godot_cpp/classes/callback_tweener.hpp>
 #include <godot_cpp/classes/interval_tweener.hpp>
+#include <godot_cpp/classes/engine.hpp>
 
 using namespace godot;
 
@@ -77,6 +78,7 @@ BattleScene::~BattleScene()
 
 void BattleScene::_ready()
 {
+    if (Engine::get_singleton()->is_editor_hint()) return;
     player_spawn_pos = get_node<Marker3D>("PlayerSpawnPos");
     enemy_spawn_pos = get_node<Marker3D>("EnemySpawnPos");
 
@@ -141,10 +143,17 @@ void BattleScene::_ready()
 
 void BattleScene::_rpc_notify_loaded()
 {
+    if (Engine::get_singleton()->is_editor_hint()) return;
+    if (!is_inside_tree()) return; // シーンツリーにいないなら中断
+
     GameManager* gm = GameManager::get_singleton();
     if (!gm) return;
 
-    int my_id = get_tree()->get_multiplayer()->get_unique_id();
+    // get_tree() が nullptr でないことを確認してからアクセス
+    SceneTree* tree = get_tree();
+    if (!tree || !tree->get_multiplayer().is_valid()) return;
+
+    int my_id = tree->get_multiplayer()->get_unique_id();
     TypedArray<MonsterData> party = gm->get_party();
     
     // ★修正: 初期値を空ではなく、確実に存在するパスにしておく（テスト用）
@@ -675,46 +684,30 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
 
 void BattleScene::_spawn_model_at(const String& path, Node3D* parent_node, bool is_player)
 {
-    // 1. 親ノードチェック
-    if (!parent_node) {
-        UtilityFunctions::print("Error: Spawn failed. Parent Node (Marker) is NULL!");
-        return;
+    if (!parent_node || path.is_empty()) return;
+
+    // ★追加: すでにいるモデル（子供）をすべて消す
+    for (int i = 0; i < parent_node->get_child_count(); ++i) {
+        parent_node->get_child(i)->queue_free();
     }
 
-    // 2. パスチェック
-    if (path.is_empty()) {
-        UtilityFunctions::print("Error: Spawn failed. Model path is EMPTY!");
-        return;
-    }
-
-    UtilityFunctions::print("Attempting to load model at: ", path);
-
-    // 3. ロードチェック
     Ref<PackedScene> scene = ResourceLoader::get_singleton()->load(path);
     if (scene.is_valid())
     {
         Node* instance = scene->instantiate();
         Node3D* model_3d = Object::cast_to<Node3D>(instance);
-        
         if (model_3d)
         {
             if (is_player) model_3d->set_rotation_degrees(Vector3(0, 180, 0));
-            else model_3d->set_rotation_degrees(Vector3(0, 0, 0));
-
-            // 子として追加
             parent_node->add_child(model_3d);
-            
-            // ★追加: 座標と表示状態の強制リセット（念のため）
             model_3d->set_position(Vector3(0, 0, 0)); 
-            model_3d->set_visible(true);
 
-            UtilityFunctions::print("Success! Model spawned for: ", is_player ? "Player" : "Enemy");
+            // ★追加: 生成直後に AnimationPlayer を探して Idle を再生
+            AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(model_3d->find_child("AnimationPlayer", true, false));
+            if (anim && anim->has_animation("Idle")) {
+                anim->play("Idle");
+            }
         }
-    }
-    else
-    {
-        // パスが間違っているか、ファイルが存在しない
-        UtilityFunctions::print("Error: Failed to load resource at: ", path);
     }
 }
 

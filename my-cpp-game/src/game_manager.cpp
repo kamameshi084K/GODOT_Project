@@ -710,20 +710,26 @@ void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_
 {
     if (!get_tree()->get_multiplayer()->is_server()) return;
 
+    // ★追加: 通信相手が技を再生できるように、現在のモンスターのスキルリストを取得
+    TypedArray<SkillData> monster_skills;
+    if (peer_id == 1 && party_monsters.size() > 0) {
+        monster_skills = Object::cast_to<MonsterData>(party_monsters[0])->get_skills();
+    }
+    // (※クライアント側のスキル取得ロジックは構成に合わせて調整してください)
+
     Dictionary info;
     info["id"] = peer_id;
-    info["monster_data_path"] = monster_data_path;
     info["path"] = model_path;
     info["hp"] = hp;
     info["speed"] = speed;
+    info["skills"] = monster_skills; // ★ここに入れることで相手側でもアニメーション名がわかります
 
     if (peer_id == 1) { p1_data = info; }
     else { p2_data = info; }
 
-    // 両方のデータが揃ったらフラグを立てる
     if (!p1_data.is_empty() && !p2_data.is_empty()) {
         battle_data_ready = true;
-        _check_and_start_battle(); // 既にシーンがあるなら送る
+        _check_and_start_battle();
     }
 }
 

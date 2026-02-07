@@ -47,7 +47,7 @@ void MonsterData::_bind_methods()
     
     // エディタ上で SkillData のみを配列に入れられるようにする設定
     // "24/17:SkillData" は Godot 4.x GDExtension の特殊記法で、「Object型(24)かつResource(17)でクラス名がSkillData」を意味します
-    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "skills", PROPERTY_HINT_RESOURCE_TYPE, "24/17:SkillData"), "set_skills", "get_skills");
+    ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "skills", PROPERTY_HINT_TYPE_STRING, "24/17:SkillData"), "set_skills", "get_skills");
     ClassDB::bind_method(D_METHOD("set_resource_path", "path"), &MonsterData::set_resource_path);
     ClassDB::bind_method(D_METHOD("get_resource_path"), &MonsterData::get_resource_path);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "resource_path"), "set_resource_path", "get_resource_path");
