@@ -11,6 +11,9 @@
 #include <godot_cpp/classes/progress_bar.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/canvas_layer.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
+#include <godot_cpp/classes/texture2d.hpp>
+#include <godot_cpp/classes/control.hpp>
 
 namespace godot
 {
@@ -62,8 +65,10 @@ namespace godot
          * @param attacker 攻撃側のノード
          * @param target 防御側のノード
          * @param skill 使用するスキルデータ
+         * @param p_hand プレイヤーの手 ("rock", "scissors", "paper")
+         * @param e_hand 敵の手 ("rock", "scissors", "paper
          */
-        void _perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill);
+        void _perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill, String p_hand, String e_hand);
 
         /**
          * @brief 出した手に対応するスキルをリストから探す
@@ -95,6 +100,40 @@ namespace godot
 
         int player_max_hp;
         int enemy_max_hp;
+
+        bool is_transitioning = false;
+
+        Control* janken_effect_root;
+        TextureRect* left_hand_rect;
+        TextureRect* right_hand_rect;
+        /** @brief じゃんけんUIを表示する
+         * @param p_hand プレイヤーの手 ("rock", "scissors", "paper")
+         * @param e_hand 敵の手 ("rock", "scissors", "paper")
+         */
+        void _show_janken_ui(String p_hand, String e_hand);
+        // じゃんけんUIを非表示にする
+        void _hide_janken_ui();
+        
+        // 画像リソースを保持（毎回ロードするのを避けるため）
+        Ref<Texture2D> tex_rock;
+        Ref<Texture2D> tex_scissors;
+        Ref<Texture2D> tex_paper;
+
+        // 演出後に実行する攻撃データを一時保存
+        Node3D* temp_attacker;
+        Node3D* temp_defender;
+        Ref<SkillData> temp_skill;
+
+        /**
+         * @brief じゃんけんのUI演出を再生する
+         * @param my_hand 自分の手
+         * @param enemy_hand 敵の手
+         * @param winner_side 勝者のサイド (0:引き分け, 1:ホスト勝利, 2:クライアント勝利)
+         * @param on_finished 演出終了後に呼ばれるコールバック
+         */
+        void _play_janken_ui_effect(const String& my_hand, const String& enemy_hand, int winner_side, Callable on_finished);
+
+        void _start_attack_after_ui(); // 演出終了後に呼ばれる関数
 
         /**
          * @brief ダメージ計算の結果をHPとUIに適用する

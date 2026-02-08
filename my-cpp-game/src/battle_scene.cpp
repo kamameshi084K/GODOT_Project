@@ -142,6 +142,23 @@ void BattleScene::_ready()
     enemy_hp_bar = get_node<ProgressBar>("UI/EnemyHPBar");
     message_label = get_node<Label>("UI/MessageWindow/Label");
 
+    // _ready() の中に追加
+    janken_effect_root = get_node<Control>("UI/JankenEffect");
+    left_hand_rect = get_node<TextureRect>("UI/JankenEffect/PlayerHand");
+    right_hand_rect = get_node<TextureRect>("UI/JankenEffect/EnemyHand");
+    if (!janken_effect_root) UtilityFunctions::print("Error: JankenEffect node not found!");
+    if (!left_hand_rect) UtilityFunctions::print("Error: PlayerHand node not found!");
+
+    // 画像のロード（パスは実際のプロジェクトに合わせて変更してください）
+    tex_rock = ResourceLoader::get_singleton()->load("res://assets/textures/rock.png");
+    tex_scissors = ResourceLoader::get_singleton()->load("res://assets/textures/scissors.png");
+    tex_paper = ResourceLoader::get_singleton()->load("res://assets/textures/paper.png");
+
+    // 【追加】ロード確認ログ
+    if (tex_rock.is_null()) UtilityFunctions::print("Error: Failed to load rock.png");
+    if (tex_scissors.is_null()) UtilityFunctions::print("Error: Failed to load scissors.png");
+    if (tex_paper.is_null()) UtilityFunctions::print("Error: Failed to load paper.png");
+
     // 初期状態ではメッセージを隠しておくなどの処理
     if (message_label)
     {
@@ -512,7 +529,7 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
 
     if (attacker_node && defender_node && skill_to_use.is_valid())
     {
-        _perform_attack_sequence(attacker_node, defender_node, skill_to_use);
+        _perform_attack_sequence(attacker_node, defender_node, skill_to_use, my_hand_str, enemy_hand_str);
     }
 
     // --- 5. ゲーム終了判定 (変更なし) ---
@@ -649,119 +666,120 @@ String resolve_anim_name(AnimationPlayer* anim, String name)
     return name;
 }
 
-void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill)
+void BattleScene::_show_janken_ui(String p_hand, String e_hand)
 {
-    if (!attacker || !target || skill.is_null())
-    {
-        return;
+    if (janken_effect_root) {
+        // Z-Indexを最大値に近い値にして、他のUIより前に出す
+        janken_effect_root->set_z_index(100);
+        // 透明度が0になっていないか確認（1.0が不透明）
+        janken_effect_root->set_modulate(Color(1, 1, 1, 1));
+        janken_effect_root->show();
     }
 
-    // 攻撃側のアニメーター取得
+    auto set_tex = [this](TextureRect* rect, String hand)
+    {
+        if (!rect) return;
+        
+        if (hand == "rock") rect->set_texture(tex_rock);
+        else if (hand == "scissors") rect->set_texture(tex_scissors);
+        else if (hand == "paper") rect->set_texture(tex_paper);
+
+        // サイズを0.1倍にする（巨大すぎて画面外にいる対策）
+        rect->set_scale(Vector2(0.1, 0.1));
+        // 拡大縮小の軸を中心にする
+        rect->set_pivot_offset(rect->get_size() / 2.0);
+    };
+
+    set_tex(left_hand_rect, p_hand);
+    set_tex(right_hand_rect, e_hand);
+}
+
+void BattleScene::_hide_janken_ui()
+{
+    if (janken_effect_root) janken_effect_root->hide();
+}
+
+void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill, String p_hand, String e_hand)
+{
+    // 1. 基本チェック
+    if (!attacker || !target || !skill.is_valid()) return;
+
+    // 2. アニメーター取得
     AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(attacker->find_child("AnimationPlayer", true, false));
-    // 受ける側のアニメーター取得
     AnimationPlayer* target_anim = Object::cast_to<AnimationPlayer>(target->find_child("AnimationPlayer", true, false));
     
-    if (!anim) 
-    {
-        return;
-    }
+    if (!anim) return;
 
+    // 3. Tween作成（これ1つだけで最後まで通す）
     Ref<Tween> tween = create_tween();
-    if (tween.is_null())
-    {
-        return;
-    }
+    if (tween.is_null()) return;
 
-    // アニメーション名の解決
+    // 4. アニメーション名の解決
     String skill_anim = resolve_anim_name(anim, skill->get_animation_name());
     String idle_anim = resolve_anim_name(anim, "Idle");
     String jump_anim = resolve_anim_name(anim, "Jump");
-    
-    // 相手側の被弾アニメ（HitRecieve）を解決
-    String hit_anim = "";
-    if (target_anim)
-    {
-        hit_anim = resolve_anim_name(target_anim, "HitRecieve");
-    }
+    String hit_anim = (target_anim) ? resolve_anim_name(target_anim, "HitRecieve") : "";
 
+    // ★ 5. 【最優先】じゃんけん演出をTweenの先頭に追加 ★
+    // ここで登録したものは必ず最初に実行されます
+    tween->tween_callback(Callable(this, "_show_janken_ui").bind(p_hand, e_hand));
+    tween->tween_interval(0.8); // 0.8秒表示
+    tween->tween_callback(Callable(this, "_hide_janken_ui"));
+
+    // 6. 攻撃パラメータの計算
     Vector3 start_pos = attacker->get_global_position();
     Vector3 target_pos = target->get_global_position();
     Vector3 dir = (target_pos - start_pos).normalized();
-
     String skill_name = skill->get_skill_name();
 
-    if (skill_name == "たいあたり")
+    // 7. スキルごとの挙動（既存の tween オブジェクトに chain していく）
+    if (skill_name == String::utf8("たいあたり"))
     {
-        // --- たいあたり演出 ---
         Vector3 attack_pos = target_pos - (dir * 0.4);
-
-        // 1. 高速突進
         tween->tween_property(attacker, "global_position", attack_pos, 0.15)->set_trans(Tween::TRANS_SINE);
         tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
         
-        // 2. 衝突した瞬間に相手の被弾アニメを再生
         if (target_anim && !hit_anim.is_empty())
-        {
             tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
-        }
 
-        // 3. ヒットの余韻
         tween->tween_interval(0.5);
-
-        // 4. 元の位置へ戻る
         tween->tween_property(attacker, "global_position", start_pos, 0.3);
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
-    else if (skill_name == "のしかかる")
+    else if (skill_name == String::utf8("のしかかる"))
     {
-        // --- のしかかる演出 ---
         Vector3 peak_pos = (start_pos + target_pos) / 2.0 + Vector3(0, 3.5, 0);
-
-        // 1. 上昇
         tween->tween_callback(Callable(anim, "play").bind(jump_anim));
         tween->tween_property(attacker, "global_position", peak_pos, 0.4)->set_trans(Tween::TRANS_QUAD)->set_ease(Tween::EASE_OUT);
-
-        // 2. 落下
         tween->tween_property(attacker, "global_position", target_pos, 0.25)->set_trans(Tween::TRANS_QUAD)->set_ease(Tween::EASE_IN);
         tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
 
-        // 3. 着地の瞬間に相手の被弾アニメを再生
         if (target_anim && !hit_anim.is_empty())
-        {
             tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
-        }
 
-        // 4. 着地後の停止
         tween->tween_interval(0.6);
-
-        // 5. 元の位置へ戻る
         tween->tween_property(attacker, "global_position", start_pos, 0.4);
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
     else
     {
-        // --- デフォルト（かみつく等） ---
+        // デフォルト攻撃
         Vector3 attack_pos = target_pos - (dir * 1.2); 
-
         tween->tween_property(attacker, "global_position", attack_pos, 0.2);
         tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
         
-        // 到着時に被弾アニメ再生
         if (target_anim && !hit_anim.is_empty())
-        {
             tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
-        }
         
         tween->tween_interval(0.7);
-        
         tween->tween_property(attacker, "global_position", start_pos, 0.2);
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
 
-    // 演出終了後に相手をIdleに戻す設定（任意）
+    // 8. 最後に相手をIdleに戻す（これも同じtweenの末尾に追加）
     if (target_anim)
     {
         String target_idle = resolve_anim_name(target_anim, "Idle");
@@ -881,19 +899,25 @@ void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
 
 void BattleScene::_check_battle_end()
 {
-    if (player_hp <= 0)
+    // すでに遷移が始まっているなら何もしない
+    if (is_transitioning) return;
+
+    if (player_hp <= 0 || enemy_hp <= 0)
     {
-        UtilityFunctions::print("DEFEATED...");
-        // 敗北時はそのまま町へ
-        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
-    }
-    else if (enemy_hp <= 0)
-    {
-        UtilityFunctions::print("VICTORY!");
-        GameManager* gm = GameManager::get_singleton();
-        if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward()); //
-        
-        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+        is_transitioning = true; // フラグを立てる
+
+        if (player_hp <= 0)
+        {
+            UtilityFunctions::print("DEFEATED...");
+            get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+        }
+        else
+        {
+            UtilityFunctions::print("VICTORY!");
+            GameManager* gm = GameManager::get_singleton();
+            if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward());
+            get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+        }
     }
 }
 
