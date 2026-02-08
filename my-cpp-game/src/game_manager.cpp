@@ -108,7 +108,7 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_go_to_town"), &GameManager::_rpc_go_to_town);
     ClassDB::bind_method(D_METHOD("_rpc_notify_ready"), &GameManager::_rpc_notify_ready);
     ClassDB::bind_method(D_METHOD("_rpc_start_battle"), &GameManager::_rpc_start_battle);
-    ClassDB::bind_method(D_METHOD("_rpc_register_battle_ready", "peer_id", "monster_data_path", "model_path", "hp", "speed"), &GameManager::_rpc_register_battle_ready);
+    ClassDB::bind_method(D_METHOD("_rpc_register_battle_ready", "peer_id", "player_name", "model_path", "hp", "speed", "skills"), &GameManager::_rpc_register_battle_ready);
     ClassDB::bind_method(D_METHOD("_check_and_start_battle"), &GameManager::_check_and_start_battle);
     ClassDB::bind_method(D_METHOD("_rpc_request_battle_setup"), &GameManager::_rpc_request_battle_setup);
 }
@@ -706,7 +706,7 @@ void GameManager::select_starter_monster(int type_index)
     }
 }
 
-void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_data_path, const String& model_path, int hp, int speed)
+void GameManager::_rpc_register_battle_ready(int peer_id, String p_name, String m_path, int hp, int speed, Array skills)
 {
     if (!get_tree()->get_multiplayer()->is_server()) return;
 
@@ -717,15 +717,15 @@ void GameManager::_rpc_register_battle_ready(int peer_id, const String& monster_
     }
     // (※クライアント側のスキル取得ロジックは構成に合わせて調整してください)
 
-    Dictionary info;
-    info["id"] = peer_id;
-    info["path"] = model_path;
-    info["hp"] = hp;
-    info["speed"] = speed;
-    info["skills"] = monster_skills; // ★ここに入れることで相手側でもアニメーション名がわかります
+    Dictionary data;
+    data["id"] = peer_id;
+    data["path"] = m_path;
+    data["hp"] = hp;
+    data["speed"] = speed;
+    data["skills"] = skills; // これを BattleScene に渡すデータに含める
 
-    if (peer_id == 1) { p1_data = info; }
-    else { p2_data = info; }
+    if (peer_id == 1) { p1_data = data; }
+    else { p2_data = data; }
 
     if (!p1_data.is_empty() && !p2_data.is_empty()) {
         battle_data_ready = true;

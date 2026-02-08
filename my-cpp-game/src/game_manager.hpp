@@ -398,9 +398,9 @@ namespace godot
          * @param model_path モデルのリソースパス
          * @param hp モンスターのHP
          * @param speed モンスターの素早さ
-         * 
+         * @param skills モンスターのスキルリスト
          */
-        void _rpc_register_battle_ready(int peer_id, const String& monster_data_path, const String& model_path, int hp, int speed);
+        void _rpc_register_battle_ready(int peer_id, String p_name, String m_path, int hp, int speed, Array skills);
 
         void _rpc_request_battle_setup();
 
