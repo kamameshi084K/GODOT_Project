@@ -36,6 +36,15 @@ void BattleScene::_bind_methods()
 
     ClassDB::bind_method(D_METHOD("_rpc_sync_hp", "target_side", "final_damage"), &BattleScene::_rpc_sync_hp);
     ClassDB::bind_method(D_METHOD("_apply_damage", "attacker", "target", "skill"), &BattleScene::_apply_damage);
+    ClassDB::bind_method(D_METHOD("_show_janken_ui", "p_hand", "e_hand"), &BattleScene::_show_janken_ui);
+    ClassDB::bind_method(D_METHOD("_hide_janken_ui"), &BattleScene::_hide_janken_ui);
+    
+    // ★ 変更: 引数を減らしました
+    ClassDB::bind_method(D_METHOD("_perform_attack_sequence", "attacker", "target", "skill"), &BattleScene::_perform_attack_sequence);
+    
+    // ★ 追加: ターン終了処理用
+    ClassDB::bind_method(D_METHOD("_on_draw_or_end"), &BattleScene::_on_draw_or_end);
+
     ClassDB::bind_method(D_METHOD("show_message", "text"), &BattleScene::show_message);
 }
 
@@ -466,90 +475,118 @@ void BattleScene::_rpc_submit_hand(const String& hand)
 void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand, int winner_side, int first_attacker)
 {
     bool is_server = get_tree()->get_multiplayer()->is_server();
-    int my_id = get_tree()->get_multiplayer()->get_unique_id();
-    GameManager* gm = GameManager::get_singleton();
-    if (!gm) return;
+    String my_hand_str = is_server ? h_hand : c_hand;
+    String enemy_hand_str = is_server ? c_hand : h_hand;
 
-    // --- 1. 3Dモデルの取得 ---
+    // 1. 画像をセット（初期位置は画面外）
+    _show_janken_ui(my_hand_str, enemy_hand_str);
+
+    // --- 勝敗判定をここで計算しておく（Tweenで使うため） ---
+    bool i_won = false;
+    bool enemy_won = false;
+    
+    if (winner_side != 0) {
+        bool host_won = (winner_side == 1);
+        i_won = (is_server && host_won) || (!is_server && !host_won);
+        enemy_won = !i_won;
+    }
+    // 両方falseなら引き分け
+
+    // 2. 攻撃データの準備 (計算処理・変更なし)
     Node3D* player_model = nullptr;
     Node3D* enemy_model = nullptr;
-
     if (player_spawn_pos && player_spawn_pos->get_child_count() > 0)
         player_model = Object::cast_to<Node3D>(player_spawn_pos->get_child(0));
     if (enemy_spawn_pos && enemy_spawn_pos->get_child_count() > 0)
         enemy_model = Object::cast_to<Node3D>(enemy_spawn_pos->get_child(0));
 
-    // --- 2. ステータスと計算 ---
-    int my_atk = gm->get_player_attack();
-    int my_def = gm->get_player_defense();
-    int enemy_atk = gm->get_next_enemy_attack();
-    int enemy_def = gm->get_next_enemy_defense();
-
-    int damage_to_enemy = MAX(1, my_atk - enemy_def);
-    int damage_to_player = MAX(1, enemy_atk - my_def);
-
-    // --- 3. スキルリストの取得 ---
-    TypedArray<SkillData> my_skills;
-    if (gm->get_party().size() > 0) {
-        Ref<MonsterData> m = gm->get_party()[0];
-        if (m.is_valid()) my_skills = m->get_skills();
-    }
-    // 相手のスキルリスト（前回修正した変数を使用）
-    TypedArray<SkillData> current_enemy_skills = enemy_player_skills;
-
-    String my_hand_str = is_server ? h_hand : c_hand;
-    String enemy_hand_str = is_server ? c_hand : h_hand;
-
-    // ★重要: アタッカーとディフェンダーを決定するロジック
     Node3D* attacker_node = nullptr;
     Node3D* defender_node = nullptr;
     Ref<SkillData> skill_to_use;
-    bool is_player_attacking = false; // 自分が攻撃側かどうか
-
-    // 勝敗判定
-    if (winner_side != 0)
-    {
-        bool host_won = (winner_side == 1);
-        bool i_won = (is_server && host_won) || (!is_server && !host_won);
-
-        if (i_won)
-        {
+    
+    if (winner_side != 0) {
+        if (i_won) {
             attacker_node = player_model;
             defender_node = enemy_model;
             skill_to_use = _get_skill_by_hand(current_skills, my_hand_str);
-        }
-        else
-        {
-            // ここがホスト側で実行される際、enemy_player_skills があれば正しくアニメが流れる
+        } else {
             attacker_node = enemy_model;
             defender_node = player_model;
             skill_to_use = _get_skill_by_hand(enemy_player_skills, enemy_hand_str);
         }
     }
 
+    // --- 3. Tweenでアニメーション演出 ---
+    Ref<Tween> seq = create_tween();
+    if (seq.is_null()) return;
+
+    // 演出用の座標計算 (スケール0.2に合わせて調整)
+    Vector2 view_size = janken_effect_root ? janken_effect_root->get_size() : Vector2(1152, 648);
+    float center_x = view_size.x / 2.0;
+    
+    // スケール定義
+    float base_scale = 0.2;
+    Vector2 tex_size = left_hand_rect->get_size(); // _show_janken_uiでセット済みと仮定
+    float scaled_width = tex_size.x * base_scale;
+    
+    // 中央で競り合う位置（中心から少しだけオフセットしてぶつかる感じに）
+    // 完全に中央だと重なるので、半径分だけずらす
+    float offset_from_center = scaled_width * 0.5; 
+    
+    // Pivotが中心(size/2)にある前提でのLeft/RightのRect座標(TopLeft)計算
+    // VisualCenter = Pos + Pivot
+    // Pos = VisualCenter - Pivot
+    // Left Visual Center Goal = center_x - offset_from_center
+    // Right Visual Center Goal = center_x + offset_from_center
+    
+    float left_target_x = (center_x - offset_from_center) - (tex_size.x / 2.0);
+    float right_target_x = (center_x + offset_from_center) - (tex_size.x / 2.0);
+
+    // (A) 「画面外から中央へ」ガッと移動 (0.3秒)
+    seq->set_parallel(true); // 並列実行開始
+    seq->tween_property(left_hand_rect, "position:x", left_target_x, 0.3)->set_trans(Tween::TRANS_CUBIC)->set_ease(Tween::EASE_OUT);
+    seq->tween_property(right_hand_rect, "position:x", right_target_x, 0.3)->set_trans(Tween::TRANS_CUBIC)->set_ease(Tween::EASE_OUT);
+    
+    // (B) 衝突の衝撃で少し揺らすなど（省略可だが、間を作る）
+    seq->chain()->tween_interval(0.2); // 移動完了後、0.2秒溜める
+
+    // (C) 勝敗演出：勝ったほうを前に、負けたほうを暗く (0.3秒かけて変化)
+    seq->set_parallel(true);
+    
+    // 勝った時の拡大サイズ (0.2 -> 0.3)
+    Vector2 win_scale = Vector2(0.3, 0.3);
+
+    if (winner_side == 0) {
+        // 引き分け：両方ちょっと弾かれる動きなど（今回はそのまま）
+    } else {
+        if (i_won) {
+            // 自分勝ち：自分を強調、相手を暗く
+            seq->tween_property(left_hand_rect, "scale", win_scale, 0.3)->set_trans(Tween::TRANS_BACK)->set_ease(Tween::EASE_OUT);
+            seq->tween_property(right_hand_rect, "modulate", Color(0.3, 0.3, 0.3, 1), 0.3); // 暗くする
+        } else {
+            // 相手勝ち：相手を強調、自分を暗く
+            seq->tween_property(right_hand_rect, "scale", win_scale, 0.3)->set_trans(Tween::TRANS_BACK)->set_ease(Tween::EASE_OUT);
+            seq->tween_property(left_hand_rect, "modulate", Color(0.3, 0.3, 0.3, 1), 0.3); // 暗くする
+        }
+    }
+
+    // (D) 結果をじっくり見せる時間 (0.8秒)
+    seq->chain()->tween_interval(0.8);
+
+    // (E) 手を隠す
+    seq->tween_callback(Callable(this, "_hide_janken_ui"));
+
+    // (F) 攻撃へ移行 or ターン終了
     if (attacker_node && defender_node && skill_to_use.is_valid())
     {
-        _perform_attack_sequence(attacker_node, defender_node, skill_to_use, my_hand_str, enemy_hand_str);
+        seq->tween_callback(Callable(this, "_perform_attack_sequence").bind(attacker_node, defender_node, skill_to_use));
+        seq->tween_interval(2.0); 
+        seq->tween_callback(Callable(this, "_on_draw_or_end"));
     }
-
-    // --- 5. ゲーム終了判定 (変更なし) ---
-    // Update UI calls here...
-
-    if (player_hp <= 0){
-        player_hp = 0;
-        if (is_server) rpc("_rpc_notify_defeat");
-        UtilityFunctions::print("DEFEATED...");
-        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
-    }
-    else if (enemy_hp <= 0) {
-        enemy_hp = 0;
-        UtilityFunctions::print("VICTORY!");
-        if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward());
-        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
-    }
-    else {
-        has_selected = false;
-        _update_ui_buttons();
+    else
+    {
+        seq->tween_interval(0.5);
+        seq->tween_callback(Callable(this, "_on_draw_or_end")); 
     }
 }
 
@@ -669,29 +706,50 @@ String resolve_anim_name(AnimationPlayer* anim, String name)
 void BattleScene::_show_janken_ui(String p_hand, String e_hand)
 {
     if (janken_effect_root) {
-        // Z-Indexを最大値に近い値にして、他のUIより前に出す
         janken_effect_root->set_z_index(100);
-        // 透明度が0になっていないか確認（1.0が不透明）
         janken_effect_root->set_modulate(Color(1, 1, 1, 1));
         janken_effect_root->show();
     }
 
-    auto set_tex = [this](TextureRect* rect, String hand)
+    // 画面サイズを取得（親コントロールのサイズを基準にする）
+    Vector2 view_size = janken_effect_root ? janken_effect_root->get_size() : Vector2(1152, 648);
+
+    auto set_tex = [this, view_size](TextureRect* rect, String hand, bool is_left)
     {
         if (!rect) return;
         
-        if (hand == "rock") rect->set_texture(tex_rock);
-        else if (hand == "scissors") rect->set_texture(tex_scissors);
-        else if (hand == "paper") rect->set_texture(tex_paper);
+        // ★毎回リセット（前のターンの色が残らないように）
+        rect->set_modulate(Color(1, 1, 1, 1)); 
 
-        // サイズを0.1倍にする（巨大すぎて画面外にいる対策）
-        rect->set_scale(Vector2(0.1, 0.1));
-        // 拡大縮小の軸を中心にする
-        rect->set_pivot_offset(rect->get_size() / 2.0);
+        Ref<Texture2D> target_tex; 
+        if (hand == "rock") target_tex = tex_rock;
+        else if (hand == "scissors") target_tex = tex_scissors;
+        else if (hand == "paper") target_tex = tex_paper;
+
+        if (target_tex.is_valid()) {
+            rect->set_texture(target_tex);
+            
+            // サイズとピボットを中心に設定
+            Vector2 tex_size = target_tex->get_size();
+            rect->set_size(tex_size);
+            rect->set_pivot_offset(tex_size / 2.0);
+            
+            // ★初期位置の設定：画面の「外」に飛ばす
+            float y_pos = (view_size.y - tex_size.y) / 2.0; // 上下中央
+            if (is_left) {
+                // 左手は画面左外へ (-300)
+                rect->set_position(Vector2(-300, y_pos));
+            } else {
+                // 右手は画面右外へ (画面幅 + 300)
+                rect->set_position(Vector2(view_size.x + 300, y_pos));
+            }
+        }
+        // スケールは0.2倍
+        rect->set_scale(Vector2(0.2, 0.2));
     };
 
-    set_tex(left_hand_rect, p_hand);
-    set_tex(right_hand_rect, e_hand);
+    set_tex(left_hand_rect, p_hand, true);
+    set_tex(right_hand_rect, e_hand, false);
 }
 
 void BattleScene::_hide_janken_ui()
@@ -699,7 +757,7 @@ void BattleScene::_hide_janken_ui()
     if (janken_effect_root) janken_effect_root->hide();
 }
 
-void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill, String p_hand, String e_hand)
+void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill)
 {
     // 1. 基本チェック
     if (!attacker || !target || !skill.is_valid()) return;
@@ -710,7 +768,7 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
     
     if (!anim) return;
 
-    // 3. Tween作成（これ1つだけで最後まで通す）
+    // 3. Tween作成
     Ref<Tween> tween = create_tween();
     if (tween.is_null()) return;
 
@@ -720,11 +778,8 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
     String jump_anim = resolve_anim_name(anim, "Jump");
     String hit_anim = (target_anim) ? resolve_anim_name(target_anim, "HitRecieve") : "";
 
-    // ★ 5. 【最優先】じゃんけん演出をTweenの先頭に追加 ★
-    // ここで登録したものは必ず最初に実行されます
-    tween->tween_callback(Callable(this, "_show_janken_ui").bind(p_hand, e_hand));
-    tween->tween_interval(0.8); // 0.8秒表示
-    tween->tween_callback(Callable(this, "_hide_janken_ui"));
+    // ★★★ 削除: ここにあった _show_janken_ui の呼び出しを消去しました ★★★
+    // 純粋に攻撃モーションから開始します
 
     // 6. 攻撃パラメータの計算
     Vector3 start_pos = attacker->get_global_position();
@@ -732,7 +787,7 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
     Vector3 dir = (target_pos - start_pos).normalized();
     String skill_name = skill->get_skill_name();
 
-    // 7. スキルごとの挙動（既存の tween オブジェクトに chain していく）
+    // 7. スキルごとの挙動 (中身は変更なし)
     if (skill_name == String::utf8("たいあたり"))
     {
         Vector3 attack_pos = target_pos - (dir * 0.4);
@@ -779,7 +834,7 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
 
-    // 8. 最後に相手をIdleに戻す（これも同じtweenの末尾に追加）
+    // 8. 最後に相手をIdleに戻す
     if (target_anim)
     {
         String target_idle = resolve_anim_name(target_anim, "Idle");
@@ -919,6 +974,18 @@ void BattleScene::_check_battle_end()
             get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
         }
     }
+}
+
+void BattleScene::_on_draw_or_end()
+{
+    // 勝負が決まってシーン移動中なら何もしない
+    if (is_transitioning) return;
+
+    has_selected = false;
+    _update_ui_buttons();
+    
+    // 必要に応じてメッセージ表示
+    // show_message("コマンドを選択してください"); 
 }
 
 void BattleScene::show_message(const String& text)

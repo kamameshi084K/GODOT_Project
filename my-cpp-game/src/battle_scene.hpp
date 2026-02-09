@@ -65,10 +65,9 @@ namespace godot
          * @param attacker 攻撃側のノード
          * @param target 防御側のノード
          * @param skill 使用するスキルデータ
-         * @param p_hand プレイヤーの手 ("rock", "scissors", "paper")
-         * @param e_hand 敵の手 ("rock", "scissors", "paper
+         * ※ p_hand, e_hand の引数を削除しました
          */
-        void _perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill, String p_hand, String e_hand);
+        void _perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill);
 
         /**
          * @brief 出した手に対応するスキルをリストから探す
@@ -85,6 +84,11 @@ namespace godot
          * @param is_player プレイヤー側かどうか（向きの調整用）
          */
         void _spawn_model_at(const String& path, Node3D* parent_node, bool is_player);
+
+        /**
+         * @brief ターン終了時やあいこの時に呼び出し、次のコマンド入力を許可する
+         */
+        void _on_draw_or_end();
 
         Dictionary p1_data;
         Dictionary p2_data;
