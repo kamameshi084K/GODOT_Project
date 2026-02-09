@@ -13,6 +13,7 @@
 #include <godot_cpp/classes/callback_tweener.hpp>
 #include <godot_cpp/classes/interval_tweener.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/style_box_flat.hpp>
 
 using namespace godot;
 
@@ -348,17 +349,8 @@ void BattleScene::_rpc_setup_battle(const Dictionary& host_info, const Dictionar
     }
 
     battle_ready = true;
-    if (player_hp_bar)
-    {
-        player_hp_bar->set_max(player_hp);   // 最大値を設定
-        player_hp_bar->set_value(player_hp); // 現在値を設定
-    }
-
-    if (enemy_hp_bar)
-    {
-        enemy_hp_bar->set_max(enemy_hp);     // 最大値を設定
-        enemy_hp_bar->set_value(enemy_hp);   // 現在値を設定
-    }
+    _update_hp_bar_look(player_hp_bar, player_hp, player_hp);
+    _update_hp_bar_look(enemy_hp_bar, enemy_hp, enemy_hp);
     UtilityFunctions::print("Battle Setup Complete! My HP: ", player_hp, " Enemy HP: ", enemy_hp);
 }
 
@@ -598,65 +590,47 @@ void BattleScene::_rpc_notify_defeat()
 
 void BattleScene::_update_ui_buttons()
 {
-    // スキル1
-    if (skill_button_1)
-    {
-        if (current_skills.size() > 0)
-        {
-            Ref<SkillData> skill = current_skills[0];
-            if (skill.is_valid())
-            {
-                String type_str = _hand_type_to_string(skill->get_hand_type());
-                skill_button_1->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
-                skill_button_1->set_disabled(false);
-            }
-        }
-        else
-        {
-            skill_button_1->set_text("- No Skill -");
-            skill_button_1->set_disabled(true);
-        }
-    }
+    // 色の定義（お好みで調整してください）
+    Color color_rock = Color(1.0, 0.4, 0.4, 1.0);    // 赤 (グー)
+    Color color_scissors = Color(1.0, 0.9, 0.2, 1.0); // 黄 (チョキ)
+    Color color_paper = Color(0.4, 0.6, 1.0, 1.0);    // 青 (パー)
+    Color color_disable = Color(0.5, 0.5, 0.5, 1.0);  // グレー (無効時)
 
-    // スキル2
-    if (skill_button_2)
+    auto update_btn = [&](Button* btn, int index)
     {
-        if (current_skills.size() > 1)
-        {
-            Ref<SkillData> skill = current_skills[1];
-            if (skill.is_valid())
-            {
-                String type_str = _hand_type_to_string(skill->get_hand_type());
-                skill_button_2->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
-                skill_button_2->set_disabled(false);
-            }
-        }
-        else
-        {
-            skill_button_2->set_text("- Empty -");
-            skill_button_2->set_disabled(true);
-        }
-    }
+        if (!btn) return;
 
-    // スキル3
-    if (skill_button_3)
-    {
-        if (current_skills.size() > 2)
+        if (current_skills.size() > index)
         {
-            Ref<SkillData> skill = current_skills[2];
+            Ref<SkillData> skill = current_skills[index];
             if (skill.is_valid())
             {
-                String type_str = _hand_type_to_string(skill->get_hand_type());
-                skill_button_3->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
-                skill_button_3->set_disabled(false);
+                int type = skill->get_hand_type();
+                String type_str = _hand_type_to_string(type);
+                btn->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
+                btn->set_disabled(false);
+
+                // ★ 手の種類に応じてボタンの色を変える
+                switch (type)
+                {
+                    case 0: btn->set_modulate(color_rock); break;     // Rock
+                    case 1: btn->set_modulate(color_scissors); break; // Scissors
+                    case 2: btn->set_modulate(color_paper); break;    // Paper
+                    default: btn->set_modulate(Color(1, 1, 1)); break;
+                }
             }
         }
         else
         {
-            skill_button_3->set_text("- Empty -");
-            skill_button_3->set_disabled(true);
+            btn->set_text("- Empty -");
+            btn->set_disabled(true);
+            btn->set_modulate(color_disable); // 空っぽならグレー
         }
-    }
+    };
+
+    update_btn(skill_button_1, 0);
+    update_btn(skill_button_2, 1);
+    update_btn(skill_button_3, 2);
 }
 
 // UI更新などで使うヘルパー関数
@@ -934,14 +908,14 @@ void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
     {
         player_hp -= final_damage;
         if (player_hp < 0) player_hp = 0;
-        if (player_hp_bar) player_hp_bar->set_value(player_hp);
+        _update_hp_bar_look(player_hp_bar, player_hp, (int)player_hp_bar->get_max());
         show_message(String::utf8("自分は ") + String::num_int64(final_damage) + String::utf8(" のダメージを受けた！"));
     }
     else
     {
         enemy_hp -= final_damage;
         if (enemy_hp < 0) enemy_hp = 0;
-        if (enemy_hp_bar) enemy_hp_bar->set_value(enemy_hp);
+        _update_hp_bar_look(enemy_hp_bar, enemy_hp, (int)enemy_hp_bar->get_max());
         show_message(String::utf8("相手に ") + String::num_int64(final_damage) + String::utf8(" のダメージ！"));
     }
 
@@ -1001,4 +975,46 @@ void BattleScene::show_message(const String& text)
             parent->show();
         }
     }
+}
+
+void BattleScene::_update_hp_bar_look(ProgressBar* bar, int current, int max)
+{
+    if (!bar) return;
+
+    // 1. 値の更新
+    bar->set_max(max);
+    bar->set_value(current);
+
+    // 2. 割合計算 (0.0 〜 1.0)
+    float ratio = (max > 0) ? (float)current / (float)max : 0.0f;
+
+    // 3. 色の決定 (HSV: 緑 -> 黄 -> 赤)
+    float hue = ratio * 0.33f; 
+    Color target_color = Color::from_hsv(hue, 1.0, 1.0);
+
+    // 4. スタイルボックスの取得と適用
+    Ref<StyleBoxFlat> flat_style;
+
+    // すでにオーバーライド（個別設定）があるか確認
+    if (bar->has_theme_stylebox_override("fill"))
+    {
+        Ref<StyleBox> style = bar->get_theme_stylebox("fill");
+        if (style.is_valid())
+        {
+            // ★エラー修正箇所: 明示的に Ref<StyleBoxFlat>(...) で囲むことで曖昧さを回避
+            flat_style = Ref<StyleBoxFlat>(Object::cast_to<StyleBoxFlat>(style.ptr()));
+        }
+    }
+
+    // まだ設定されていない、またはStyleBoxFlat以外だった場合は新規作成
+    if (flat_style.is_null())
+    {
+        flat_style.instantiate();
+        // 角を少し丸くすると見栄えが良いです（お好みで）
+        flat_style->set_corner_radius_all(4);
+        bar->add_theme_stylebox_override("fill", flat_style);
+    }
+
+    // 背景色を変更
+    flat_style->set_bg_color(target_color);
 }

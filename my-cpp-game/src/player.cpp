@@ -1,5 +1,8 @@
 #include "player.hpp"
 #include "game_manager.hpp"
+#include "enemy.hpp"
+#include "capture_ball.hpp"
+
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_map.hpp>
@@ -13,8 +16,7 @@ using namespace godot;
 
 void Player::_bind_methods()
 {
-    // --- パラメータの登録 ---
-    
+    // --- 物理・移動パラメータのバインド ---
     ClassDB::bind_method(D_METHOD("set_speed", "p_speed"), &Player::set_speed);
     ClassDB::bind_method(D_METHOD("get_speed"), &Player::get_speed);
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "speed"), "set_speed", "get_speed");
@@ -39,8 +41,7 @@ void Player::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_friction"), &Player::get_friction);
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "friction"), "set_friction", "get_friction");
 
-    // --- ノードパスの登録 ---
-
+    // --- ノードパスのバインド ---
     ClassDB::bind_method(D_METHOD("set_visual_node_path", "path"), &Player::set_visual_node_path);
     ClassDB::bind_method(D_METHOD("get_visual_node_path"), &Player::get_visual_node_path);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "visual_node_path"), "set_visual_node_path", "get_visual_node_path");
@@ -56,11 +57,16 @@ void Player::_bind_methods()
     ClassDB::bind_method(D_METHOD("set_hitbox_path", "path"), &Player::set_hitbox_path);
     ClassDB::bind_method(D_METHOD("get_hitbox_path"), &Player::get_hitbox_path);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "hitbox_path"), "set_hitbox_path", "get_hitbox_path");
+
+    // --- リソース（シーン）のバインド ---
+    ClassDB::bind_method(D_METHOD("set_capture_ball_scene", "scene"), &Player::set_capture_ball_scene);
+    ClassDB::bind_method(D_METHOD("get_capture_ball_scene"), &Player::get_capture_ball_scene);
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "capture_ball_scene", PROPERTY_HINT_RESOURCE_TYPE, "PackedScene"), "set_capture_ball_scene", "get_capture_ball_scene");
 }
 
 Player::Player()
 {
-    // デフォルト値
+    // 初期パラメータの設定
     speed = 5.0;
     jump_velocity = 4.5;
     gravity = 9.8;
@@ -68,6 +74,7 @@ Player::Player()
     acceleration = 40.0;
     friction = 30.0;
 
+    // ポインタの初期化
     visual_node = nullptr;
     camera_arm = nullptr;
     anim_tree = nullptr;
@@ -81,6 +88,7 @@ Player::~Player()
 
 void Player::_ready()
 {
+    // NodePathから実体ノードを取得してキャッシュ
     if (!visual_node_path.is_empty())
     {
         visual_node = get_node<Node3D>(visual_node_path);
@@ -106,49 +114,35 @@ void Player::_ready()
         hitbox = get_node<Area3D>(hitbox_path);
     }
 
-    // RayCast3Dノードの作成と設定
+    // インタラクション用RayCast3Dの動的生成
     interaction_ray = memnew(RayCast3D);
-    // visual_node（モデル）があるなら、その子にすることで回転に追従させる
     if (visual_node)
     {
         visual_node->add_child(interaction_ray);
     }
     else
     {
-        // モデルがない場合は仕方なくPlayer直下に追加
         add_child(interaction_ray);
     }
 
-    // 設定: プレイヤーの目の前 2メートルまで検知
-    // (Z軸マイナス方向が正面)
+    // レイキャストのパラメータ設定（正面2mを検知）
     interaction_ray->set_target_position(Vector3(0, 0, 2.0));
-    
-    // 重要: デフォルトではオフになっているので有効化する
     interaction_ray->set_enabled(true);
-    
-    // 足元(0,0,0)ではなく、胸のあたり(高さ1.0)から飛ばす
     interaction_ray->set_position(Vector3(0, 1.0, 0));
 
-    // GameManagerのチェック（バトル帰りかどうか）
+    // GameManagerを介したシーン遷移（バトル帰り）の復帰処理
     GameManager *gm = GameManager::get_singleton();
     if (gm)
     {
         if (gm->get_is_returning_from_battle())
         {
-            // バトルからの帰還時のみ位置を戻す
             set_global_position(gm->get_last_player_position());
             gm->set_is_returning_from_battle(false);
             UtilityFunctions::print("Welcome back from battle!");
-            
-            // 重要: バトル用ステータスのセットアップはGameManagerが管理するので、Playerからは何もしなくてOK
-            // 必要なら、ここでパーティがいるか確認してセットするだけでも良い
             gm->prepare_battle_stats();
         }
         else
         {
-            // ゲーム開始時。
-            // プレイヤーがステータスを持っていないので、GMに送信する処理はもう不要！
-            // 念のためバトル用ステータスを準備させておく
             gm->prepare_battle_stats();
         }
     }
@@ -156,6 +150,7 @@ void Player::_ready()
 
 void Player::_physics_process(double delta)
 {
+    // エディタ内での動作防止
     if (Engine::get_singleton()->is_editor_hint())
     {
         return;
@@ -164,13 +159,13 @@ void Player::_physics_process(double delta)
     Input *input = Input::get_singleton();
     Vector3 velocity = get_velocity();
 
-    // 1. 重力
+    // 1. 重力計算
     if (!is_on_floor())
     {
         velocity.y -= gravity * delta;
     }
 
-    // 3. カメラ操作
+    // 2. カメラ操作（右スティック/マウス等による旋回）
     Vector2 cam_input = input->get_vector("camera_left", "camera_right", "camera_up", "camera_down");
     
     if (camera_arm)
@@ -186,7 +181,7 @@ void Player::_physics_process(double delta)
         camera_arm->set_rotation_degrees(rot);
     }
 
-    // 4. 移動入力
+    // 3. 移動入力と方向計算
     Vector2 input_dir = input->get_vector("move_left", "move_right", "move_up", "move_down");
     Vector3 direction = Vector3(input_dir.x, 0, input_dir.y);
 
@@ -196,9 +191,10 @@ void Player::_physics_process(double delta)
         direction = direction.rotated(Vector3(0, 1, 0), arm_rotation);
     }
 
+    // 4. 移動処理（加速・減速）
     if (direction.length() > 0)
     {
-        // 向きの更新
+        // モデルの向きを移動方向へ滑らかに回転
         if (visual_node)
         {
             double target_angle = Math::atan2(direction.x, direction.z);
@@ -207,47 +203,68 @@ void Player::_physics_process(double delta)
             visual_node->set_rotation(rotation);
         }
 
-        // 加速
         velocity.x = Math::move_toward(velocity.x, (real_t)(direction.x * speed), (real_t)(acceleration * delta));
         velocity.z = Math::move_toward(velocity.z, (real_t)(direction.z * speed), (real_t)(acceleration * delta));
     }
     else
     {
-        // 減速（摩擦）
         velocity.x = Math::move_toward(velocity.x, (real_t)0.0, (real_t)(friction * delta));
         velocity.z = Math::move_toward(velocity.z, (real_t)0.0, (real_t)(friction * delta));
     }
 
-    // 5. アニメーションと攻撃
+    // 5. アニメーション制御とアクション
     if (anim_tree)
     {
-        // 攻撃入力
+        // 攻撃アクション
         if (input->is_action_just_pressed("attack"))
         {
             anim_tree->set("parameters/Punch/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
-            UtilityFunctions::print("Attack!");
-
-            // 捕食ロジック（Hitboxがあれば実行）
+            
             if (hitbox)
             {
                 TypedArray<Node3D> bodies = hitbox->get_overlapping_bodies();
                 for (int i = 0; i < bodies.size(); i++)
                 {
-                    Node3D* body = Object::cast_to<Node3D>(bodies[i]);
-                    if (body && body->is_in_group("enemy"))
+                    Enemy* enemy = Object::cast_to<Enemy>(bodies[i]);
+                    if (enemy)
                     {
-                        UtilityFunctions::print("Gotcha! Ate the enemy!");
-                        body->queue_free();
+                        enemy->take_damage(3);
                     }
                 }
             }
         }
 
-        // 移動アニメーション
+        // ボール投げアクション
+        if (capture_ball_scene.is_valid())
+        {
+            Node* node = capture_ball_scene->instantiate();
+            if (!node) return; // 生成失敗対策
+
+            CaptureBall* ball = Object::cast_to<CaptureBall>(node);
+            if (ball) // ここで必ず nullptr チェック！
+            {
+                // 先にツリーに追加（これにより _ready 等が走る準備ができる）
+                get_parent()->add_child(ball);
+                
+                Vector3 spawn_pos = get_global_position() + Vector3(0, 1.5, 0) - get_transform().basis.get_column(2) * 1.0;
+                Vector3 forward = -get_transform().basis.get_column(2);
+                
+                ball->set_global_position(spawn_pos);
+                ball->setup(forward);
+            }
+            else
+            {
+                // キャストに失敗した場合はメモリリーク防止のため削除
+                UtilityFunctions::print("Error: Instantiated node is not a CaptureBall!");
+                node->queue_free();
+            }
+        }
+
+        // 移動アニメーション（水平速度をパラメータに渡す）
         double h_speed = Vector3(velocity.x, 0, velocity.z).length();
         anim_tree->set("parameters/Move/blend_position", (real_t)h_speed);
 
-        // ジャンプ/移動の状態遷移
+        // ステートマシンによる接地・空中状態の遷移
         if (state_machine)
         {
             if (is_on_floor())
@@ -267,31 +284,22 @@ void Player::_physics_process(double delta)
 
 void Player::_input(const Ref<InputEvent>& event)
 {
-    // エディタ上での実行を防ぐ
     if (Engine::get_singleton()->is_editor_hint())
     {
         return;
     }
 
-    // "ui_accept" (Enter, Space, Aボタン等) が押されたかチェック
+    // 決定/インタラクトボタンの入力処理
     if (event->is_action_pressed("ui_accept"))
     {
-        // レイキャストが存在し、何かに衝突しているか？
         if (interaction_ray && interaction_ray->is_colliding())
         {
-            // 当たったオブジェクトを取得
             Object* collider = interaction_ray->get_collider();
             Node* hit_node = Object::cast_to<Node>(collider);
 
-            if (hit_node)
+            if (hit_node && hit_node->has_method("interact"))
             {
-                // interactメソッドがあるかチェックして呼び出す
-                if (hit_node->has_method("interact"))
-                {
-                    hit_node->call("interact");
-                }
-
-                // ここに後で「会話処理」などを追加します
+                hit_node->call("interact");
             }
         }
     }
@@ -328,3 +336,6 @@ NodePath Player::get_anim_tree_path() const { return anim_tree_path; }
 
 void Player::set_hitbox_path(const NodePath &path) { hitbox_path = path; }
 NodePath Player::get_hitbox_path() const { return hitbox_path; }
+
+void Player::set_capture_ball_scene(const Ref<PackedScene>& scene) { capture_ball_scene = scene; }
+Ref<PackedScene> Player::get_capture_ball_scene() const { return capture_ball_scene; }

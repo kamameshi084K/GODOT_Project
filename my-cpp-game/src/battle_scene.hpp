@@ -61,6 +61,14 @@ namespace godot
         String server_client_hand;  // サーバー側で保持するクライアントの手
 
         /**
+         * @brief HPバーの見た目（色と値）を更新する
+         * @param bar 対象のProgressBar
+         * @param current 現在のHP
+         * @param max 最大HP
+         */
+        void _update_hp_bar_look(ProgressBar* bar, int current, int max);
+
+        /**
          * @brief 攻撃の演出（移動、アニメーション、ダメージ適用）を実行する
          * @param attacker 攻撃側のノード
          * @param target 防御側のノード

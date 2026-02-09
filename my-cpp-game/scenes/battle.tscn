@@ -91,12 +91,14 @@ offset_left = 47.0
 offset_top = 540.0
 offset_right = 417.0
 offset_bottom = 600.0
+theme_override_constants/outline_size = 5
 
 [node name="EnemyHPBar" type="ProgressBar" parent="UI"]
 offset_left = 746.0
 offset_top = 40.0
 offset_right = 1116.0
 offset_bottom = 100.0
+theme_override_constants/outline_size = 5
 
 [node name="MessageWindow" type="PanelContainer" parent="UI"]
 offset_left = 445.0

@@ -16,6 +16,7 @@
 #include "battle_scene.hpp"
 #include "skill_data.hpp"  
 #include "monster_data.hpp"
+#include "capture_ball.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -46,6 +47,7 @@ void initialize_gdexample_module(ModuleInitializationLevel p_level)
     ClassDB::register_class<Town>(); // タウンクラスを登録
     ClassDB::register_class<BattleScene>(); // バトルシーンクラスを登録
     ClassDB::register_class<SkillData>(); // 技データクラスを登録
+    ClassDB::register_class<CaptureBall>(); // キャプチャーボールクラスを登録
     
 }
 
