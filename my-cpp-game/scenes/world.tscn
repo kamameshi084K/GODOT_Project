@@ -48,36 +48,39 @@ shadow_enabled = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Player/Warrior/CharacterArmature" index="0"]
-bones/2/position = Vector3(0.0021530236, 1.1045109, 0.07522926)
-bones/7/rotation = Quaternion(-0.022093872, -0.00027540798, 6.0698053e-06, 0.99975586)
-bones/9/rotation = Quaternion(0.7469081, 0.46716103, 0.38718492, -0.27198687)
-bones/10/rotation = Quaternion(-0.2478905, 0.21160617, -0.19153988, 0.92578924)
-bones/17/rotation = Quaternion(0.7160165, -0.49705887, -0.38794035, -0.2995918)
-bones/25/rotation = Quaternion(0.99205136, 0.00844268, -0.0006963639, 0.12554881)
-bones/26/rotation = Quaternion(0.26097658, 0.0025650624, 0.007673046, 0.9653112)
-bones/27/rotation = Quaternion(0.9920523, -0.008442825, 0.00069712376, 0.12554054)
-bones/28/rotation = Quaternion(0.26097596, -0.002565044, -0.007673049, 0.9653114)
+bones/2/position = Vector3(0.0021530236, 1.1152484, 0.07522926)
+bones/7/rotation = Quaternion(-0.006778274, -0.00027546898, 1.8621815e-06, 0.99997705)
+bones/9/rotation = Quaternion(0.73821473, 0.48265204, 0.3795373, -0.27935177)
+bones/10/rotation = Quaternion(-0.24790749, 0.21408291, -0.19146763, 0.92523)
+bones/17/rotation = Quaternion(0.7101368, -0.5065735, -0.382728, -0.30431637)
+bones/25/rotation = Quaternion(0.9943115, 0.008519455, -0.0008493455, 0.10616689)
+bones/26/rotation = Quaternion(0.22369233, 0.002268336, 0.0077659413, 0.9746263)
+bones/27/rotation = Quaternion(0.99432033, -0.008519731, 0.00085072935, 0.10608424)
+bones/28/rotation = Quaternion(0.2236916, -0.0022683165, -0.0077659427, 0.9746264)
 
 [node name="Head" parent="Player/Warrior/CharacterArmature/Skeleton3D" index="0"]
-transform = Transform3D(0.99999976, 7.7093887e-13, -0.0005502031, -3.7456855e-05, 0.9976802, -0.06807822, 0.0005489266, 0.06807828, 0.9976799, -0.00063837686, 2.0832875, 0.08092582)
+transform = Transform3D(0.99999976, 5.9374727e-12, -0.00055020326, -5.4252865e-05, 0.9951268, -0.098605126, 0.00054752186, 0.09860517, 0.99512655, -0.00063837686, 2.0940251, 0.08092582)
 
 [node name="UpperArm_L" parent="Player/Warrior/CharacterArmature/Skeleton3D" index="1"]
-transform = Transform3D(0.54014915, 0.28688172, 0.791162, 0.029091373, -0.9459066, 0.32313222, 0.84106624, -0.1515236, -0.5192765, 0.31953597, 1.8270439, 0.043003142)
+transform = Transform3D(0.5384846, 0.3257758, 0.7771126, 0.05131963, -0.9332082, 0.35565248, 0.84107107, -0.1516323, -0.51923704, 0.31953597, 1.8377814, 0.043003142)
 
 [node name="Weapon_R" parent="Player/Warrior/CharacterArmature/Skeleton3D" index="2"]
-transform = Transform3D(-0.0015968647, 0.076433614, -0.99707335, -0.36656067, -0.92771673, -0.07052967, -0.9303929, 0.36537528, 0.02949924, -0.47956726, 0.9379796, 0.16326341)
+transform = Transform3D(-0.011283014, 0.051894043, -0.9985888, -0.36645952, -0.9293855, -0.044156816, -0.93036586, 0.365444, 0.029503504, -0.50300324, 0.9532648, 0.16332908)
 
 [node name="UpperArm_R" parent="Player/Warrior/CharacterArmature/Skeleton3D" index="3"]
-transform = Transform3D(0.4954262, -0.37753692, -0.7823162, -0.065526314, -0.9142883, 0.39972872, -0.8661751, -0.1467737, -0.47770086, -0.3195362, 1.8270439, 0.043003116)
+transform = Transform3D(0.4935209, -0.4015637, -0.7714814, -0.07865845, -0.9040043, 0.42022526, -0.86616987, -0.14670637, -0.4777313, -0.3195362, 1.8377814, 0.043003116)
 
 [node name="Camera3D" parent="Player/SpringArm3D" index="0"]
 current = true
 
 [node name="Ground" type="MeshInstance3D" parent="."]
+layers = 4
 mesh = SubResource("PlaneMesh_f3sb7")
 surface_material_override/0 = SubResource("StandardMaterial3D_aqk2v")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="Ground"]
+collision_layer = 4
+collision_mask = 11
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground/StaticBody3D"]
 shape = SubResource("ConcavePolygonShape3D_036b0")

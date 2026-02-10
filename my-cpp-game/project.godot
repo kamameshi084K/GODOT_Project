@@ -85,3 +85,14 @@ throw_ball={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":10,"pressure":0.0,"pressed":true,"script":null)
 ]
 }
+
+[layer_names]
+
+3d_render/layer_1="Player"
+3d_render/layer_2="Enemy"
+3d_render/layer_3="World"
+3d_render/layer_4="PlayerAttack"
+3d_physics/layer_1="Player"
+3d_physics/layer_2="Enemy"
+3d_physics/layer_3="World"
+3d_physics/layer_4="PlayerAttack"
