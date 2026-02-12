@@ -111,6 +111,11 @@ void GameManager::_bind_methods()
     ClassDB::bind_method(D_METHOD("_rpc_register_battle_ready", "peer_id", "player_name", "model_path", "hp", "speed", "skills"), &GameManager::_rpc_register_battle_ready);
     ClassDB::bind_method(D_METHOD("_check_and_start_battle"), &GameManager::_check_and_start_battle);
     ClassDB::bind_method(D_METHOD("_rpc_request_battle_setup"), &GameManager::_rpc_request_battle_setup);
+    ClassDB::bind_method(D_METHOD("get_current_party_rank_sum"), &GameManager::get_current_party_rank_sum);
+    ClassDB::bind_method(D_METHOD("can_add_to_party", "monster"), &GameManager::can_add_to_party);
+    ClassDB::bind_method(D_METHOD("move_standby_to_party", "monster"), &GameManager::move_standby_to_party);
+    ClassDB::bind_method(D_METHOD("move_party_to_standby", "monster"), &GameManager::move_party_to_standby);
+    ClassDB::bind_method(D_METHOD("add_captured_monster", "monster"), &GameManager::add_captured_monster);
 }
 
 GameManager::GameManager()
@@ -766,4 +771,83 @@ void GameManager::_check_and_start_battle()
             battle_scene->rpc("_rpc_setup_battle", p1_data, p2_data);
         }
     }
+}
+
+// パーティの合計ランクを計算
+int GameManager::get_current_party_rank_sum() const
+{
+    int total_rank = 0;
+    for (int i = 0; i < party_monsters.size(); i++)
+    {
+        Ref<MonsterData> m = party_monsters[i];
+        if (m.is_valid())
+        {
+            total_rank += m->get_rank();
+        }
+    }
+    return total_rank;
+}
+
+// パーティに追加できるかチェック（3体まで & 合計ランク7まで）
+bool GameManager::can_add_to_party(const Ref<MonsterData>& monster) const
+{
+    if (monster.is_null()) return false;
+    
+    // 1. 人数制限チェック (最大3体)
+    if (party_monsters.size() >= 3)
+    {
+        UtilityFunctions::print("Cannot add: Party is full (Max 3).");
+        return false;
+    }
+
+    // 2. ランクコストチェック
+    int current_total = get_current_party_rank_sum();
+    int new_rank = monster->get_rank();
+    
+    if (current_total + new_rank > 7)
+    {
+        UtilityFunctions::print("Cannot add: Rank limit exceeded! (Current: ", current_total, " + New: ", new_rank, " > 7)");
+        return false;
+    }
+
+    return true;
+}
+
+// 控えからパーティへ移動
+bool GameManager::move_standby_to_party(const Ref<MonsterData>& monster)
+{
+    // まずルールチェック
+    if (!can_add_to_party(monster)) return false;
+
+    // 控えリストにそのモンスターがいるか確認
+    int index = standby_monsters.find(monster);
+    if (index != -1)
+    {
+        standby_monsters.remove_at(index); // 控えから削除
+        party_monsters.append(monster);    // パーティに追加
+        UtilityFunctions::print("Moved to Party: ", monster->get_monster_name());
+        return true;
+    }
+    
+    return false;
+}
+
+// パーティから控えへ戻す
+void GameManager::move_party_to_standby(const Ref<MonsterData>& monster)
+{
+    int index = party_monsters.find(monster);
+    if (index != -1)
+    {
+        party_monsters.remove_at(index);     // パーティから削除
+        standby_monsters.append(monster);    // 控えに追加
+        UtilityFunctions::print("Moved to Standby: ", monster->get_monster_name());
+    }
+}
+
+// 捕獲時の処理（とりあえず倉庫へ）
+void GameManager::add_captured_monster(const Ref<MonsterData>& monster)
+{
+    // とりあえず控えに追加する
+    standby_monsters.append(monster);
+    UtilityFunctions::print("Captured! Sent to Box: ", monster->get_monster_name());
 }

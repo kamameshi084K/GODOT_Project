@@ -30,6 +30,14 @@ void MonsterData::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_speed"), &MonsterData::get_speed);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "speed"), "set_speed", "get_speed");
 
+    ClassDB::bind_method(D_METHOD("set_current_hp", "val"), &MonsterData::set_current_hp);
+    ClassDB::bind_method(D_METHOD("get_current_hp"), &MonsterData::get_current_hp);
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "current_hp"), "set_current_hp", "get_current_hp");
+
+    ClassDB::bind_method(D_METHOD("set_rank", "val"), &MonsterData::set_rank);
+    ClassDB::bind_method(D_METHOD("get_rank"), &MonsterData::get_rank);
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "rank", PROPERTY_HINT_RANGE, "1,4"), "set_rank", "get_rank");
+
     // --- ★追加: 特性 ---
     ClassDB::bind_method(D_METHOD("set_ability", "val"), &MonsterData::set_ability);
     ClassDB::bind_method(D_METHOD("get_ability"), &MonsterData::get_ability);
@@ -65,6 +73,7 @@ MonsterData::MonsterData()
     attack = 1;
     defense = 0;
     speed = 1;
+    rank = 1;
 
     // 初期化
     ability = ABILITY_NONE;
@@ -102,6 +111,9 @@ int MonsterData::get_defense() const { return defense; }
 void MonsterData::set_speed(int val) { speed = val; }
 int MonsterData::get_speed() const { return speed; }
 
+void MonsterData::set_current_hp(int val) { current_hp = val; }
+int MonsterData::get_current_hp() const { return current_hp; }
+
 // --- ★追加分の実装 ---
 
 void MonsterData::set_ability(int val) { ability = val; }
@@ -115,3 +127,6 @@ String MonsterData::get_model_path() const { return model_path; }
 
 void MonsterData::set_resource_path(const String& path) { resource_path = path; }
 String MonsterData::get_resource_path() const { return resource_path; }
+
+void MonsterData::set_rank(int val) { rank = val; }
+int MonsterData::get_rank() const { return rank; }

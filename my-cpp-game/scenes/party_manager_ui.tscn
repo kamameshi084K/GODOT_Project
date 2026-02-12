@@ -1,0 +1,86 @@
+[gd_scene load_steps=2 format=3 uid="uid://hysw4c7pmu6o"]
+
+[ext_resource type="Script" uid="uid://bgk612h57og0s" path="res://scripts/party_manager_ui.gd" id="1_44p8h"]
+
+[node name="PartyManagerUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_44p8h")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -111.0
+offset_right = 150.0
+offset_bottom = -49.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="PartyInfoLabel" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "現在のパーティ (Rank: 0/7)"
+
+[node name="PartyList" type="ItemList" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+auto_height = true
+
+[node name="ToStandbyButton" type="Button" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "控えに戻す"
+
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "控えモンスター"
+
+[node name="StandbyList" type="ItemList" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+
+[node name="ToPartyButton" type="Button" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "パーティに入れる"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -41.0
+offset_top = -122.0
+offset_right = 41.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "決定 / 閉じる"
+
+[connection signal="pressed" from="HBoxContainer/VBoxContainer/ToStandbyButton" to="." method="_on_to_standby_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer2/ToPartyButton" to="." method="_on_to_party_button_pressed"]
+[connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

@@ -6,6 +6,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/kinematic_collision3d.hpp>
 #include <godot_cpp/classes/random_number_generator.hpp> // 確率計算用
+#include <godot_cpp/classes/animation_node_one_shot.hpp>
 
 using namespace godot;
 
@@ -47,6 +48,7 @@ Enemy::Enemy()
     gravity = 9.8;
     visual_node = nullptr;
     anim_tree = nullptr;
+    is_dying = false;
     
     max_hp = 10;
     current_hp = 10;
@@ -83,6 +85,39 @@ void Enemy::_ready()
 void Enemy::_physics_process(double delta)
 {
     if (Engine::get_singleton()->is_editor_hint()) return;
+
+    if (is_dying)
+    {
+        set_velocity(Vector3(0, 0, 0));
+        move_and_slide();
+
+        if (anim_tree)
+        {
+            // Dieアニメが終わったかチェック (activeがfalseになったら終了)
+            bool is_die_anim_playing = anim_tree->get("parameters/Die/active");
+            if (!is_die_anim_playing)
+            {
+                queue_free(); // アニメが終わったのでさようなら
+            }
+        }
+        else
+        {
+            queue_free(); // アニメツリーがない場合は即消し
+        }
+        return; // これ以上何もしない
+    }
+
+    // ★追加: ダメージ（Hit）アニメ中も動かない
+    if (anim_tree)
+    {
+        bool is_hit_anim_playing = anim_tree->get("parameters/Hit/active");
+        if (is_hit_anim_playing)
+        {
+            set_velocity(Vector3(0, 0, 0));
+            move_and_slide();
+            return;
+        }
+    }
 
     // --- 移動ロジック (既存のまま) ---
     Vector3 velocity = get_velocity();
@@ -132,39 +167,72 @@ void Enemy::update_ui() {
 }
 
 void Enemy::take_damage(int amount) {
+    if (is_dying) return; // 死んでる最中はダメージ無効
+
     current_hp -= amount;
+    
     if (current_hp <= 0) {
         current_hp = 0;
-        UtilityFunctions::print("Enemy defeated! (Failed to capture)");
-        queue_free(); // 倒してしまったら消滅
+        UtilityFunctions::print("Enemy Defeated!");
+        
+        is_dying = true; // 死亡フラグON
+        
+        // ★追加: 死亡アニメ再生
+        if (anim_tree) {
+            anim_tree->set("parameters/Die/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
+        }
+        
+        // ここで queue_free() はしない！（アニメ終了待ちのため）
+        
     } else {
         UtilityFunctions::print("Ouch! HP: ", current_hp);
-        // ノックバック処理などを入れても良い
+        
+        // ★追加: ダメージアニメ再生
+        if (anim_tree) {
+            anim_tree->set("parameters/Hit/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
+        }
     }
     update_ui();
 }
 
-void Enemy::hit_by_ball() {
-    // 捕獲判定
+void Enemy::hit_by_ball()
+{
+    // 1. 捕獲率の計算（HPが減るほど捕まえやすい仕様は維持）
+    // HP満タンなら20%、瀕死ならほぼ100%に近い確率になります
     float hp_ratio = (float)current_hp / (float)max_hp;
-    // HPが減るほど捕まりやすい (20% 〜 100%)
     float capture_chance = 0.2f + (0.8f * (1.0f - hp_ratio));
     
     Ref<RandomNumberGenerator> rng;
     rng.instantiate();
     rng->randomize();
     
-    if (rng->randf() < capture_chance) {
+    // 2. 捕獲判定
+    if (rng->randf() < capture_chance)
+    {
         UtilityFunctions::print("Capture Success!");
+        
         GameManager* gm = GameManager::get_singleton();
-        if (gm && monster_data.is_valid()) {
-            Ref<MonsterData> new_data = monster_data->duplicate(true);
-            gm->add_monster(new_data);
+        if (gm && monster_data.is_valid())
+        {
+            // データを完全複製して、新しい個体データを作成
+            Ref<MonsterData> new_monster = monster_data->duplicate(true);
+            
+            // ★重要変更点: 捕まえた瞬間に全回復させる
+            // (current_hp に max_hp の値をセットする)
+            new_monster->set_current_hp(new_monster->get_max_hp());
+            
+            // ★重要変更点: まずは「捕獲（倉庫送り）」として処理する
+            // 準備フェーズでパーティ編成を行うため、いきなり手持ちには入れない
+            gm->add_captured_monster(new_monster);
         }
-        queue_free(); // 消滅
-    } else {
+        
+        // 捕獲成功したので、フィールド上の敵オブジェクトを消滅させる
+        queue_free(); 
+    }
+    else
+    {
         UtilityFunctions::print("Capture Failed!");
-        // ボールが弾かれるエフェクトなど
+        // ※必要であれば、ここでボールが弾かれる音やエフェクトを追加できます
     }
 }
 

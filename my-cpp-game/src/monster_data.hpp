@@ -27,6 +27,8 @@ namespace godot
         int attack;          // 攻撃力
         int defense;         // 防御力
         int speed;           // 素早さ
+        int current_hp;
+        int rank;
 
         // 特性
         int ability;
@@ -163,5 +165,10 @@ namespace godot
 
         void set_resource_path(const String& path);
         String get_resource_path() const;
+
+        void set_current_hp(int val); // ★追加
+        int get_current_hp() const;   // ★追加
+        void set_rank(int val); // ★追加
+        int get_rank() const;
     };
 }

@@ -418,5 +418,21 @@ namespace godot
 
         void set_starter_option_3(const Ref<MonsterData>& data);
         Ref<MonsterData> get_starter_option_3() const;
+
+        // 現在のパーティの合計ランクを計算する
+        int get_current_party_rank_sum() const;
+        
+        // 指定したモンスターをパーティに加えられるかチェックする (コスト・人数制限)
+        bool can_add_to_party(const Ref<MonsterData>& monster) const;
+        
+        // 控え(Standby)のモンスターをパーティ(Party)に移動させる
+        // 成功したら true を返す
+        bool move_standby_to_party(const Ref<MonsterData>& monster);
+        
+        // パーティのモンスターを控えに戻す
+        void move_party_to_standby(const Ref<MonsterData>& monster);
+
+        // 捕獲時はとりあえず控え(Standby)に入れるように変更
+        void add_captured_monster(const Ref<MonsterData>& monster);
     };
 }

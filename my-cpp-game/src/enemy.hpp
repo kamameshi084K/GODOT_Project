@@ -43,6 +43,8 @@ namespace godot
         // アニメーションツリーへのポインタ
         AnimationTree* anim_tree;
 
+        bool is_dying;
+
     protected:
         // Godotへのメソッド登録用
         static void _bind_methods();

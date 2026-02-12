@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b1y27wad8uwsk"]
+[gd_scene load_steps=16 format=3 uid="uid://b1y27wad8uwsk"]
 
 [ext_resource type="PackedScene" uid="uid://brdbcjpt3kjef" path="res://assets/models/Market_SecondAge_Level1.gltf" id="1_gwqsq"]
 [ext_resource type="PackedScene" uid="uid://c0x3e4hwtdwvf" path="res://assets/models/Market_FirstAge_Level1.gltf" id="2_nki3b"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://ehefqu81itmf" path="res://scenes/hud.tscn" id="6_tkreh"]
 [ext_resource type="PackedScene" uid="uid://f6udbn6juvkk" path="res://scenes/npc.tscn" id="7_525j1"]
 [ext_resource type="PackedScene" uid="uid://dxnjoyefn05ck" path="res://scenes/dialogue_ui.tscn" id="8_xtgmq"]
+[ext_resource type="Script" uid="uid://b26rls2qxlcmi" path="res://scripts/open_party_button.gd" id="9_v3ani"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xtgmq"]
 albedo_color = Color(0.19607843, 0.19607843, 0.19607843, 1)
@@ -102,15 +103,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.878807, 0, -6.7171965)
 
 [node name="DialogueBox" parent="." instance=ExtResource("8_xtgmq")]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="UI_Layer" type="CanvasLayer" parent="."]
 
-[node name="TimeLabel" type="Label" parent="CanvasLayer"]
+[node name="TimeLabel" type="Label" parent="UI_Layer"]
 offset_right = 87.0
 offset_bottom = 28.0
 theme_override_font_sizes/font_size = 20
-text = "Time: 0.0"
+text = "Time's Up! Please Ready up."
 
-[node name="Button" type="Button" parent="CanvasLayer"]
+[node name="Button" type="Button" parent="UI_Layer"]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -122,10 +123,18 @@ offset_right = 40.0
 offset_bottom = 160.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "READY!"
+text = "準備完了！"
+
+[node name="OpenPartyButton" type="Button" parent="UI_Layer"]
+offset_left = 508.0
+offset_top = 142.0
+offset_right = 648.0
+offset_bottom = 193.0
+text = "パーティー編成"
+script = ExtResource("9_v3ani")
 
 [connection signal="body_entered" from="WarpArea" to="WarpArea" method="_on_body_entered"]
-[connection signal="pressed" from="CanvasLayer/Button" to="." method="_on_ready_button_pressed"]
+[connection signal="pressed" from="UI_Layer/Button" to="." method="_on_ready_button_pressed"]
 
 [editable path="Market_SecondAge_Level12"]
 [editable path="WarpArea/WonderWalls_SecondAge2"]

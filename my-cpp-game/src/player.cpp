@@ -156,6 +156,21 @@ void Player::_physics_process(double delta)
         return;
     }
 
+    if (Engine::get_singleton()->is_editor_hint()) return;
+
+    // ★追加: 攻撃モーション中は操作を受け付けない（完全に止まる）
+    if (anim_tree)
+    {
+        // "parameters/Punch/active" が true なら、パンチアニメ再生中
+        bool is_attacking = anim_tree->get("parameters/Punch/active");
+        if (is_attacking)
+        {
+            set_velocity(Vector3(0, 0, 0)); // その場で停止
+            move_and_slide(); // 重力などは適用したい場合はここを工夫しますが、今回は完全停止でOK
+            return; // ここで処理を終わらせる（移動入力へ進まない）
+        }
+    }
+
     Input *input = Input::get_singleton();
     Vector3 velocity = get_velocity();
 
@@ -218,45 +233,74 @@ void Player::_physics_process(double delta)
         // 攻撃アクション
         if (input->is_action_just_pressed("attack"))
         {
+            UtilityFunctions::print("Attack button pressed!"); // ★ボタン反応チェック
+
             anim_tree->set("parameters/Punch/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
             
             if (hitbox)
             {
                 TypedArray<Node3D> bodies = hitbox->get_overlapping_bodies();
+                UtilityFunctions::print("Bodies in hitbox: ", bodies.size()); // ★範囲内の敵の数チェック
+
                 for (int i = 0; i < bodies.size(); i++)
                 {
                     Enemy* enemy = Object::cast_to<Enemy>(bodies[i]);
                     if (enemy)
                     {
+                        UtilityFunctions::print("Hit Enemy!"); // ★ヒット確認
                         enemy->take_damage(3);
                     }
+                    else
+                    {
+                        UtilityFunctions::print("Hit something, but not Enemy class.");
+                    }
                 }
+            }
+            else
+            {
+                UtilityFunctions::print("Error: Hitbox is null! Set path in Inspector."); // ★設定忘れチェック
             }
         }
 
         // ボール投げアクション
-        if (capture_ball_scene.is_valid())
+        if (input->is_action_just_pressed("throw_ball"))
         {
-            Node* node = capture_ball_scene->instantiate();
-            if (!node) return; // 生成失敗対策
-
-            CaptureBall* ball = Object::cast_to<CaptureBall>(node);
-            if (ball) // ここで必ず nullptr チェック！
+            if (capture_ball_scene.is_valid())
             {
-                // 先にツリーに追加（これにより _ready 等が走る準備ができる）
-                get_parent()->add_child(ball);
-                
-                Vector3 spawn_pos = get_global_position() + Vector3(0, 1.5, 0) - get_transform().basis.get_column(2) * 1.0;
-                Vector3 forward = -get_transform().basis.get_column(2);
-                
-                ball->set_global_position(spawn_pos);
-                ball->setup(forward);
+                Node* node = capture_ball_scene->instantiate();
+                CaptureBall* ball = Object::cast_to<CaptureBall>(node);
+                if (ball)
+                {
+                    // 親ノード（Worldなど）に追加
+                    get_parent()->add_child(ball);
+                    
+                    Vector3 forward;
+                    Vector3 spawn_pos;
+
+                    // ★修正: 本体の向きではなく、「見た目（visual_node）」の向きを使う
+                    if (visual_node)
+                    {
+                        // visual_node の Z軸（青軸）の逆方向が「正面」
+                        forward = visual_node->get_global_transform().basis.get_column(2);
+                        // 発射位置もモデルの位置を基準にする（少し前、少し上）
+                        spawn_pos = visual_node->get_global_position() + Vector3(0, 1.5, 0) + forward * 1.0;
+                    }
+                    else
+                    {
+                        // モデルがない場合のバックアップ
+                        forward = -get_global_transform().basis.get_column(2);
+                        spawn_pos = get_global_position() + Vector3(0, 1.5, 0) + forward * 1.0;
+                    }
+                    
+                    ball->set_global_position(spawn_pos);
+                    ball->setup(forward); // その方向へ飛ばす
+                    
+                    UtilityFunctions::print("Ball thrown!");
+                }
             }
             else
             {
-                // キャストに失敗した場合はメモリリーク防止のため削除
-                UtilityFunctions::print("Error: Instantiated node is not a CaptureBall!");
-                node->queue_free();
+                UtilityFunctions::print("Error: Capture Ball Scene not set in Player!");
             }
         }
 
