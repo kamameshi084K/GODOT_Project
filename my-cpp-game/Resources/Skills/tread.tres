@@ -3,4 +3,5 @@
 [resource]
 skill_name = "のしかかる"
 hand_type = 2
+power = 6
 animation_name = "Jump"

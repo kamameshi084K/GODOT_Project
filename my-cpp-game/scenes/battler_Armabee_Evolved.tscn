@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://csv2vrs3xtraj"]
+
+[ext_resource type="PackedScene" uid="uid://bssdeax261afa" path="res://assets/models/Fly/Armabee_Evolved.fbx" id="1_p4hu6"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Armabee_Evolved" parent="." instance=ExtResource("1_p4hu6")]

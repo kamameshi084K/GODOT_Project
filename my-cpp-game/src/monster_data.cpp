@@ -38,18 +38,18 @@ void MonsterData::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_rank"), &MonsterData::get_rank);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "rank", PROPERTY_HINT_RANGE, "1,4"), "set_rank", "get_rank");
 
-    // --- ★追加: 特性 ---
+    // --- 特性 ---
     ClassDB::bind_method(D_METHOD("set_ability", "val"), &MonsterData::set_ability);
     ClassDB::bind_method(D_METHOD("get_ability"), &MonsterData::get_ability);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "ability", PROPERTY_HINT_ENUM, "None,Physical Boost,Special Boost"), "set_ability", "get_ability");
 
-    // --- ★追加: 3Dモデルのパス ---
+    // --- 3Dモデルのパス ---
     ClassDB::bind_method(D_METHOD("set_model_path", "path"), &MonsterData::set_model_path);
     ClassDB::bind_method(D_METHOD("get_model_path"), &MonsterData::get_model_path);
     // ファイル選択ダイアログが出るように PROPERTY_HINT_FILE を指定
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "model_path", PROPERTY_HINT_FILE, "*.tscn,*.scm"), "set_model_path", "get_model_path");
 
-    // --- ★追加: 技リスト ---
+    // --- 技リスト ---
     ClassDB::bind_method(D_METHOD("set_skills", "p_skills"), &MonsterData::set_skills);
     ClassDB::bind_method(D_METHOD("get_skills"), &MonsterData::get_skills);
     
@@ -114,7 +114,7 @@ int MonsterData::get_speed() const { return speed; }
 void MonsterData::set_current_hp(int val) { current_hp = val; }
 int MonsterData::get_current_hp() const { return current_hp; }
 
-// --- ★追加分の実装 ---
+// ---追加分の実装 ---
 
 void MonsterData::set_ability(int val) { ability = val; }
 int MonsterData::get_ability() const { return ability; }

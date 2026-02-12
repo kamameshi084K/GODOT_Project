@@ -61,6 +61,7 @@ text = "控えモンスター"
 
 [node name="StandbyList" type="ItemList" parent="HBoxContainer/VBoxContainer2"]
 layout_mode = 2
+auto_height = true
 
 [node name="ToPartyButton" type="Button" parent="HBoxContainer/VBoxContainer2"]
 layout_mode = 2

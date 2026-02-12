@@ -1,0 +1,7 @@
+[gd_resource type="SkillData" format=3 uid="uid://dqvouwq1vweir"]
+
+[resource]
+skill_name = "真空斬り"
+hand_type = 1
+power = 15
+animation_name = "Weapon"

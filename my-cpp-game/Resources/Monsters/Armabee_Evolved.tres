@@ -1,0 +1,15 @@
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://xnpdovmut3vs"]
+
+[ext_resource type="SkillData" uid="uid://623rbbhnvuim" path="res://Resources/Skills/head.tres" id="1_k3ol7"]
+[ext_resource type="SkillData" uid="uid://c6sln367kvsck" path="res://Resources/Skills/wings.tres" id="2_cbjt6"]
+[ext_resource type="SkillData" uid="uid://2frnog7ohfpu" path="res://Resources/Skills/wind.tres" id="3_tjp4y"]
+
+[resource]
+monster_name = "キモ蜂"
+max_hp = 120
+attack = 18
+defense = 10
+speed = 15
+rank = 3
+model_path = "uid://csv2vrs3xtraj"
+skills = Array[SkillData]([ExtResource("1_k3ol7"), ExtResource("2_cbjt6"), ExtResource("3_tjp4y")])

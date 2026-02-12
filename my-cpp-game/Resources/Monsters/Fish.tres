@@ -1,0 +1,16 @@
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://c2topfh658cd5"]
+
+[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/attack.tres" id="1_anb5r"]
+[ext_resource type="SkillData" uid="uid://foroe408lpms" path="res://Resources/Skills/bite.tres" id="2_mbutd"]
+[ext_resource type="SkillData" uid="uid://lvtlsxcaw4l6" path="res://Resources/Skills/tread.tres" id="3_ql68q"]
+
+[resource]
+monster_name = "いかつい魚"
+max_hp = 45
+attack = 10
+defense = 2
+speed = 18
+current_hp = 20
+rank = 2
+model_path = "uid://cqghuj271c6fy"
+skills = Array[SkillData]([ExtResource("1_anb5r"), ExtResource("2_mbutd"), ExtResource("3_ql68q")])

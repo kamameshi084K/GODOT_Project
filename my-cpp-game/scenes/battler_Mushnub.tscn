@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://ggywj2kflclo"]
+
+[ext_resource type="PackedScene" uid="uid://du24a6dn7pj7t" path="res://assets/models/blob/Mushnub.fbx" id="1_qtd36"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Mushnub" parent="." instance=ExtResource("1_qtd36")]

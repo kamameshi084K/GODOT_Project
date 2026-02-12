@@ -40,13 +40,16 @@ void BattleScene::_bind_methods()
     ClassDB::bind_method(D_METHOD("_show_janken_ui", "p_hand", "e_hand"), &BattleScene::_show_janken_ui);
     ClassDB::bind_method(D_METHOD("_hide_janken_ui"), &BattleScene::_hide_janken_ui);
     
-    // ★ 変更: 引数を減らしました
+    // 変更: 引数を減らしました
     ClassDB::bind_method(D_METHOD("_perform_attack_sequence", "attacker", "target", "skill"), &BattleScene::_perform_attack_sequence);
     
-    // ★ 追加: ターン終了処理用
+    // 追加: ターン終了処理用
     ClassDB::bind_method(D_METHOD("_on_draw_or_end"), &BattleScene::_on_draw_or_end);
 
     ClassDB::bind_method(D_METHOD("show_message", "text"), &BattleScene::show_message);
+
+    ClassDB::bind_method(D_METHOD("_rpc_swap_monster", "side", "data"), &BattleScene::_rpc_swap_monster);
+    ClassDB::bind_method(D_METHOD("_on_return_button_pressed"), &BattleScene::_on_return_button_pressed);
 }
 
 BattleScene::BattleScene()
@@ -151,6 +154,19 @@ void BattleScene::_ready()
     player_hp_bar = get_node<ProgressBar>("UI/PlayerHPBar");
     enemy_hp_bar = get_node<ProgressBar>("UI/EnemyHPBar");
     message_label = get_node<Label>("UI/MessageWindow/Label");
+
+    result_panel = get_node<Control>("UI/ResultPanel");
+    result_label = get_node<Label>("UI/ResultPanel/ResultLabel");
+    return_button = get_node<Button>("UI/ResultPanel/ReturnButton");
+
+    if (return_button) {
+        return_button->connect("pressed", Callable(this, "_on_return_button_pressed"));
+    }
+    if (result_panel) result_panel->hide(); // 最初は隠す
+
+    // インデックスの初期化
+    my_monster_index = 0;
+    enemy_monster_index = 0;
 
     // _ready() の中に追加
     janken_effect_root = get_node<Control>("UI/JankenEffect");
@@ -407,7 +423,7 @@ void BattleScene::_submit_hand(const String& hand)
     if(has_selected) return;
     has_selected = true;
     
-    // ★修正: 新しいボタンを無効化
+    //修正: 新しいボタンを無効化
     if(skill_button_1) skill_button_1->set_disabled(true);
     if(skill_button_2) skill_button_2->set_disabled(true);
     if(skill_button_3) skill_button_3->set_disabled(true);
@@ -584,8 +600,37 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
 
 void BattleScene::_rpc_notify_defeat()
 {
-    UtilityFunctions::print("VICTORY! Returning to town...");
-    get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+    // 送信者のIDを取得（これが「負けた人」のID）
+    int loser_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    int my_id = get_tree()->get_multiplayer()->get_unique_id();
+
+    // 負けたのが自分なら「LOSE」、自分じゃないなら「WIN」
+    bool is_win = (loser_id != my_id);
+    
+    _show_result(is_win);
+}
+
+void BattleScene::_show_result(bool is_win)
+{
+    if (!result_panel || !result_label) return;
+
+    result_panel->show();
+    result_panel->set_z_index(200); // 最前面へ
+
+    if (is_win)
+    {
+        result_label->set_text("YOU WIN!");
+        result_label->set_modulate(Color(1, 0.8, 0.2)); // 金色
+        
+        // 勝利報酬の経験値獲得
+        GameManager* gm = GameManager::get_singleton();
+        if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward());
+    }
+    else
+    {
+        result_label->set_text("YOU LOSE...");
+        result_label->set_modulate(Color(0.2, 0.2, 0.8)); // 青色
+    }
 }
 
 void BattleScene::_update_ui_buttons()
@@ -610,7 +655,7 @@ void BattleScene::_update_ui_buttons()
                 btn->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
                 btn->set_disabled(false);
 
-                // ★ 手の種類に応じてボタンの色を変える
+                // 手の種類に応じてボタンの色を変える
                 switch (type)
                 {
                     case 0: btn->set_modulate(color_rock); break;     // Rock
@@ -692,7 +737,7 @@ void BattleScene::_show_janken_ui(String p_hand, String e_hand)
     {
         if (!rect) return;
         
-        // ★毎回リセット（前のターンの色が残らないように）
+        //毎回リセット（前のターンの色が残らないように）
         rect->set_modulate(Color(1, 1, 1, 1)); 
 
         Ref<Texture2D> target_tex; 
@@ -708,7 +753,7 @@ void BattleScene::_show_janken_ui(String p_hand, String e_hand)
             rect->set_size(tex_size);
             rect->set_pivot_offset(tex_size / 2.0);
             
-            // ★初期位置の設定：画面の「外」に飛ばす
+            //初期位置の設定：画面の「外」に飛ばす
             float y_pos = (view_size.y - tex_size.y) / 2.0; // 上下中央
             if (is_left) {
                 // 左手は画面左外へ (-300)
@@ -752,7 +797,7 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
     String jump_anim = resolve_anim_name(anim, "Jump");
     String hit_anim = (target_anim) ? resolve_anim_name(target_anim, "HitRecieve") : "";
 
-    // ★★★ 削除: ここにあった _show_janken_ui の呼び出しを消去しました ★★★
+    //★★ 削除: ここにあった _show_janken_ui の呼び出しを消去しました★★
     // 純粋に攻撃モーションから開始します
 
     // 6. 攻撃パラメータの計算
@@ -885,23 +930,42 @@ void BattleScene::_apply_damage(Node3D* attacker, Node3D* target, const Ref<Skil
 {
     if (!get_tree()->get_multiplayer()->is_server()) return;
 
-    // 攻撃者が「ホストのモデル」かどうかを判定する
     bool is_host_attacking = (attacker == player_spawn_pos->get_child(0));
-    int damage = skill->get_power();
+    
+    // GameManagerから現在のステータスを取得（簡易的な実装）
+    GameManager* gm = GameManager::get_singleton();
+    int atk = 0;
+    int def = 0;
+
+    if (is_host_attacking)
+    {
+        // 攻撃側がホスト（自分）なら、自分の攻撃力 vs 敵の防御力
+        atk = gm->get_player_attack();
+        def = gm->get_next_enemy_defense();
+    }
+    else
+    {
+        // 攻撃側がクライアント（敵）なら、敵の攻撃力 vs 自分の防御力
+        atk = gm->get_next_enemy_attack();
+        def = gm->get_player_defense();
+    }
+
+    // ★計算式: (攻撃力 + 技の威力) - (防御力 / 2)
+    // ※防御力で完全に0にならないよう、最低でも 1 は通るようにする
+    int base_damage = atk + skill->get_power();
+    int damage = base_damage - (def / 2);
+    
+    if (damage < 1) damage = 1; // 最低保証ダメージ
 
     // target_side: 1ならホストが被弾、2ならクライアントが被弾
     int target_side = is_host_attacking ? 2 : 1;
 
     rpc("_rpc_sync_hp", target_side, damage);
 }
-
 // --- 実質的なHP減少とUI更新を行うRPC関数 ---
 void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
 {
     bool am_i_host = (get_tree()->get_multiplayer()->get_unique_id() == 1);
-    
-    // 「ホストが被弾」かつ「自分がホスト」なら自分にダメージ
-    // 「クライアントが被弾」かつ「自分がクライアント」なら自分にダメージ
     bool hit_me = (target_side == 1 && am_i_host) || (target_side == 2 && !am_i_host);
 
     if (hit_me)
@@ -910,6 +974,17 @@ void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
         if (player_hp < 0) player_hp = 0;
         _update_hp_bar_look(player_hp_bar, player_hp, (int)player_hp_bar->get_max());
         show_message(String::utf8("自分は ") + String::num_int64(final_damage) + String::utf8(" のダメージを受けた！"));
+        
+        // ★追加: 自分のHPが0になったら
+        if (player_hp <= 0)
+        {
+            // 自分のモデルを取得して死亡アニメ再生
+            Node3D* model = nullptr;
+            if (player_spawn_pos->get_child_count() > 0) 
+                model = Object::cast_to<Node3D>(player_spawn_pos->get_child(0));
+            
+            _play_death_sequence(model, true);
+        }
     }
     else
     {
@@ -917,12 +992,16 @@ void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
         if (enemy_hp < 0) enemy_hp = 0;
         _update_hp_bar_look(enemy_hp_bar, enemy_hp, (int)enemy_hp_bar->get_max());
         show_message(String::utf8("相手に ") + String::num_int64(final_damage) + String::utf8(" のダメージ！"));
-    }
 
-    // ★重要: HPが0になった瞬間の判定もここで行う
-    if (player_hp <= 0 || enemy_hp <= 0)
-    {
-        _check_battle_end();
+        // ★追加: 相手のHPが0になったら
+        if (enemy_hp <= 0)
+        {
+            Node3D* model = nullptr;
+            if (enemy_spawn_pos->get_child_count() > 0) 
+                model = Object::cast_to<Node3D>(enemy_spawn_pos->get_child(0));
+            
+            _play_death_sequence(model, false);
+        }
     }
 }
 
@@ -1001,7 +1080,7 @@ void BattleScene::_update_hp_bar_look(ProgressBar* bar, int current, int max)
         Ref<StyleBox> style = bar->get_theme_stylebox("fill");
         if (style.is_valid())
         {
-            // ★エラー修正箇所: 明示的に Ref<StyleBoxFlat>(...) で囲むことで曖昧さを回避
+            //エラー修正箇所: 明示的に Ref<StyleBoxFlat>(...) で囲むことで曖昧さを回避
             flat_style = Ref<StyleBoxFlat>(Object::cast_to<StyleBoxFlat>(style.ptr()));
         }
     }
@@ -1017,4 +1096,168 @@ void BattleScene::_update_hp_bar_look(ProgressBar* bar, int current, int max)
 
     // 背景色を変更
     flat_style->set_bg_color(target_color);
+}
+
+void BattleScene::_play_death_sequence(Node3D* model, bool is_player_side)
+{
+    // ボタン無効化
+    if (skill_button_1) skill_button_1->set_disabled(true);
+    if (skill_button_2) skill_button_2->set_disabled(true);
+    if (skill_button_3) skill_button_3->set_disabled(true);
+
+    if (model)
+    {
+        AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(model->find_child("AnimationPlayer", true, false));
+        if (anim)
+        {
+            // Death または Die アニメを探して再生
+            String death_anim = resolve_anim_name(anim, "Death");
+            if (!anim->has_animation(death_anim)) death_anim = resolve_anim_name(anim, "Die");
+            
+            anim->play(death_anim);
+        }
+    }
+
+    // アニメーション時間分待ってから次の処理へ（Tweenで遅延実行）
+    Ref<Tween> t = create_tween();
+    t->tween_interval(2.0); // 2秒待つ
+    
+    if (is_player_side)
+    {
+        // 自分が死んだ場合 -> 次のモンスターがいるかチェックする処理へ
+        t->tween_callback(Callable(this, "_check_next_monster_or_end"));
+    }
+    else
+    {
+        // 敵が死んだ場合 -> 敵からのリアクション（RPC）を待つだけなので、メッセージだけ出す
+        t->tween_callback(Callable(this, "show_message").bind("相手が倒れた！次のポケモンを待っています..."));
+    }
+}
+
+void BattleScene::_check_next_monster_or_end()
+{
+    GameManager* gm = GameManager::get_singleton();
+    if (!gm) return;
+
+    TypedArray<MonsterData> party = gm->get_party();
+    
+    // 次のインデックスへ
+    my_monster_index++;
+
+    // まだ控えがいるか？
+    if (my_monster_index < party.size())
+    {
+        // ★いる場合：次のモンスターのデータを準備してRPCを送る
+        Ref<MonsterData> next_m = party[my_monster_index];
+        
+        Dictionary next_data;
+        next_data["path"] = next_m->get_model_path();
+        next_data["hp"] = next_m->get_max_hp(); // 次の子は満タン
+        next_data["speed"] = next_m->get_speed();
+        
+        // スキル情報の構築
+        Array skill_array;
+        TypedArray<SkillData> skills = next_m->get_skills();
+        for(int i=0; i<skills.size(); i++) {
+            Ref<SkillData> s = skills[i];
+            if(s.is_valid()) {
+                Dictionary sd;
+                sd["name"] = s->get_skill_name();
+                sd["hand"] = s->get_hand_type();
+                sd["anim"] = s->get_animation_name();
+                sd["phys"] = s->get_is_physical();
+                skill_array.append(sd);
+            }
+        }
+        next_data["skills"] = skill_array;
+
+        // 自分のサイドID (ホストなら1, クライアントなら2)
+        int my_side = get_tree()->get_multiplayer()->is_server() ? 1 : 2;
+        
+        show_message(String::utf8("行け！ ") + next_m->get_monster_name() + "!");
+        
+        // 全員に「俺は交代するぞ」と伝える
+        rpc("_rpc_swap_monster", my_side, next_data);
+    }
+    else
+    {
+        // ★いない場合：全滅（敗北）
+        show_message("手持ちのモンスターがいません...");
+        
+        // 全員に「俺は負けた」と伝える
+        rpc("_rpc_notify_defeat"); 
+    }
+}
+
+void BattleScene::_rpc_swap_monster(int side, const Dictionary& next_monster_data)
+{
+    bool am_i_host = (get_tree()->get_multiplayer()->get_unique_id() == 1);
+    
+    // side: 1=Host, 2=Client
+    // 自分がHostでside=1なら「自分」、side=2なら「敵」
+    bool is_me = (side == 1 && am_i_host) || (side == 2 && !am_i_host);
+
+    String path = next_monster_data["path"];
+    int max_hp = next_monster_data["hp"];
+    int speed = next_monster_data["speed"];
+    Array skill_data = next_monster_data["skills"];
+
+    if (is_me)
+    {
+        // 自分の更新
+        _spawn_model_at(path, player_spawn_pos, true);
+        player_hp = max_hp;
+        player_max_hp = max_hp;
+        _update_hp_bar_look(player_hp_bar, player_hp, player_max_hp);
+        
+        // スキルボタン更新
+        current_skills.clear();
+        for(int i=0; i<skill_data.size(); i++) {
+            Dictionary d = skill_data[i];
+            Ref<SkillData> s; s.instantiate();
+            s->set_skill_name(d["name"]);
+            s->set_hand_type(d["hand"]);
+            s->set_animation_name(d["anim"]);
+            s->set_is_physical(d["phys"]);
+            current_skills.append(s);
+        }
+        _update_ui_buttons();
+        
+        // 交代したので選択フラグ解除
+        has_selected = false;
+        
+        // GameManagerの現在のHPも更新しておく（ダメージ計算用）
+        GameManager::get_singleton()->set_player_current_hp(player_hp);
+    }
+    else
+    {
+        // 敵の更新
+        _spawn_model_at(path, enemy_spawn_pos, false);
+        enemy_hp = max_hp;
+        enemy_max_hp = max_hp; // 本当は送ってもらうべきだが、とりあえず満タン
+        _update_hp_bar_look(enemy_hp_bar, enemy_hp, enemy_max_hp);
+        
+        // 敵のスキルリスト更新
+        enemy_player_skills.clear();
+        for(int i=0; i<skill_data.size(); i++) {
+            Dictionary d = skill_data[i];
+            Ref<SkillData> s; s.instantiate();
+            s->set_skill_name(d["name"]);
+            s->set_hand_type(d["hand"]);
+            s->set_animation_name(d["anim"]);
+            s->set_is_physical(d["phys"]);
+            enemy_player_skills.append(s);
+        }
+        
+        // GameManagerの敵ステータス更新
+        GameManager::get_singleton()->set_next_enemy_speed(speed);
+        
+        show_message("相手がモンスターを繰り出した！");
+    }
+}
+
+void BattleScene::_on_return_button_pressed()
+{
+    // 街へ戻る
+    get_tree()->change_scene_to_file("res://scenes/town.tscn");
 }

@@ -173,6 +173,29 @@ namespace godot
          */
         void _rpc_sync_hp(int target_side, int final_damage);
 
+        int my_monster_index = 0;
+        int enemy_monster_index = 0; // 相手が何体目か（表示用）
+
+        // リザルト画面用UI
+        Control* result_panel;
+        Label* result_label;
+        Button* return_button;
+
+        // 死亡アニメーション処理
+        void _play_death_sequence(Node3D* model, bool is_player_side);
+
+        // 次のモンスターがいるか確認し、いれば交代、いなければ敗北通知
+        void _check_next_monster_or_end();
+
+        // 交代処理（RPC）
+        void _rpc_swap_monster(int side, const Dictionary& next_monster_data);
+        
+        // リザルト画面を表示する
+        void _show_result(bool is_win);
+
+        // 街へ戻るボタンの処理
+        void _on_return_button_pressed();
+
     protected:
         static void _bind_methods();
 

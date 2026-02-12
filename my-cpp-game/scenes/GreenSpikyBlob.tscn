@@ -1,0 +1,85 @@
+[gd_scene load_steps=14 format=3 uid="uid://bt0ojrji4nklg"]
+
+[ext_resource type="PackedScene" uid="uid://oqtxdrs7d0m" path="res://assets/models/blob/GreenSpikyBlob.fbx" id="1_0ewbf"]
+[ext_resource type="MonsterData" uid="uid://ds52yjevlsiqf" path="res://Resources/Monsters/GreenSpikyBlob.tres" id="1_8buoq"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_8buoq"]
+animation = &"CharacterArmature|Death"
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_2mkk0"]
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_n7fp4"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_xemgj"]
+animation = &"CharacterArmature|HitRecieve"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_sfxnn"]
+animation = &"CharacterArmature|Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_mt7wq"]
+animation = &"CharacterArmature|Walk"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_qik1e"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_sfxnn")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_mt7wq")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_lyvj7"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_3ydt1"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_qik1e")
+states/Move/position = Vector2(354, 100)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_lyvj7")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_qsqik"]
+graph_offset = Vector2(-753.7747, 117.925354)
+nodes/output/position = Vector2(480, 280)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_3ydt1")
+nodes/StateMachine/position = Vector2(-580, 180)
+nodes/Hit/node = SubResource("AnimationNodeOneShot_n7fp4")
+nodes/Hit/position = Vector2(-231.8522, 215.5179)
+nodes/HitRecieve/node = SubResource("AnimationNodeAnimation_xemgj")
+nodes/HitRecieve/position = Vector2(-600, 420)
+nodes/Die/node = SubResource("AnimationNodeOneShot_2mkk0")
+nodes/Die/position = Vector2(93.77241, 257.5614)
+nodes/Animation/node = SubResource("AnimationNodeAnimation_8buoq")
+nodes/Animation/position = Vector2(-17.352795, 570.00037)
+node_connections = [&"output", 0, &"Die", &"Hit", 0, &"StateMachine", &"Hit", 1, &"HitRecieve", &"Die", 0, &"Hit", &"Die", 1, &"Animation"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8buoq"]
+radius = 1.6
+height = 3.2
+
+[node name="Enemy" type="Enemy"]
+monster_data = ExtResource("1_8buoq")
+visual_node_path = NodePath("GreenSpikyBlob")
+anim_tree_path = NodePath("AnimationTree")
+
+[node name="GreenSpikyBlob" parent="." instance=ExtResource("1_0ewbf")]
+
+[node name="Skeleton3D" parent="GreenSpikyBlob/CharacterArmature" index="0"]
+bones/0/position = Vector3(0, 5.1821626e-06, 5.804829e-07)
+bones/0/rotation = Quaternion(0.7071888, 0, 0, 0.70702475)
+bones/2/position = Vector3(0, 0, 0.007556992)
+bones/2/rotation = Quaternion(0.7072523, 0, 0, 0.7069612)
+bones/4/rotation = Quaternion(4.9536233e-05, -3.607481e-07, -0.007289434, 0.9999734)
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../GreenSpikyBlob")
+tree_root = SubResource("AnimationNodeBlendTree_qsqik")
+anim_player = NodePath("../GreenSpikyBlob/AnimationPlayer")
+parameters/StateMachine/Move/blend_position = 0.0059701204
+parameters/Hit/active = false
+parameters/Hit/internal_active = false
+parameters/Hit/request = 0
+parameters/Die/active = false
+parameters/Die/internal_active = false
+parameters/Die/request = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+shape = SubResource("CapsuleShape3D_8buoq")
+
+[editable path="GreenSpikyBlob"]

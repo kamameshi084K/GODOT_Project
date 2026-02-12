@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgqjpte5k4j6i"]
+
+[ext_resource type="PackedScene" uid="uid://dvf6fjq3q6v2w" path="res://assets/models/Fly/Alpaking_Evolved.fbx" id="1_j0538"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Alpaking_Evolved" parent="." instance=ExtResource("1_j0538")]

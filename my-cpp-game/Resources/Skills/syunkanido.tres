@@ -1,0 +1,7 @@
+[gd_resource type="SkillData" format=3 uid="uid://byfbg823hqbtm"]
+
+[resource]
+skill_name = "瞬間移動切り"
+hand_type = 1
+power = 15
+animation_name = "Weapon"

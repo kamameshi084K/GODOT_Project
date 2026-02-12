@@ -1,0 +1,83 @@
+[gd_scene load_steps=14 format=3 uid="uid://b4w8crpw0ij56"]
+
+[ext_resource type="MonsterData" uid="uid://c2topfh658cd5" path="res://Resources/Monsters/Fish.tres" id="1_431eu"]
+[ext_resource type="PackedScene" uid="uid://c74vr425h5nn4" path="res://assets/models/blob/Fish.fbx" id="1_psuch"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_psuch"]
+radius = 1.0
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3po83"]
+animation = &"CharacterArmature|Death"
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_hq4t0"]
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_twsrt"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_b7mtg"]
+animation = &"CharacterArmature|HitRecieve"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_psuch"]
+animation = &"CharacterArmature|Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_431eu"]
+animation = &"CharacterArmature|Walk"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_hrcfq"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_psuch")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_431eu")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ehebh"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_qavic"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_hrcfq")
+states/Move/position = Vector2(371, 100)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_ehebh")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_02ob7"]
+nodes/output/position = Vector2(1280, 40)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_qavic")
+nodes/StateMachine/position = Vector2(120, 60)
+nodes/Hit/node = SubResource("AnimationNodeOneShot_twsrt")
+nodes/Hit/position = Vector2(440, 40)
+nodes/Die/node = SubResource("AnimationNodeOneShot_hq4t0")
+nodes/Die/position = Vector2(1000, 40)
+nodes/HitReact/node = SubResource("AnimationNodeAnimation_b7mtg")
+nodes/HitReact/position = Vector2(240, 360)
+nodes/Death/node = SubResource("AnimationNodeAnimation_3po83")
+nodes/Death/position = Vector2(720, 360)
+node_connections = [&"output", 0, &"Die", &"Hit", 0, &"StateMachine", &"Hit", 1, &"HitReact", &"Die", 0, &"Hit", &"Die", 1, &"Death"]
+
+[node name="Enemy" type="Enemy"]
+monster_data = ExtResource("1_431eu")
+visual_node_path = NodePath("Fish")
+anim_tree_path = NodePath("AnimationTree")
+
+[node name="Fish" parent="." instance=ExtResource("1_psuch")]
+
+[node name="Skeleton3D" parent="Fish/CharacterArmature" index="0"]
+bones/0/position = Vector3(0, 2.0853377e-06, 4.435443e-06)
+bones/0/rotation = Quaternion(0.70715225, 0, 0, 0.7070614)
+bones/2/position = Vector3(0, 0, 0.006207884)
+bones/2/rotation = Quaternion(0.70705265, 0, 0, 0.7071609)
+bones/4/rotation = Quaternion(-0.00011911586, 2.3183206e-06, -0.019456077, 0.9998107)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("SphereShape3D_psuch")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Fish")
+tree_root = SubResource("AnimationNodeBlendTree_02ob7")
+anim_player = NodePath("../Fish/AnimationPlayer")
+parameters/StateMachine/Move/blend_position = 0.0014925003
+parameters/Hit/active = false
+parameters/Hit/internal_active = false
+parameters/Hit/request = 0
+parameters/Die/active = false
+parameters/Die/internal_active = false
+parameters/Die/request = 0
+
+[editable path="Fish"]

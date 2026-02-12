@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bv6dlqplbse8g"]
+
+[ext_resource type="PackedScene" uid="uid://bx5cr68jnmudq" path="res://assets/models/Big/Ninja.fbx" id="1_efc2w"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Ninja" parent="." instance=ExtResource("1_efc2w")]

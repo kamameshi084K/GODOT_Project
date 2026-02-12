@@ -7,7 +7,7 @@
 [resource]
 monster_name = "ミニにわとり"
 max_hp = 20
-attack = 7
+attack = 5
 speed = 7
 model_path = "uid://bdiiu5o4tfs3j"
 skills = Array[SkillData]([ExtResource("1_y3vka"), ExtResource("2_q6ml2"), ExtResource("3_vfe07")])

@@ -1,7 +1,9 @@
-[gd_scene load_steps=11 format=3 uid="uid://c8ylt6pd4vuqk"]
+[gd_scene load_steps=14 format=3 uid="uid://c8ylt6pd4vuqk"]
 
 [ext_resource type="PackedScene" uid="uid://b8b7wkkpqn0xf" path="res://assets/models/Warrior.gltf" id="1_4flbx"]
 [ext_resource type="PackedScene" uid="uid://c0ct41xoeff1f" path="res://scenes/capture_ball.tscn" id="1_g2els"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qhqgy"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_onrkg"]
 radius = 0.6
@@ -9,28 +11,41 @@ height = 3.0
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_4flbx"]
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_onrkg"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qhqgy"]
+animation = &"Sword_Attack"
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_g2els"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_dqkch"]
 animation = &"Idle"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i3pqv"]
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qlg0r"]
 animation = &"Run"
 
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_036b0"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_onrkg")
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_tuyoq"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_dqkch")
 blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_i3pqv")
+blend_point_1/node = SubResource("AnimationNodeAnimation_qlg0r")
 blend_point_1/pos = 1.0
+max_space = 1.05
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fj7yv"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fjrip"]
 advance_mode = 2
 
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_hqtel"]
-states/Move/node = SubResource("AnimationNodeBlendSpace1D_036b0")
-states/Move/position = Vector2(565, 100)
-states/Start/position = Vector2(337, 100)
-transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_fj7yv")]
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_smehm"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_tuyoq")
+states/Move/position = Vector2(412, 101)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_fjrip")]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_qhqgy"]
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_ur7pv"]
+nodes/output/position = Vector2(960, 180)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_smehm")
+nodes/StateMachine/position = Vector2(160, 200)
+nodes/Punch/node = SubResource("AnimationNodeOneShot_g2els")
+nodes/Punch/position = Vector2(600, 160)
+nodes/Attack/node = SubResource("AnimationNodeAnimation_qhqgy")
+nodes/Attack/position = Vector2(421.50964, 429.884)
+node_connections = [&"output", 0, &"Punch", &"Punch", 0, &"StateMachine", &"Punch", 1, &"Attack"]
 
 [node name="Player" type="Player" groups=["player"]]
 speed = 10.0
@@ -38,53 +53,65 @@ camera_sensitivity = 0.05
 visual_node_path = NodePath("Warrior")
 camera_arm_path = NodePath("SpringArm3D")
 anim_tree_path = NodePath("AnimationTree")
-hitbox_path = NodePath("AttackArea")
+hitbox_path = NodePath("Warrior/AttackArea")
 capture_ball_scene = ExtResource("1_g2els")
 collision_mask = 6
 
 [node name="Warrior" parent="." instance=ExtResource("1_4flbx")]
 
 [node name="Skeleton3D" parent="Warrior/CharacterArmature" index="0"]
-bones/1/rotation = Quaternion(5.8898786e-06, 0.70295197, 0.7112374, 5.918958e-06)
-bones/2/position = Vector3(0.0021530236, 1.1171662, 0.07522926)
+bones/1/position = Vector3(0.2078145, 0.024695065, -0.04518315)
+bones/1/rotation = Quaternion(5.8892733e-06, 0.70290667, 0.71128213, 5.9193076e-06)
+bones/2/position = Vector3(0.0021530236, 1.1173295, 0.07521576)
 bones/2/rotation = Quaternion(-3.5526934e-15, 1.1920933e-07, -8.470341e-22, 1)
-bones/4/rotation = Quaternion(0.23118804, 3.1015122e-07, 1.7024259e-07, 0.9729091)
-bones/5/rotation = Quaternion(-0.026250968, -8.3204594e-07, -5.8555725e-09, 0.99965537)
-bones/6/rotation = Quaternion(-0.036250193, 6.775707e-07, -2.517566e-09, 0.99934274)
-bones/7/rotation = Quaternion(-0.0041817827, -0.0002754728, 1.1488502e-06, 0.99999124)
-bones/9/rotation = Quaternion(0.73784375, 0.48329628, 0.37921348, -0.2796576)
-bones/10/rotation = Quaternion(-0.2479189, 0.21428037, -0.19146097, 0.92518264)
+bones/3/rotation = Quaternion(-0.11437449, -1.4747101e-07, -6.465854e-08, 0.9934378)
+bones/4/rotation = Quaternion(0.2312798, 3.103216e-07, 1.7059992e-07, 0.9728873)
+bones/5/rotation = Quaternion(-0.026280202, -4.5835233e-05, 2.496924e-05, 0.99965465)
+bones/6/rotation = Quaternion(-0.036250193, 6.7756747e-07, -2.516322e-09, 0.99934274)
+bones/7/rotation = Quaternion(-0.0040920894, -0.00027537628, 1.1045288e-06, 0.9999916)
+bones/9/rotation = Quaternion(0.73782337, 0.4831935, 0.3793691, -0.2796782)
+bones/10/rotation = Quaternion(-0.24797374, 0.2090621, -0.19189964, 0.92627025)
 bones/11/rotation = Quaternion(0.019800318, 0.017442655, -0.0085220495, 0.9996155)
 bones/12/rotation = Quaternion(-0.06264131, -0.018810429, -0.001180835, 0.99785817)
-bones/13/rotation = Quaternion(-0.14578031, 3.0886195e-08, 3.539991e-08, 0.989317)
+bones/13/rotation = Quaternion(-0.14578031, 3.0887485e-08, 3.5395296e-08, 0.989317)
 bones/14/rotation = Quaternion(-0.17105748, 0.08374462, -0.43297887, 0.8810536)
 bones/15/rotation = Quaternion(-0.07893174, -0.2979136, 0.14166276, 0.94071734)
-bones/17/rotation = Quaternion(0.70994866, -0.50687313, -0.38256195, -0.30446503)
-bones/18/rotation = Quaternion(-0.24361049, -0.21794444, 0.19049166, 0.92567116)
-bones/19/rotation = Quaternion(0.01980032, -0.017442642, 0.008522035, 0.9996155)
+bones/17/rotation = Quaternion(0.7099818, -0.50670636, -0.3826487, -0.30455625)
+bones/18/rotation = Quaternion(-0.24350289, -0.21794626, 0.1907564, 0.9256445)
+bones/19/rotation = Quaternion(0.019802308, -0.017445438, 0.0085141845, 0.99961555)
 bones/20/rotation = Quaternion(-0.06264138, 0.01881043, 0.0011808302, 0.99785817)
-bones/21/rotation = Quaternion(-0.74059683, -0.032689344, 0.058509063, 0.6685989)
-bones/23/rotation = Quaternion(-0.17105757, -0.08374459, 0.43297896, 0.88105357)
+bones/21/rotation = Quaternion(-0.74054086, -0.03271731, 0.058461685, 0.6686636)
+bones/22/rotation = Quaternion(1.0057993e-07, -5.0060656e-08, -7.446694e-09, 1)
+bones/23/rotation = Quaternion(-0.17105748, -0.083746485, 0.43297142, 0.88105714)
 bones/24/rotation = Quaternion(-0.07893175, 0.29791364, -0.14166285, 0.9407172)
-bones/25/rotation = Quaternion(0.9947108, 0.008532875, -0.00087956764, 0.10235711)
-bones/26/rotation = Quaternion(0.21664399, 0.0022121617, 0.007782129, 0.9762172)
-bones/27/rotation = Quaternion(0.9947235, -0.008533187, 0.00088128773, 0.102232575)
-bones/28/rotation = Quaternion(0.21665604, -0.0022122439, -0.0077821044, 0.9762146)
+bones/25/rotation = Quaternion(0.99475, 0.008534019, -0.0008821059, 0.10197484)
+bones/26/rotation = Quaternion(0.21608396, 0.0022076967, 0.007783397, 0.9763413)
+bones/27/rotation = Quaternion(0.9947296, -0.008532615, 0.00088088424, 0.10217473)
+bones/28/rotation = Quaternion(0.21630439, -0.00220944, -0.007782898, 0.97629243)
 bones/29/rotation = Quaternion(-3.5526934e-15, 1.1920937e-07, -8.470344e-22, 1)
-bones/30/rotation = Quaternion(-6.143804e-06, 0.70295197, 0.7112374, -5.5837636e-06)
+bones/30/position = Vector3(-0.21212608, 0.024822036, -0.04503827)
+bones/30/rotation = Quaternion(-6.145537e-06, 0.7029464, 0.71124285, -5.581901e-06)
 bones/31/rotation = Quaternion(-3.552734e-15, -5.9604645e-07, 3.3881257e-21, 1)
 
 [node name="Head" parent="Warrior/CharacterArmature/Skeleton3D" index="0"]
-transform = Transform3D(0.99999976, 1.020517e-11, -0.000550203, -5.709542e-05, 0.99460137, -0.10377153, 0.0005472326, 0.10377158, 0.99460113, -0.00063837686, 2.0959427, 0.08092582)
+transform = Transform3D(0.9999997, -4.0015722e-05, -0.00064483465, -2.7315618e-05, 0.99456924, -0.10407944, 0.00064549735, 0.10407947, 0.99456894, -0.0006646287, 2.096079, 0.08104514)
 
 [node name="UpperArm_L" parent="Warrior/CharacterArmature/Skeleton3D" index="1"]
-transform = Transform3D(0.5383948, 0.32739282, 0.77649504, 0.052248828, -0.9326416, 0.35700145, 0.8410715, -0.15163681, -0.51923543, 0.31953597, 1.839699, 0.043003142)
+transform = Transform3D(0.53807986, 0.3272581, 0.77677006, 0.051983863, -0.93268174, 0.3569351, 0.8412893, -0.15168011, -0.5188694, 0.31952113, 1.8398501, 0.04312063)
 
 [node name="Weapon_R" parent="Warrior/CharacterArmature/Skeleton3D" index="2"]
-transform = Transform3D(-0.01158949, 0.05111667, -0.9986256, -0.366452, -0.9294277, -0.043321643, -0.93036485, 0.36544612, 0.029503597, -0.503743, 0.9553366, 0.16333108)
+transform = Transform3D(-0.011738572, 0.051121343, -0.9986235, -0.36646745, -0.92942417, -0.043270867, -0.93035716, 0.3654549, 0.02964456, -0.50365335, 0.95545137, 0.16326565)
 
 [node name="UpperArm_R" parent="Warrior/CharacterArmature/Skeleton3D" index="3"]
-transform = Transform3D(0.49345502, -0.40231973, -0.7711297, -0.07907308, -0.90366834, 0.42086914, -0.8661696, -0.1467043, -0.47773218, -0.3195362, 1.839699, 0.043003116)
+transform = Transform3D(0.49343315, -0.40205443, -0.771282, -0.07856317, -0.9037288, 0.42083535, -0.8662286, -0.14705977, -0.47751626, -0.31955105, 1.8398309, 0.043057665)
+
+[node name="AttackArea" type="Area3D" parent="Warrior"]
+collision_layer = 8
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Warrior/AttackArea"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 1.5, 2)
+shape = SubResource("BoxShape3D_qhqgy")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
@@ -100,16 +127,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../Warrior")
-tree_root = SubResource("AnimationNodeStateMachine_hqtel")
+tree_root = SubResource("AnimationNodeBlendTree_ur7pv")
 anim_player = NodePath("../Warrior/AnimationPlayer")
-parameters/Move/blend_position = 0.0
-
-[node name="AttackArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 2
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="AttackArea"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 1)
-shape = SubResource("BoxShape3D_qhqgy")
+parameters/StateMachine/Move/blend_position = 0.0005223751
+parameters/Punch/active = false
+parameters/Punch/internal_active = false
+parameters/Punch/request = 0
 
 [editable path="Warrior"]

@@ -1,0 +1,7 @@
+[gd_resource type="SkillData" format=3 uid="uid://c6sln367kvsck"]
+
+[resource]
+skill_name = "翼でうつ"
+hand_type = 1
+power = 12
+animation_name = "Punch"

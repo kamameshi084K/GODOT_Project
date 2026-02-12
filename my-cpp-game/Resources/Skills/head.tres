@@ -1,0 +1,6 @@
+[gd_resource type="SkillData" format=3 uid="uid://623rbbhnvuim"]
+
+[resource]
+skill_name = "ヘッドバット"
+power = 12
+animation_name = "Headbutt"

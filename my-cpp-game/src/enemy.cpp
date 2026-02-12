@@ -66,10 +66,40 @@ void Enemy::_ready()
         if (anim_tree) anim_tree->set_active(true);
     }
     
-    // ★追加: HP表示用ラベルの作成
+    // HP表示用ラベルの作成
     hp_label = memnew(Label3D);
     add_child(hp_label);
-    hp_label->set_position(Vector3(0, 1.5, 0)); // 頭上
+    float label_height = 1.5; // 計算できなかった時のデフォルト値
+    if (visual_node)
+    {
+        // visual_node の中にある「メッシュ（見た目）」をすべて探す
+        // find_children は再帰的に（孫ノードまで）探してくれます
+        TypedArray<Node> visuals = visual_node->find_children("*", "VisualInstance3D", true, false);
+        
+        float max_height = 0.0;
+        
+        for (int i = 0; i < visuals.size(); i++)
+        {
+            VisualInstance3D* vis = Object::cast_to<VisualInstance3D>(visuals[i]);
+            if (vis)
+            {
+                // AABB（境界ボックス）を取得して、そのYサイズ（高さ）を見る
+                AABB box = vis->get_aabb();
+                if (box.size.y > max_height)
+                {
+                    max_height = box.size.y;
+                }
+            }
+        }
+        
+        // もし高さが取得できたら採用する（小さすぎる場合は無視）
+        if (max_height > 0.5)
+        {
+            label_height = max_height;
+        }
+    }
+    // 計算した高さ + 少し隙間(0.5m) を空けて配置
+    hp_label->set_position(Vector3(0, label_height + 0.5, 0));
     hp_label->set_billboard_mode(BaseMaterial3D::BILLBOARD_ENABLED);
     hp_label->set_font_size(32);
     hp_label->set_modulate(Color(1, 0, 0)); // 赤文字
@@ -107,7 +137,7 @@ void Enemy::_physics_process(double delta)
         return; // これ以上何もしない
     }
 
-    // ★追加: ダメージ（Hit）アニメ中も動かない
+    // ダメージ（Hit）アニメ中も動かない
     if (anim_tree)
     {
         bool is_hit_anim_playing = anim_tree->get("parameters/Hit/active");
@@ -151,13 +181,13 @@ void Enemy::_physics_process(double delta)
 
     if (anim_tree) {
         double h_speed = Vector3(velocity.x, 0, velocity.z).length();
-        anim_tree->set("parameters/Move/blend_position", (real_t)h_speed);
+        anim_tree->set("parameters/StateMachine/Move/blend_position", (real_t)h_speed);
     }
 
     set_velocity(velocity);
     move_and_slide();
     
-    // ★削除: 衝突時のバトル画面遷移コードは削除しました
+    //削除: 衝突時のバトル画面遷移コードは削除しました
 }
 
 void Enemy::update_ui() {
@@ -177,7 +207,7 @@ void Enemy::take_damage(int amount) {
         
         is_dying = true; // 死亡フラグON
         
-        // ★追加: 死亡アニメ再生
+        // 死亡アニメ再生
         if (anim_tree) {
             anim_tree->set("parameters/Die/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
         }
@@ -187,7 +217,7 @@ void Enemy::take_damage(int amount) {
     } else {
         UtilityFunctions::print("Ouch! HP: ", current_hp);
         
-        // ★追加: ダメージアニメ再生
+        // ダメージアニメ再生
         if (anim_tree) {
             anim_tree->set("parameters/Hit/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
         }
@@ -217,11 +247,11 @@ void Enemy::hit_by_ball()
             // データを完全複製して、新しい個体データを作成
             Ref<MonsterData> new_monster = monster_data->duplicate(true);
             
-            // ★重要変更点: 捕まえた瞬間に全回復させる
+            //重要変更点: 捕まえた瞬間に全回復させる
             // (current_hp に max_hp の値をセットする)
             new_monster->set_current_hp(new_monster->get_max_hp());
             
-            // ★重要変更点: まずは「捕獲（倉庫送り）」として処理する
+            //重要変更点: まずは「捕獲（倉庫送り）」として処理する
             // 準備フェーズでパーティ編成を行うため、いきなり手持ちには入れない
             gm->add_captured_monster(new_monster);
         }

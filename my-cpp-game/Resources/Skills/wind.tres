@@ -1,0 +1,6 @@
+[gd_resource type="SkillData" format=3 uid="uid://2frnog7ohfpu"]
+
+[resource]
+skill_name = "かぜおこし"
+hand_type = 2
+animation_name = "Fast_Flying"

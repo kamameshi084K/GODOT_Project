@@ -11,6 +11,7 @@
 #include <godot_cpp/classes/input_event_joypad_motion.hpp>
 #include <godot_cpp/classes/animation_node_one_shot.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/input_event_mouse_motion.hpp>
 
 using namespace godot;
 
@@ -105,7 +106,7 @@ void Player::_ready()
         if (anim_tree)
         {
             anim_tree->set_active(true);
-            state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/playback"));
+            state_machine = Object::cast_to<AnimationNodeStateMachinePlayback>(anim_tree->get("parameters/StateMachine/playback"));
         }
     }
 
@@ -129,6 +130,8 @@ void Player::_ready()
     interaction_ray->set_target_position(Vector3(0, 0, 2.0));
     interaction_ray->set_enabled(true);
     interaction_ray->set_position(Vector3(0, 1.0, 0));
+
+    Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
 
     // GameManagerを介したシーン遷移（バトル帰り）の復帰処理
     GameManager *gm = GameManager::get_singleton();
@@ -158,7 +161,7 @@ void Player::_physics_process(double delta)
 
     if (Engine::get_singleton()->is_editor_hint()) return;
 
-    // ★追加: 攻撃モーション中は操作を受け付けない（完全に止まる）
+    // 攻撃モーション中は操作を受け付けない（完全に止まる）
     if (anim_tree)
     {
         // "parameters/Punch/active" が true なら、パンチアニメ再生中
@@ -233,21 +236,21 @@ void Player::_physics_process(double delta)
         // 攻撃アクション
         if (input->is_action_just_pressed("attack"))
         {
-            UtilityFunctions::print("Attack button pressed!"); // ★ボタン反応チェック
+            UtilityFunctions::print("Attack button pressed!"); //ボタン反応チェック
 
             anim_tree->set("parameters/Punch/request", (int)AnimationNodeOneShot::ONE_SHOT_REQUEST_FIRE);
             
             if (hitbox)
             {
                 TypedArray<Node3D> bodies = hitbox->get_overlapping_bodies();
-                UtilityFunctions::print("Bodies in hitbox: ", bodies.size()); // ★範囲内の敵の数チェック
+                UtilityFunctions::print("Bodies in hitbox: ", bodies.size()); //範囲内の敵の数チェック
 
                 for (int i = 0; i < bodies.size(); i++)
                 {
                     Enemy* enemy = Object::cast_to<Enemy>(bodies[i]);
                     if (enemy)
                     {
-                        UtilityFunctions::print("Hit Enemy!"); // ★ヒット確認
+                        UtilityFunctions::print("Hit Enemy!"); //ヒット確認
                         enemy->take_damage(3);
                     }
                     else
@@ -258,7 +261,7 @@ void Player::_physics_process(double delta)
             }
             else
             {
-                UtilityFunctions::print("Error: Hitbox is null! Set path in Inspector."); // ★設定忘れチェック
+                UtilityFunctions::print("Error: Hitbox is null! Set path in Inspector."); //設定忘れチェック
             }
         }
 
@@ -277,7 +280,7 @@ void Player::_physics_process(double delta)
                     Vector3 forward;
                     Vector3 spawn_pos;
 
-                    // ★修正: 本体の向きではなく、「見た目（visual_node）」の向きを使う
+                    //修正: 本体の向きではなく、「見た目（visual_node）」の向きを使う
                     if (visual_node)
                     {
                         // visual_node の Z軸（青軸）の逆方向が「正面」
@@ -306,7 +309,7 @@ void Player::_physics_process(double delta)
 
         // 移動アニメーション（水平速度をパラメータに渡す）
         double h_speed = Vector3(velocity.x, 0, velocity.z).length();
-        anim_tree->set("parameters/Move/blend_position", (real_t)h_speed);
+        anim_tree->set("parameters/StateMachine/Move/blend_position", (real_t)h_speed);
 
         // ステートマシンによる接地・空中状態の遷移
         if (state_machine)
@@ -328,12 +331,40 @@ void Player::_physics_process(double delta)
 
 void Player::_input(const Ref<InputEvent>& event)
 {
-    if (Engine::get_singleton()->is_editor_hint())
+    if (Engine::get_singleton()->is_editor_hint()) return;
+
+    Ref<InputEventMouseMotion> mouse_motion = event;
+    if (mouse_motion.is_valid())
     {
-        return;
+        if (camera_arm)
+        {
+            camera_arm->rotate_y(-mouse_motion->get_relative().x * camera_sensitivity);
+
+            double current_rotation_x = camera_arm->get_rotation_degrees().x;
+            double change = mouse_motion->get_relative().y * camera_sensitivity * 20.0;
+            double new_rotation_x = current_rotation_x - change;
+            
+            new_rotation_x = Math::clamp(new_rotation_x, (double)-90.0, (double)30.0);
+
+            Vector3 rot = camera_arm->get_rotation_degrees();
+            rot.x = new_rotation_x;
+            camera_arm->set_rotation_degrees(rot);
+        }
     }
 
-    // 決定/インタラクトボタンの入力処理
+    if (event->is_action_pressed("ui_cancel"))
+    {
+        Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+    }
+    
+    if (event->is_action_pressed("attack") || event->is_action_pressed("ui_accept"))
+    {
+        if (Input::get_singleton()->get_mouse_mode() == Input::MOUSE_MODE_VISIBLE)
+        {
+            Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
+        }
+    }
+
     if (event->is_action_pressed("ui_accept"))
     {
         if (interaction_ray && interaction_ray->is_colliding())

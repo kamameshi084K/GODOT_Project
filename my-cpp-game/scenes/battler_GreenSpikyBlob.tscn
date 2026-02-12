@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://b6ww8wcuhe3xx"]
+
+[ext_resource type="PackedScene" uid="uid://oqtxdrs7d0m" path="res://assets/models/blob/GreenSpikyBlob.fbx" id="1_6q1vy"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="GreenSpikyBlob" parent="." instance=ExtResource("1_6q1vy")]

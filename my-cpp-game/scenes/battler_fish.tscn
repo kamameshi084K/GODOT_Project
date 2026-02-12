@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqghuj271c6fy"]
+
+[ext_resource type="PackedScene" uid="uid://c74vr425h5nn4" path="res://assets/models/blob/Fish.fbx" id="1_v3byj"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Fish" parent="." instance=ExtResource("1_v3byj")]

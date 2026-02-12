@@ -1,0 +1,15 @@
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://ds52yjevlsiqf"]
+
+[ext_resource type="SkillData" uid="uid://cytkuoeuwvg0h" path="res://Resources/Skills/attack.tres" id="1_b3k2n"]
+[ext_resource type="SkillData" uid="uid://foroe408lpms" path="res://Resources/Skills/bite.tres" id="2_7h7au"]
+[ext_resource type="SkillData" uid="uid://lvtlsxcaw4l6" path="res://Resources/Skills/tread.tres" id="3_dfrbd"]
+
+[resource]
+monster_name = "緑ハリスライム"
+max_hp = 70
+attack = 6
+defense = 6
+speed = 2
+rank = 2
+model_path = "uid://b6ww8wcuhe3xx"
+skills = Array[SkillData]([ExtResource("1_b3k2n"), ExtResource("2_7h7au"), ExtResource("3_dfrbd")])

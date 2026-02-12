@@ -1,0 +1,15 @@
+[gd_resource type="MonsterData" load_steps=4 format=3 uid="uid://dfbd6j2yqenck"]
+
+[ext_resource type="SkillData" uid="uid://byfbg823hqbtm" path="res://Resources/Skills/syunkanido.tres" id="1_c5gnx"]
+[ext_resource type="SkillData" uid="uid://dqvouwq1vweir" path="res://Resources/Skills/Vacuum_cutting.tres" id="2_w2hlk"]
+[ext_resource type="SkillData" uid="uid://d1ucx65ak7ehq" path="res://Resources/Skills/Punch.tres" id="3_uouim"]
+
+[resource]
+monster_name = "忍者"
+max_hp = 85
+attack = 25
+defense = 4
+speed = 28
+rank = 3
+model_path = "uid://bv6dlqplbse8g"
+skills = Array[SkillData]([ExtResource("1_c5gnx"), ExtResource("2_w2hlk"), ExtResource("3_uouim")])

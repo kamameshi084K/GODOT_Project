@@ -1,0 +1,112 @@
+[gd_scene load_steps=14 format=3 uid="uid://d2a27xp4w6fsn"]
+
+[ext_resource type="MonsterData" uid="uid://cl21y2ewhme11" path="res://Resources/Monsters/Alpaking.tres" id="1_pi5sv"]
+[ext_resource type="PackedScene" uid="uid://dvf6fjq3q6v2w" path="res://assets/models/Fly/Alpaking_Evolved.fbx" id="2_mgikv"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_nlkgr"]
+animation = &"CharacterArmature|Death"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_j477d"]
+animation = &"CharacterArmature|HitReact"
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_4nwho"]
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_5jqoe"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_is6oe"]
+animation = &"CharacterArmature|Flying_Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_580xv"]
+animation = &"CharacterArmature|Fast_Flying"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_18vog"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_is6oe")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_580xv")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_v0uug"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_6s8ej"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_18vog")
+states/Move/position = Vector2(360, 100)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_v0uug")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_aujhc"]
+graph_offset = Vector2(-1015.97394, 0)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_6s8ej")
+nodes/StateMachine/position = Vector2(-1072.5579, 143.3354)
+nodes/Hit/node = SubResource("AnimationNodeOneShot_5jqoe")
+nodes/Hit/position = Vector2(-740, 140)
+nodes/Animation/node = SubResource("AnimationNodeAnimation_j477d")
+nodes/Animation/position = Vector2(-1020, 360)
+nodes/Die/node = SubResource("AnimationNodeOneShot_4nwho")
+nodes/Die/position = Vector2(-240, 140)
+"nodes/Animation 2/node" = SubResource("AnimationNodeAnimation_nlkgr")
+"nodes/Animation 2/position" = Vector2(-540, 360)
+node_connections = [&"output", 0, &"Die", &"Hit", 0, &"StateMachine", &"Hit", 1, &"Animation", &"Die", 0, &"Hit", &"Die", 1, &"Animation 2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_pi5sv"]
+radius = 1.0
+
+[node name="Enemy" type="Enemy"]
+monster_data = ExtResource("1_pi5sv")
+visual_node_path = NodePath("Alpaking_Evolved")
+anim_tree_path = NodePath("AnimationTree")
+
+[node name="Alpaking_Evolved" parent="." instance=ExtResource("2_mgikv")]
+
+[node name="Skeleton3D" parent="Alpaking_Evolved/CharacterArmature" index="0"]
+bones/1/position = Vector3(3.1973854e-05, 0.014373757, -0.0053299116)
+bones/1/rotation = Quaternion(0.11987768, -0.0003413233, 0.0028152154, 0.9927846)
+bones/2/position = Vector3(-1.5215833e-12, 0.0044503724, -6.3696426e-10)
+bones/2/rotation = Quaternion(0.3505139, -0.0009922232, -0.0026560102, 0.9365533)
+bones/3/position = Vector3(1.0192756e-11, 0.006110309, -1.0051111e-09)
+bones/3/rotation = Quaternion(0.3504253, -0.0002584774, -9.620261e-05, 0.93659073)
+bones/3/scale = Vector3(1, 0.9999999, 1.0000001)
+bones/5/position = Vector3(0.0038408507, 0.005682068, 0.00038228152)
+bones/5/rotation = Quaternion(-0.3639182, 0.115693174, -0.5721472, 0.72582805)
+bones/5/scale = Vector3(1.0000001, 0.99999994, 0.9999999)
+bones/6/position = Vector3(1.3103226e-09, 0.0070250225, -3.2104555e-11)
+bones/6/rotation = Quaternion(0.09973226, -0.695578, -0.12116182, 0.7011024)
+bones/6/scale = Vector3(1.0000001, 0.9999998, 0.99999994)
+bones/7/position = Vector3(2.5316996e-10, 0.0044027693, 1.9053796e-09)
+bones/7/rotation = Quaternion(0.0067495247, -0.00020969767, 0.01809372, 0.9998135)
+bones/7/scale = Vector3(0.99999976, 1.0000001, 1)
+bones/8/position = Vector3(-1.1579432e-09, 0.0042042015, -1.356524e-09)
+bones/8/rotation = Quaternion(-0.06390196, 0.06313552, 0.02882681, 0.9955398)
+bones/8/scale = Vector3(1, 1, 0.9999999)
+bones/10/position = Vector3(-0.0038138635, 0.0057254825, 0.00038229907)
+bones/10/rotation = Quaternion(-0.36456713, -0.11362568, 0.5680223, 0.7290616)
+bones/10/scale = Vector3(1.0000001, 1, 0.99999994)
+bones/11/position = Vector3(-3.4844012e-09, 0.0070250225, 1.8193458e-09)
+bones/11/rotation = Quaternion(0.09973226, 0.69557804, 0.121161744, 0.7011023)
+bones/11/scale = Vector3(1.0000001, 1.0000002, 1.0000001)
+bones/12/position = Vector3(4.9006765e-10, 0.004402767, 3.604581e-09)
+bones/12/rotation = Quaternion(0.0067495774, 0.0002096936, -0.018093672, 0.9998135)
+bones/12/scale = Vector3(0.99999994, 0.9999997, 0.9999999)
+bones/13/position = Vector3(1.132244e-09, 0.004204208, 1.8996558e-10)
+bones/13/rotation = Quaternion(-0.06390195, -0.06313551, -0.028826859, 0.9955398)
+bones/13/scale = Vector3(1, 1.0000002, 1.0000001)
+bones/15/position = Vector3(3.1973854e-05, 0.014404978, -0.005332321)
+bones/15/rotation = Quaternion(0.9996196, -0.01244383, -0.008297794, -0.023173314)
+bones/15/scale = Vector3(1.0000072, 1, 1.0000238)
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Alpaking_Evolved")
+tree_root = SubResource("AnimationNodeBlendTree_aujhc")
+anim_player = NodePath("../Alpaking_Evolved/AnimationPlayer")
+parameters/StateMachine/Move/blend_position = 0.0
+parameters/Hit/active = false
+parameters/Hit/internal_active = false
+parameters/Hit/request = 0
+parameters/Die/active = false
+parameters/Die/internal_active = false
+parameters/Die/request = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_pi5sv")
+
+[editable path="Alpaking_Evolved"]

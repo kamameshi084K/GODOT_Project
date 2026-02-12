@@ -1,5 +1,5 @@
-[gd_resource type="SkillData" load_steps=0 format=3 uid="uid://cytkuoeuwvg0h"]
+[gd_resource type="SkillData" format=3 uid="uid://cytkuoeuwvg0h"]
 
 [resource]
 skill_name = "たいあたり"
-power = 15
+power = 5

@@ -1,0 +1,6 @@
+[gd_resource type="SkillData" format=3 uid="uid://d1ucx65ak7ehq"]
+
+[resource]
+skill_name = "パンチ"
+power = 13
+animation_name = "Punch"

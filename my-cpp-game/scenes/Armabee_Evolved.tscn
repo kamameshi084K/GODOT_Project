@@ -1,0 +1,113 @@
+[gd_scene load_steps=14 format=3 uid="uid://bsxdvtom62go7"]
+
+[ext_resource type="PackedScene" uid="uid://bssdeax261afa" path="res://assets/models/Fly/Armabee_Evolved.fbx" id="1_6a3rv"]
+[ext_resource type="MonsterData" uid="uid://xnpdovmut3vs" path="res://Resources/Monsters/Armabee_Evolved.tres" id="1_wva58"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_6a3rv"]
+animation = &"CharacterArmature|Death"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_wva58"]
+animation = &"CharacterArmature|HitReact"
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_c4l4s"]
+
+[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_qnnd0"]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_vuhte"]
+animation = &"CharacterArmature|Flying_Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_bn7tb"]
+animation = &"CharacterArmature|Fast_Flying"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_8c4yb"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_vuhte")
+blend_point_0/pos = 0.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_bn7tb")
+blend_point_1/pos = 1.0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_361uh"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_jkpqo"]
+states/Move/node = SubResource("AnimationNodeBlendSpace1D_8c4yb")
+states/Move/position = Vector2(374, 112)
+transitions = ["Start", "Move", SubResource("AnimationNodeStateMachineTransition_361uh")]
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_jv4qm"]
+graph_offset = Vector2(-625.55597, 32)
+nodes/StateMachine/node = SubResource("AnimationNodeStateMachine_jkpqo")
+nodes/StateMachine/position = Vector2(-480, 180)
+nodes/Hit/node = SubResource("AnimationNodeOneShot_qnnd0")
+nodes/Hit/position = Vector2(-200, 180)
+nodes/Animation/node = SubResource("AnimationNodeAnimation_wva58")
+nodes/Animation/position = Vector2(-560, 460)
+nodes/Die/node = SubResource("AnimationNodeOneShot_c4l4s")
+nodes/Die/position = Vector2(235.84961, 272.1762)
+"nodes/Animation 2/node" = SubResource("AnimationNodeAnimation_6a3rv")
+"nodes/Animation 2/position" = Vector2(156.9346, 500.86865)
+node_connections = [&"output", 0, &"Die", &"Hit", 0, &"StateMachine", &"Hit", 1, &"Animation", &"Die", 0, &"Hit", &"Die", 1, &"Animation 2"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wva58"]
+radius = 1.0
+
+[node name="Enemy" type="Enemy"]
+monster_data = ExtResource("1_wva58")
+visual_node_path = NodePath("Armabee_Evolved")
+anim_tree_path = NodePath("AnimationTree")
+
+[node name="Armabee_Evolved" parent="." instance=ExtResource("1_6a3rv")]
+
+[node name="Skeleton3D" parent="Armabee_Evolved/CharacterArmature" index="0"]
+bones/1/position = Vector3(3.2015552e-05, 0.015087065, -0.0013638312)
+bones/1/rotation = Quaternion(-0.01462718, -0.0009377923, 0.0032875577, 0.99988717)
+bones/1/scale = Vector3(0.99999994, 0.99999994, 0.99999994)
+bones/2/position = Vector3(1.1872214e-11, 0.0038552883, 1.3852929e-10)
+bones/2/rotation = Quaternion(0.23638546, 0.00018450983, -0.0034135182, 0.97165334)
+bones/2/scale = Vector3(1, 1.0000001, 1)
+bones/3/position = Vector3(-1.0468804e-11, 0.0044923327, -9.67675e-10)
+bones/3/rotation = Quaternion(0.58771724, -0.00022310461, -0.0001611107, 0.80906636)
+bones/3/scale = Vector3(0.99999994, 0.99999976, 0.9999999)
+bones/5/position = Vector3(0.0038414353, 0.0055359, -0.0017555071)
+bones/5/rotation = Quaternion(-0.20693925, 0.049481004, -0.74636805, 0.630605)
+bones/5/scale = Vector3(1, 1.0000001, 1)
+bones/6/position = Vector3(1.573441e-09, 0.0070250235, 2.1599557e-10)
+bones/6/rotation = Quaternion(0.0015997423, -0.608567, -0.34700543, 0.71360415)
+bones/6/scale = Vector3(1.0000001, 1.0000002, 0.99999994)
+bones/7/position = Vector3(-3.7297643e-10, 0.004402768, 4.8081907e-09)
+bones/7/rotation = Quaternion(-0.20225666, 0.005905672, -0.038401086, 0.97856164)
+bones/7/scale = Vector3(0.9999999, 1, 1)
+bones/8/position = Vector3(8.5926447e-11, 0.004204202, -4.7280415e-09)
+bones/8/rotation = Quaternion(-0.063901864, 0.063135564, 0.028827194, 0.9955398)
+bones/8/scale = Vector3(0.99999994, 0.9999998, 1)
+bones/10/position = Vector3(-0.0038132237, 0.0055860146, -0.0017404186)
+bones/10/rotation = Quaternion(-0.20578715, -0.046882145, 0.7426299, 0.6355742)
+bones/10/scale = Vector3(1, 1.0000001, 1)
+bones/11/position = Vector3(3.0221556e-09, 0.007025025, 5.178218e-10)
+bones/11/rotation = Quaternion(0.0015997775, 0.608567, 0.34700543, 0.71360415)
+bones/11/scale = Vector3(1.0000001, 1.0000001, 0.99999994)
+bones/12/position = Vector3(-8.9345786e-10, 0.004402766, -2.8675085e-09)
+bones/12/rotation = Quaternion(-0.2022567, -0.005905625, 0.038401045, 0.9785615)
+bones/12/scale = Vector3(0.99999976, 0.9999997, 0.99999994)
+bones/13/position = Vector3(5.4228166e-10, 0.004204205, 3.4936862e-10)
+bones/13/rotation = Quaternion(-0.06390192, -0.063135564, -0.028827237, 0.9955398)
+bones/13/scale = Vector3(1, 1, 1.0000001)
+bones/15/position = Vector3(3.203466e-05, 0.014852343, -0.0011518269)
+bones/15/rotation = Quaternion(0.9996196, -0.012443873, -0.008295721, -0.023173423)
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+root_node = NodePath("../Armabee_Evolved")
+tree_root = SubResource("AnimationNodeBlendTree_jv4qm")
+anim_player = NodePath("../Armabee_Evolved/AnimationPlayer")
+parameters/StateMachine/Move/blend_position = -0.0014925599
+parameters/Hit/active = false
+parameters/Hit/internal_active = false
+parameters/Hit/request = 0
+parameters/Die/active = false
+parameters/Die/internal_active = false
+parameters/Die/request = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_wva58")
+
+[editable path="Armabee_Evolved"]

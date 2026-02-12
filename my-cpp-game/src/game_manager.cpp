@@ -153,10 +153,10 @@ GameManager::GameManager()
     // 1. _rpc_start_collection
     Dictionary rpc_config_collection;
     rpc_config_collection["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
-    // ★修正箇所: MultiplayerAPI ではなく MultiplayerPeer を使う
+    //修正箇所: MultiplayerAPI ではなく MultiplayerPeer を使う
     rpc_config_collection["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
     rpc_config_collection["call_local"] = true;
-    rpc_config("_rpc_start_collection", rpc_config_collection); // ★この行で適用！
+    rpc_config("_rpc_start_collection", rpc_config_collection); //この行で適用！
 
     // 2. _rpc_sync_timer
     Dictionary rpc_config_timer;
@@ -686,7 +686,6 @@ void GameManager::select_starter_monster(int type_index)
 
     Ref<MonsterData> source_data;
 
-    // 以前の switch 文を、この短いロジックに置き換えます
     switch (type_index)
     {
     case 0: source_data = starter_option_1; break; // Speed
@@ -696,26 +695,31 @@ void GameManager::select_starter_monster(int type_index)
 
     if (source_data.is_valid())
     {
-        String original_path = source_data->get_path(); // 元の .tres パスを取得
+        String original_path = source_data->get_path(); 
         Ref<MonsterData> new_monster = source_data->duplicate(true);
+        
+        //修正: ここで全回復させる！
+        // これがないと、新品なのに瀕死状態で渡されてしまいます
+        new_monster->set_current_hp(new_monster->get_max_hp());
         
         // 複製した個体にパスを書き込む
         new_monster->set_resource_path(original_path); 
         
         add_monster(new_monster);
         prepare_battle_stats();
+        
+        UtilityFunctions::print("Starter Selected: ", new_monster->get_monster_name(), " (HP Full)");
     }
     else
     {
         UtilityFunctions::print("Error: Starter monster data is not set in GameManager!");
     }
 }
-
 void GameManager::_rpc_register_battle_ready(int peer_id, String p_name, String m_path, int hp, int speed, Array skills)
 {
     if (!get_tree()->get_multiplayer()->is_server()) return;
 
-    // ★追加: 通信相手が技を再生できるように、現在のモンスターのスキルリストを取得
+    // 通信相手が技を再生できるように、現在のモンスターのスキルリストを取得
     TypedArray<SkillData> monster_skills;
     if (peer_id == 1 && party_monsters.size() > 0) {
         monster_skills = Object::cast_to<MonsterData>(party_monsters[0])->get_skills();
@@ -816,7 +820,13 @@ bool GameManager::can_add_to_party(const Ref<MonsterData>& monster) const
 // 控えからパーティへ移動
 bool GameManager::move_standby_to_party(const Ref<MonsterData>& monster)
 {
-    // まずルールチェック
+    //修正3: 引数のチェック
+    if (monster.is_null()) {
+        UtilityFunctions::print("Error: Monster is null.");
+        return false;
+    }
+
+    // まずルールチェック（人数とランク）
     if (!can_add_to_party(monster)) return false;
 
     // 控えリストにそのモンスターがいるか確認
@@ -828,6 +838,10 @@ bool GameManager::move_standby_to_party(const Ref<MonsterData>& monster)
         UtilityFunctions::print("Moved to Party: ", monster->get_monster_name());
         return true;
     }
+    else 
+    {
+        UtilityFunctions::print("Error: Monster not found in Standby list.");
+    }
     
     return false;
 }
@@ -835,6 +849,8 @@ bool GameManager::move_standby_to_party(const Ref<MonsterData>& monster)
 // パーティから控えへ戻す
 void GameManager::move_party_to_standby(const Ref<MonsterData>& monster)
 {
+    if (monster.is_null()) return;
+
     int index = party_monsters.find(monster);
     if (index != -1)
     {
@@ -842,12 +858,24 @@ void GameManager::move_party_to_standby(const Ref<MonsterData>& monster)
         standby_monsters.append(monster);    // 控えに追加
         UtilityFunctions::print("Moved to Standby: ", monster->get_monster_name());
     }
+    else
+    {
+        UtilityFunctions::print("Error: Monster not found in Party list.");
+    }
 }
 
 // 捕獲時の処理（とりあえず倉庫へ）
 void GameManager::add_captured_monster(const Ref<MonsterData>& monster)
 {
-    // とりあえず控えに追加する
+    if (monster.is_null()) return;
+
+    //修正1: 捕まえたモンスターは必ず「新品同様」にする
+    // 捕獲時のダメージ情報をリセットし、HPを最大値まで回復させる
+    monster->set_current_hp(monster->get_max_hp());
+
+    //修正2: いきなりパーティに入れるのではなく、まずは「控え(Standby)」に入れる
+    // プレイヤーが自分で編成画面で選ぶようにするため
     standby_monsters.append(monster);
-    UtilityFunctions::print("Captured! Sent to Box: ", monster->get_monster_name());
+    
+    UtilityFunctions::print("Captured! Sent to Box (Standby): ", monster->get_monster_name(), " HP recovered to Max.");
 }
