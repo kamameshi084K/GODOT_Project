@@ -6,6 +6,7 @@ extends Control
 
 func _ready():
 	refresh_ui()
+	standby_list.grab_focus()
 
 func refresh_ui():
 	# ★修正点: GameManager ではなく GlobalGameManager を使う

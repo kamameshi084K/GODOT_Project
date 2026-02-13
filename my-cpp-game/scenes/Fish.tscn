@@ -54,15 +54,19 @@ node_connections = [&"output", 0, &"Die", &"Hit", 0, &"StateMachine", &"Hit", 1,
 monster_data = ExtResource("1_431eu")
 visual_node_path = NodePath("Fish")
 anim_tree_path = NodePath("AnimationTree")
+transform = Transform3D(-1.5, 0, -2.2649371e-07, 0, 1.5, 0, 2.2649371e-07, 0, -1.5, 0, 0, 0)
+collision_layer = 2
+collision_mask = 13
 
 [node name="Fish" parent="." instance=ExtResource("1_psuch")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Fish/CharacterArmature" index="0"]
-bones/0/position = Vector3(0, 2.0853377e-06, 4.435443e-06)
-bones/0/rotation = Quaternion(0.70715225, 0, 0, 0.7070614)
-bones/2/position = Vector3(0, 0, 0.006207884)
-bones/2/rotation = Quaternion(0.70705265, 0, 0, 0.7071609)
-bones/4/rotation = Quaternion(-0.00011911586, 2.3183206e-06, -0.019456077, 0.9998107)
+bones/0/position = Vector3(0, 3.9210777e-06, 9.999948e-07)
+bones/0/rotation = Quaternion(0.70718473, 0, 0, 0.7070288)
+bones/2/position = Vector3(0, 0, 0.0062080794)
+bones/2/rotation = Quaternion(0.70712507, 0, 0, 0.7070885)
+bones/4/rotation = Quaternion(3.5851648e-05, -6.131513e-07, -0.017109834, 0.9998537)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

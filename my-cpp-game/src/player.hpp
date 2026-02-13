@@ -66,6 +66,8 @@ namespace godot
         // 投擲するボールのシーンリソース
         Ref<PackedScene> capture_ball_scene;
 
+        bool is_operable = true;
+
     protected:
         // Godotへのメソッド登録用
         static void _bind_methods();
@@ -171,5 +173,8 @@ namespace godot
          */
         void set_capture_ball_scene(const Ref<PackedScene>& scene);
         Ref<PackedScene> get_capture_ball_scene() const;
+
+        void set_operable(bool p_operable);
+        bool get_operable() const;
     };
 }

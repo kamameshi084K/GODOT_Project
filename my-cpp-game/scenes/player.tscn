@@ -49,7 +49,6 @@ node_connections = [&"output", 0, &"Punch", &"Punch", 0, &"StateMachine", &"Punc
 
 [node name="Player" type="Player" groups=["player"]]
 speed = 10.0
-camera_sensitivity = 0.05
 visual_node_path = NodePath("Warrior")
 camera_arm_path = NodePath("SpringArm3D")
 anim_tree_path = NodePath("AnimationTree")
@@ -60,50 +59,50 @@ collision_mask = 6
 [node name="Warrior" parent="." instance=ExtResource("1_4flbx")]
 
 [node name="Skeleton3D" parent="Warrior/CharacterArmature" index="0"]
-bones/1/position = Vector3(0.2078145, 0.024695065, -0.04518315)
-bones/1/rotation = Quaternion(5.8892733e-06, 0.70290667, 0.71128213, 5.9193076e-06)
-bones/2/position = Vector3(0.0021530236, 1.1173295, 0.07521576)
+bones/1/position = Vector3(0.2078145, 0.024806151, -0.044740956)
+bones/1/rotation = Quaternion(5.8898786e-06, 0.70295197, 0.7112374, 5.918958e-06)
+bones/2/position = Vector3(0.0021530236, 1.1051356, 0.07521368)
 bones/2/rotation = Quaternion(-3.5526934e-15, 1.1920933e-07, -8.470341e-22, 1)
 bones/3/rotation = Quaternion(-0.11437449, -1.4747101e-07, -6.465854e-08, 0.9934378)
-bones/4/rotation = Quaternion(0.2312798, 3.103216e-07, 1.7059992e-07, 0.9728873)
-bones/5/rotation = Quaternion(-0.026280202, -4.5835233e-05, 2.496924e-05, 0.99965465)
+bones/4/rotation = Quaternion(0.23127459, 3.103218e-07, 1.7059628e-07, 0.9728885)
+bones/5/rotation = Quaternion(-0.026280263, 2.6621126e-05, -1.5241354e-05, 0.9996547)
 bones/6/rotation = Quaternion(-0.036250193, 6.7756747e-07, -2.516322e-09, 0.99934274)
-bones/7/rotation = Quaternion(-0.0040920894, -0.00027537628, 1.1045288e-06, 0.9999916)
-bones/9/rotation = Quaternion(0.73782337, 0.4831935, 0.3793691, -0.2796782)
-bones/10/rotation = Quaternion(-0.24797374, 0.2090621, -0.19189964, 0.92627025)
+bones/7/rotation = Quaternion(-0.0212914, -0.00027531647, 5.828e-06, 0.99977326)
+bones/9/rotation = Quaternion(0.7463693, 0.4678929, 0.38676184, -0.27280873)
+bones/10/rotation = Quaternion(-0.24789049, 0.20971432, -0.19179209, 0.92616737)
 bones/11/rotation = Quaternion(0.019800318, 0.017442655, -0.0085220495, 0.9996155)
 bones/12/rotation = Quaternion(-0.06264131, -0.018810429, -0.001180835, 0.99785817)
 bones/13/rotation = Quaternion(-0.14578031, 3.0887485e-08, 3.5395296e-08, 0.989317)
 bones/14/rotation = Quaternion(-0.17105748, 0.08374462, -0.43297887, 0.8810536)
 bones/15/rotation = Quaternion(-0.07893174, -0.2979136, 0.14166276, 0.94071734)
-bones/17/rotation = Quaternion(0.7099818, -0.50670636, -0.3826487, -0.30455625)
-bones/18/rotation = Quaternion(-0.24350289, -0.21794626, 0.1907564, 0.9256445)
-bones/19/rotation = Quaternion(0.019802308, -0.017445438, 0.0085141845, 0.99961555)
+bones/17/rotation = Quaternion(0.7156402, -0.49767223, -0.38776827, -0.29969537)
+bones/18/rotation = Quaternion(-0.24354096, -0.21804953, 0.19074029, 0.9256136)
+bones/19/rotation = Quaternion(0.019820133, -0.017470509, 0.008443688, 0.99961525)
 bones/20/rotation = Quaternion(-0.06264138, 0.01881043, 0.0011808302, 0.99785817)
 bones/21/rotation = Quaternion(-0.74054086, -0.03271731, 0.058461685, 0.6686636)
 bones/22/rotation = Quaternion(1.0057993e-07, -5.0060656e-08, -7.446694e-09, 1)
-bones/23/rotation = Quaternion(-0.17105748, -0.083746485, 0.43297142, 0.88105714)
+bones/23/rotation = Quaternion(-0.17105661, -0.08376347, 0.4329036, 0.8810891)
 bones/24/rotation = Quaternion(-0.07893175, 0.29791364, -0.14166285, 0.9407172)
-bones/25/rotation = Quaternion(0.99475, 0.008534019, -0.0008821059, 0.10197484)
-bones/26/rotation = Quaternion(0.21608396, 0.0022076967, 0.007783397, 0.9763413)
-bones/27/rotation = Quaternion(0.9947296, -0.008532615, 0.00088088424, 0.10217473)
-bones/28/rotation = Quaternion(0.21630439, -0.00220944, -0.007782898, 0.97629243)
+bones/25/rotation = Quaternion(0.992159, 0.008447303, -0.0007036937, 0.12469483)
+bones/26/rotation = Quaternion(0.2586141, 0.0025462813, 0.0076792995, 0.9659469)
+bones/27/rotation = Quaternion(0.992197, -0.008447224, 0.0007045546, 0.12439216)
+bones/28/rotation = Quaternion(0.2587784, -0.0025475742, -0.0076788673, 0.9659028)
 bones/29/rotation = Quaternion(-3.5526934e-15, 1.1920937e-07, -8.470344e-22, 1)
-bones/30/position = Vector3(-0.21212608, 0.024822036, -0.04503827)
-bones/30/rotation = Quaternion(-6.145537e-06, 0.7029464, 0.71124285, -5.581901e-06)
+bones/30/position = Vector3(-0.21212608, 0.024959981, -0.045383375)
+bones/30/rotation = Quaternion(-6.1418027e-06, 0.70258474, 0.71160007, -5.5861974e-06)
 bones/31/rotation = Quaternion(-3.552734e-15, -5.9604645e-07, 3.3881257e-21, 1)
 
 [node name="Head" parent="Warrior/CharacterArmature/Skeleton3D" index="0"]
-transform = Transform3D(0.9999997, -4.0015722e-05, -0.00064483465, -2.7315618e-05, 0.99456924, -0.10407944, 0.00064549735, 0.10407947, 0.99456894, -0.0006646287, 2.096079, 0.08104514)
+transform = Transform3D(0.9999998, 2.2467826e-05, -0.000491357, -5.6709163e-05, 0.9975613, -0.0697988, 0.00048859033, 0.06979883, 0.9975611, -0.0006223633, 2.083887, 0.08103357)
 
 [node name="UpperArm_L" parent="Warrior/CharacterArmature/Skeleton3D" index="1"]
-transform = Transform3D(0.53807986, 0.3272581, 0.77677006, 0.051983863, -0.93268174, 0.3569351, 0.8412893, -0.15168011, -0.5188694, 0.31952113, 1.8398501, 0.04312063)
+transform = Transform3D(0.5398673, 0.28921312, 0.7905053, 0.029621132, -0.9450671, 0.3255316, 0.8412288, -0.15232822, -0.51877767, 0.31954503, 1.8276422, 0.043061078)
 
 [node name="Weapon_R" parent="Warrior/CharacterArmature/Skeleton3D" index="2"]
-transform = Transform3D(-0.011738572, 0.051121343, -0.9986235, -0.36646745, -0.92942417, -0.043270867, -0.93035716, 0.3654549, 0.02964456, -0.50365335, 0.95545137, 0.16326565)
+transform = Transform3D(-0.0027577137, 0.07497078, -0.99718195, -0.36705387, -0.927657, -0.06872847, -0.9301957, 0.36582974, 0.030076705, -0.48092258, 0.93892854, 0.16385403)
 
 [node name="UpperArm_R" parent="Warrior/CharacterArmature/Skeleton3D" index="3"]
-transform = Transform3D(0.49343315, -0.40205443, -0.771282, -0.07856317, -0.9037288, 0.42083535, -0.8662286, -0.14705977, -0.47751626, -0.31955105, 1.8398309, 0.043057665)
+transform = Transform3D(0.49513993, -0.37889013, -0.781843, -0.066496775, -0.91378486, 0.40071857, -0.8662648, -0.14642169, -0.47764623, -0.31952718, 1.8276539, 0.04309944)
 
 [node name="AttackArea" type="Area3D" parent="Warrior"]
 collision_layer = 8

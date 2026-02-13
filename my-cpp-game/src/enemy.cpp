@@ -230,8 +230,8 @@ void Enemy::hit_by_ball()
     // 1. 捕獲率の計算（HPが減るほど捕まえやすい仕様は維持）
     // HP満タンなら20%、瀕死ならほぼ100%に近い確率になります
     float hp_ratio = (float)current_hp / (float)max_hp;
-    float capture_chance = 0.2f + (0.8f * (1.0f - hp_ratio));
-    
+    //float capture_chance = 0.2f + (0.8f * (1.0f - hp_ratio));
+    float capture_chance = 0.005f + (0.045f * (1.0f - hp_ratio)); // 調整版: 満タンで0.5%、瀕死で5.0%
     Ref<RandomNumberGenerator> rng;
     rng.instantiate();
     rng->randomize();

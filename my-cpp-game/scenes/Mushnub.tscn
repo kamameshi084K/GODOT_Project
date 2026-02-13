@@ -57,12 +57,16 @@ height = 3.0
 monster_data = ExtResource("1_o0bb6")
 visual_node_path = NodePath("Mushnub")
 anim_tree_path = NodePath("AnimationTree")
+transform = Transform3D(-1.01, 0, -8.829701e-08, 0, 1.01, 0, 8.829701e-08, 0, -1.01, 0, 0, 0)
+collision_layer = 2
+collision_mask = 13
 
 [node name="Mushnub" parent="." instance=ExtResource("1_h5r3l")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="Mushnub/CharacterArmature" index="0"]
 bones/2/position = Vector3(0, 0, 0.007946026)
-bones/4/rotation = Quaternion(-3.3154339e-12, 3.5469944e-10, 0.006706786, 0.9999776)
+bones/4/rotation = Quaternion(-2.2772882e-12, 3.5470762e-10, 0.0037800316, 0.99999285)
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../Mushnub")

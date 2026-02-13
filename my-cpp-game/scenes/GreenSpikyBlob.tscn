@@ -56,15 +56,19 @@ height = 3.2
 monster_data = ExtResource("1_8buoq")
 visual_node_path = NodePath("GreenSpikyBlob")
 anim_tree_path = NodePath("AnimationTree")
+transform = Transform3D(-1.2, 0, -1.04907336e-07, 0, 1.2, 0, 1.04907336e-07, 0, -1.2, 0, 0, 0)
+collision_layer = 2
+collision_mask = 13
 
 [node name="GreenSpikyBlob" parent="." instance=ExtResource("1_0ewbf")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Skeleton3D" parent="GreenSpikyBlob/CharacterArmature" index="0"]
-bones/0/position = Vector3(0, 5.1821626e-06, 5.804829e-07)
-bones/0/rotation = Quaternion(0.7071888, 0, 0, 0.70702475)
-bones/2/position = Vector3(0, 0, 0.007556992)
-bones/2/rotation = Quaternion(0.7072523, 0, 0, 0.7069612)
-bones/4/rotation = Quaternion(4.9536233e-05, -3.607481e-07, -0.007289434, 0.9999734)
+bones/0/position = Vector3(0, 2.9550943e-06, 3.310165e-07)
+bones/0/rotation = Quaternion(0.7071353, 0, 0, 0.7070782)
+bones/2/position = Vector3(0, 0, 0.0075561954)
+bones/2/rotation = Quaternion(0.7071898, 0, 0, 0.70702374)
+bones/4/rotation = Quaternion(1.7981387e-05, 6.170357e-08, 0.0034118956, 0.9999943)
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../GreenSpikyBlob")

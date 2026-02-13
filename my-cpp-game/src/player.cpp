@@ -63,6 +63,10 @@ void Player::_bind_methods()
     ClassDB::bind_method(D_METHOD("set_capture_ball_scene", "scene"), &Player::set_capture_ball_scene);
     ClassDB::bind_method(D_METHOD("get_capture_ball_scene"), &Player::get_capture_ball_scene);
     ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "capture_ball_scene", PROPERTY_HINT_RESOURCE_TYPE, "PackedScene"), "set_capture_ball_scene", "get_capture_ball_scene");
+
+    ClassDB::bind_method(D_METHOD("set_operable", "operable"), &Player::set_operable);
+    ClassDB::bind_method(D_METHOD("get_operable"), &Player::get_operable);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_operable"), "set_operable", "get_operable");
 }
 
 Player::Player()
@@ -89,6 +93,11 @@ Player::~Player()
 
 void Player::_ready()
 {
+    if (Engine::get_singleton()->is_editor_hint())
+    {
+        return;
+    }
+    
     // NodePathから実体ノードを取得してキャッシュ
     if (!visual_node_path.is_empty())
     {
@@ -332,6 +341,7 @@ void Player::_physics_process(double delta)
 void Player::_input(const Ref<InputEvent>& event)
 {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    if (!is_operable) return;
 
     Ref<InputEventMouseMotion> mouse_motion = event;
     if (mouse_motion.is_valid())
@@ -414,3 +424,14 @@ NodePath Player::get_hitbox_path() const { return hitbox_path; }
 
 void Player::set_capture_ball_scene(const Ref<PackedScene>& scene) { capture_ball_scene = scene; }
 Ref<PackedScene> Player::get_capture_ball_scene() const { return capture_ball_scene; }
+
+void Player::set_operable(bool p_operable) {
+    is_operable = p_operable;
+    // 操作不能になったらマウスカーソルを表示する
+    if (!is_operable) {
+        Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+    } else {
+        Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
+    }
+}
+bool Player::get_operable() const { return is_operable; }

@@ -14,6 +14,7 @@
 #include <godot_cpp/classes/interval_tweener.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/style_box_flat.hpp>
+#include <godot_cpp/classes/input.hpp>
 
 using namespace godot;
 
@@ -97,6 +98,7 @@ BattleScene::~BattleScene()
 void BattleScene::_ready()
 {
     if (Engine::get_singleton()->is_editor_hint()) return;
+    Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
     player_spawn_pos = get_node<Marker3D>("PlayerSpawnPos");
     enemy_spawn_pos = get_node<Marker3D>("EnemySpawnPos");
 
@@ -807,7 +809,12 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
     String skill_name = skill->get_skill_name();
 
     // 7. スキルごとの挙動 (中身は変更なし)
-    if (skill_name == String::utf8("たいあたり"))
+    if (skill_name == String::utf8("たいあたり") || 
+        skill_name == String::utf8("ヘッドバット") || 
+        skill_name == String::utf8("パンチ") || 
+        skill_name == String::utf8("風お越し") || 
+        skill_name == String::utf8("真空切り")||
+        skill_name == String::utf8("翼で打つ"))
     {
         Vector3 attack_pos = target_pos - (dir * 0.4);
         tween->tween_property(attacker, "global_position", attack_pos, 0.15)->set_trans(Tween::TRANS_SINE);
@@ -837,19 +844,62 @@ void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, con
         tween->tween_property(attacker, "global_position", start_pos, 0.4);
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
-    else
+    else if (skill_name == String::utf8("瞬間移動切り"))
     {
-        // デフォルト攻撃
-        Vector3 attack_pos = target_pos - (dir * 1.2); 
-        tween->tween_property(attacker, "global_position", attack_pos, 0.2);
+        // 1. フッと消える
+        tween->tween_callback(Callable(attacker, "set_visible").bind(false));
+        tween->tween_interval(0.2); // 少し溜める
+
+        // 2. 敵の目の前にワープして現れる
+        Vector3 warp_pos = target_pos - (dir * 0.6); // 敵の少し手前
+        tween->tween_callback(Callable(attacker, "set_global_position").bind(warp_pos));
+        tween->tween_callback(Callable(attacker, "set_visible").bind(true));
+
+        // 3. 攻撃アニメーションとダメージ処理
         tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
-        
+
         if (target_anim && !hit_anim.is_empty())
             tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+
+        // 4. 切り抜けた余韻
+        tween->tween_interval(0.5);
+
+        // 5. また消えて、元の位置に戻る
+        tween->tween_callback(Callable(attacker, "set_visible").bind(false));
+        tween->tween_interval(0.2);
+        tween->tween_callback(Callable(attacker, "set_global_position").bind(start_pos));
+        tween->tween_callback(Callable(attacker, "set_visible").bind(true));
         
-        tween->tween_interval(0.7);
-        tween->tween_property(attacker, "global_position", start_pos, 0.2);
+        // 6. 待機状態へ
+        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+    }
+    else if (
+             !skill->get_is_physical()) 
+    {
+        // 飛び道具系（または物理攻撃ではない技）の汎用処理
+        // 移動せず、その場でアニメーションを再生するだけ
+
+        tween->tween_callback(Callable(anim, "play").bind(skill_anim));
+        
+        // 飛び道具が飛んでいく時間分、少し遅らせてダメージを入れる（0.4秒後）
+        tween->tween_interval(0.4); 
+        
+        tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
+
+        if (target_anim && !hit_anim.is_empty())
+            tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+
+        tween->tween_interval(0.5);
+        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+    }
+    else
+    {
+        // 万が一、どの名前にも当てはまらなかった場合の安全装置（その場で殴る）
+        tween->tween_callback(Callable(anim, "play").bind(skill_anim));
+        tween->tween_interval(0.3);
+        tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
+        tween->tween_interval(0.5);
         tween->tween_callback(Callable(anim, "play").bind(idle_anim));
     }
 

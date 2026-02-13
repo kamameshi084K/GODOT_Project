@@ -1,8 +1,10 @@
-#pragma
+#pragma once
 
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
-#include <godot_cpp/variant/typed_array.hpp>
+#include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/classes/marker3d.hpp>
+#include <godot_cpp/classes/timer.hpp>
 
 namespace godot
 {
@@ -11,18 +13,14 @@ namespace godot
         GDCLASS(EnemySpawner, Node3D)
 
     private:
-        // エディタで設定する敵のリスト（例: [Bird.tscn, Ninja.tscn]）
-        TypedArray<PackedScene> enemy_scenes;
+        Array enemy_scenes;
+        Array enemy_weights; // ★追加: 各シーンの出現確率（重み）
         
-        // 生成した敵への参照（死んだかどうかの確認用）
-        Node* current_enemy;
-
-        // 次に湧くまでのタイマー
-        double respawn_timer;
+        int spawn_count;
+        float spawn_radius;
+        float spawn_interval;
         
-        // 設定値
-        double spawn_radius; // プレイヤーが何メートル近づいたら湧くか
-        double respawn_delay; // 倒されてから次が湧くまでの時間
+        Timer* spawn_timer;
 
     protected:
         static void _bind_methods();
@@ -31,24 +29,25 @@ namespace godot
         EnemySpawner();
         ~EnemySpawner();
 
-        virtual void _process(double delta) override;
+        virtual void _ready() override;
 
-        /**
-         * @brief ランダムな敵をスポーンさせる
-         * 
-         */
-        void spawn_random_enemy();
+        void set_enemy_scenes(const Array &scenes);
+        Array get_enemy_scenes() const;
 
-        // セッター・ゲッター
-        /**
-         * @brief 敵シーンのリストを設定する
-         * @param p_scenes 敵シーンの配列
-         */
-        void set_enemy_scenes(const TypedArray<PackedScene>& p_scenes);
-        /**
-         * @brief 敵シーンのリストを取得する
-         * @return TypedArray<PackedScene> 敵シーンの配列
-         */
-        TypedArray<PackedScene> get_enemy_scenes() const;
+        // ★追加: ウェイト用のゲッター/セッター
+        void set_enemy_weights(const Array &weights);
+        Array get_enemy_weights() const;
+
+        void set_spawn_count(int count);
+        int get_spawn_count() const;
+
+        void set_spawn_radius(float radius);
+        float get_spawn_radius() const;
+
+        void set_spawn_interval(float interval);
+        float get_spawn_interval() const;
+
+        void spawn_enemies();
+        void _on_timer_timeout();
     };
-} // namespace godot
+}
