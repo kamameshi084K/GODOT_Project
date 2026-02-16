@@ -1,5 +1,6 @@
-[gd_scene load_steps=16 format=3 uid="uid://b1y27wad8uwsk"]
+[gd_scene load_steps=17 format=3 uid="uid://b1y27wad8uwsk"]
 
+[ext_resource type="Script" uid="uid://b17nkvnesoyg8" path="res://scripts/town.gd" id="1_5q1rr"]
 [ext_resource type="PackedScene" uid="uid://brdbcjpt3kjef" path="res://assets/models/Market_SecondAge_Level1.gltf" id="1_gwqsq"]
 [ext_resource type="PackedScene" uid="uid://c0x3e4hwtdwvf" path="res://assets/models/Market_FirstAge_Level1.gltf" id="2_nki3b"]
 [ext_resource type="PackedScene" uid="uid://x6elfcedlioa" path="res://assets/models/Market_FirstAge_Level2.gltf" id="3_tkreh"]
@@ -28,11 +29,14 @@ data = PackedVector3Array(0.6209, 0.24159999, 0.2879, 0.5625, 0.24689999, 0.2440
 [sub_resource type="BoxShape3D" id="BoxShape3D_tkreh"]
 
 [node name="town" type="Town"]
+script = ExtResource("1_5q1rr")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_nfg6w")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
+collision_layer = 4
+collision_mask = 11
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D"]
 shape = SubResource("ConcavePolygonShape3D_fi1dd")

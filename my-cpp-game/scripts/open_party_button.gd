@@ -11,4 +11,6 @@ func _pressed():
 	# 画面の一番手前（CanvasLayer）に追加する
 	# get_parent() は CanvasLayer、その親など適切な場所に追加
 	# 一番簡単なのは get_tree().root に追加して最前面に出す方法です
-	get_tree().root.add_child(ui)
+	get_parent().add_child(ui)
+	
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)

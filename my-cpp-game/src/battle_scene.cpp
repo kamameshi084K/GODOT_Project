@@ -81,14 +81,25 @@ BattleScene::BattleScene()
     rpc_config_auth["call_local"] = true; 
     rpc_config_auth["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
     
+    // ▼ 新規追加: 誰からでも送れて、自分自身のローカル環境でも実行する設定
+    Dictionary rpc_config_any_local;
+    rpc_config_any_local["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    rpc_config_any_local["call_local"] = true;
+    rpc_config_any_local["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+
     // RPC登録
     rpc_config("_rpc_notify_loaded", rpc_config_any);
-    rpc_config("_rpc_register_player_data", rpc_config_any); // 誰でも送れる
-    rpc_config("_rpc_setup_battle", rpc_config_auth);        // ホストだけが命令できる
+    rpc_config("_rpc_register_player_data", rpc_config_any); 
+    rpc_config("_rpc_setup_battle", rpc_config_auth);        
     rpc_config("_rpc_submit_hand", rpc_config_any);
     rpc_config("_rpc_resolve_janken", rpc_config_auth);
-    rpc_config("_rpc_notify_defeat", rpc_config_any);
+    
+    // ▼ 変更: 負けた本人にも「YOU LOSE」を出すために any_local にする
+    rpc_config("_rpc_notify_defeat", rpc_config_any_local);
     rpc_config("_rpc_sync_hp", rpc_config_auth);
+
+    // ▼ 追加: 交代のRPC登録（自分と相手の両方で実行するため any_local）
+    rpc_config("_rpc_swap_monster", rpc_config_any_local);
 }
 
 BattleScene::~BattleScene()
@@ -1081,8 +1092,8 @@ void BattleScene::_check_battle_end()
 
 void BattleScene::_on_draw_or_end()
 {
-    // 勝負が決まってシーン移動中なら何もしない
-    if (is_transitioning) return;
+    // ▼ 変更: どちらかのHPが0以下の時はコマンドUIを再表示しない
+    if (is_transitioning || player_hp <= 0 || enemy_hp <= 0) return;
 
     has_selected = false;
     _update_ui_buttons();
