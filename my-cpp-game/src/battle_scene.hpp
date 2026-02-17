@@ -261,5 +261,7 @@ namespace godot
          * @brief サーバーに最新のバトルデータを要求する
          */
         void request_battle_data();
+
+        void _safe_play_anim(Node3D* target, const String& anim_name);
     };
 }

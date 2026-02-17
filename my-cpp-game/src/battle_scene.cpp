@@ -47,10 +47,14 @@ void BattleScene::_bind_methods()
     // 追加: ターン終了処理用
     ClassDB::bind_method(D_METHOD("_on_draw_or_end"), &BattleScene::_on_draw_or_end);
 
+    ClassDB::bind_method(D_METHOD("_check_next_monster_or_end"), &BattleScene::_check_next_monster_or_end);
+
     ClassDB::bind_method(D_METHOD("show_message", "text"), &BattleScene::show_message);
 
     ClassDB::bind_method(D_METHOD("_rpc_swap_monster", "side", "data"), &BattleScene::_rpc_swap_monster);
     ClassDB::bind_method(D_METHOD("_on_return_button_pressed"), &BattleScene::_on_return_button_pressed);
+
+    ClassDB::bind_method(D_METHOD("_safe_play_anim", "target", "anim_name"), &BattleScene::_safe_play_anim);
 }
 
 BattleScene::BattleScene()
@@ -613,36 +617,36 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
 
 void BattleScene::_rpc_notify_defeat()
 {
-    // 送信者のIDを取得（これが「負けた人」のID）
     int loser_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     int my_id = get_tree()->get_multiplayer()->get_unique_id();
 
-    // 負けたのが自分なら「LOSE」、自分じゃないなら「WIN」
+    // ★追加: 自分自身が呼び出した時のマルチプレイバグ対策
+    if (loser_id == 0) loser_id = my_id; 
+
     bool is_win = (loser_id != my_id);
-    
     _show_result(is_win);
 }
 
 void BattleScene::_show_result(bool is_win)
 {
-    if (!result_panel || !result_label) return;
+    if (!result_panel || !result_label) {
+        // ★追加: ResultUIが存在しない場合の緊急帰還（ソフトロック防止）
+        UtilityFunctions::print("Result UI not found! Returning to town safely...");
+        get_tree()->call_deferred("change_scene_to_file", "res://scenes/town.tscn");
+        return;
+    }
 
     result_panel->show();
-    result_panel->set_z_index(200); // 最前面へ
+    result_panel->set_z_index(200);
 
-    if (is_win)
-    {
+    if (is_win) {
         result_label->set_text("YOU WIN!");
-        result_label->set_modulate(Color(1, 0.8, 0.2)); // 金色
-        
-        // 勝利報酬の経験値獲得
+        result_label->set_modulate(Color(1, 0.8, 0.2)); 
         GameManager* gm = GameManager::get_singleton();
         if(gm) gm->gain_experience(gm->get_next_enemy_exp_reward());
-    }
-    else
-    {
+    } else {
         result_label->set_text("YOU LOSE...");
-        result_label->set_modulate(Color(0.2, 0.2, 0.8)); // 青色
+        result_label->set_modulate(Color(0.2, 0.2, 0.8));
     }
 }
 
@@ -791,134 +795,106 @@ void BattleScene::_hide_janken_ui()
 
 void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill)
 {
-    // 1. 基本チェック
     if (!attacker || !target || !skill.is_valid()) return;
 
-    // 2. アニメーター取得
     AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(attacker->find_child("AnimationPlayer", true, false));
     AnimationPlayer* target_anim = Object::cast_to<AnimationPlayer>(target->find_child("AnimationPlayer", true, false));
-    
     if (!anim) return;
 
-    // 3. Tween作成
     Ref<Tween> tween = create_tween();
     if (tween.is_null()) return;
 
-    // 4. アニメーション名の解決
     String skill_anim = resolve_anim_name(anim, skill->get_animation_name());
     String idle_anim = resolve_anim_name(anim, "Idle");
     String jump_anim = resolve_anim_name(anim, "Jump");
     String hit_anim = (target_anim) ? resolve_anim_name(target_anim, "HitRecieve") : "";
 
-    //★★ 削除: ここにあった _show_janken_ui の呼び出しを消去しました★★
-    // 純粋に攻撃モーションから開始します
-
-    // 6. 攻撃パラメータの計算
     Vector3 start_pos = attacker->get_global_position();
     Vector3 target_pos = target->get_global_position();
     Vector3 dir = (target_pos - start_pos).normalized();
     String skill_name = skill->get_skill_name();
 
-    // 7. スキルごとの挙動 (中身は変更なし)
-    if (skill_name == String::utf8("たいあたり") || 
-        skill_name == String::utf8("ヘッドバット") || 
-        skill_name == String::utf8("パンチ") || 
-        skill_name == String::utf8("風お越し") || 
-        skill_name == String::utf8("真空切り")||
-        skill_name == String::utf8("翼で打つ"))
+    if (skill_name == String::utf8("たいあたり") || skill_name == String::utf8("ヘッドバット") || 
+        skill_name == String::utf8("パンチ") || skill_name == String::utf8("風お越し") || 
+        skill_name == String::utf8("真空切り")|| skill_name == String::utf8("翼で打つ"))
     {
         Vector3 attack_pos = target_pos - (dir * 0.4);
         tween->tween_property(attacker, "global_position", attack_pos, 0.15)->set_trans(Tween::TRANS_SINE);
-        tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
+        
+        // ★修正: _safe_play_anim を使う
+        tween->parallel()->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
         
         if (target_anim && !hit_anim.is_empty())
-            tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+            tween->tween_callback(Callable(this, "_safe_play_anim").bind(target, hit_anim));
 
         tween->tween_interval(0.5);
         tween->tween_property(attacker, "global_position", start_pos, 0.3);
-        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, idle_anim));
     }
     else if (skill_name == String::utf8("のしかかる"))
     {
         Vector3 peak_pos = (start_pos + target_pos) / 2.0 + Vector3(0, 3.5, 0);
-        tween->tween_callback(Callable(anim, "play").bind(jump_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, jump_anim));
         tween->tween_property(attacker, "global_position", peak_pos, 0.4)->set_trans(Tween::TRANS_QUAD)->set_ease(Tween::EASE_OUT);
         tween->tween_property(attacker, "global_position", target_pos, 0.25)->set_trans(Tween::TRANS_QUAD)->set_ease(Tween::EASE_IN);
-        tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
+        tween->parallel()->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
 
         if (target_anim && !hit_anim.is_empty())
-            tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+            tween->tween_callback(Callable(this, "_safe_play_anim").bind(target, hit_anim));
 
         tween->tween_interval(0.6);
         tween->tween_property(attacker, "global_position", start_pos, 0.4);
-        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, idle_anim));
     }
     else if (skill_name == String::utf8("瞬間移動切り"))
     {
-        // 1. フッと消える
         tween->tween_callback(Callable(attacker, "set_visible").bind(false));
-        tween->tween_interval(0.2); // 少し溜める
-
-        // 2. 敵の目の前にワープして現れる
-        Vector3 warp_pos = target_pos - (dir * 0.6); // 敵の少し手前
+        tween->tween_interval(0.2); 
+        Vector3 warp_pos = target_pos - (dir * 0.6); 
         tween->tween_callback(Callable(attacker, "set_global_position").bind(warp_pos));
         tween->tween_callback(Callable(attacker, "set_visible").bind(true));
 
-        // 3. 攻撃アニメーションとダメージ処理
-        tween->parallel()->tween_callback(Callable(anim, "play").bind(skill_anim));
+        tween->parallel()->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, skill_anim));
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
 
         if (target_anim && !hit_anim.is_empty())
-            tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+            tween->tween_callback(Callable(this, "_safe_play_anim").bind(target, hit_anim));
 
-        // 4. 切り抜けた余韻
         tween->tween_interval(0.5);
-
-        // 5. また消えて、元の位置に戻る
         tween->tween_callback(Callable(attacker, "set_visible").bind(false));
         tween->tween_interval(0.2);
         tween->tween_callback(Callable(attacker, "set_global_position").bind(start_pos));
         tween->tween_callback(Callable(attacker, "set_visible").bind(true));
         
-        // 6. 待機状態へ
-        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, idle_anim));
     }
-    else if (
-             !skill->get_is_physical()) 
+    else if (!skill->get_is_physical()) 
     {
-        // 飛び道具系（または物理攻撃ではない技）の汎用処理
-        // 移動せず、その場でアニメーションを再生するだけ
-
-        tween->tween_callback(Callable(anim, "play").bind(skill_anim));
-        
-        // 飛び道具が飛んでいく時間分、少し遅らせてダメージを入れる（0.4秒後）
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, skill_anim));
         tween->tween_interval(0.4); 
-        
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
 
         if (target_anim && !hit_anim.is_empty())
-            tween->tween_callback(Callable(target_anim, "play").bind(hit_anim));
+            tween->tween_callback(Callable(this, "_safe_play_anim").bind(target, hit_anim));
 
         tween->tween_interval(0.5);
-        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, idle_anim));
     }
     else
     {
-        // 万が一、どの名前にも当てはまらなかった場合の安全装置（その場で殴る）
-        tween->tween_callback(Callable(anim, "play").bind(skill_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, skill_anim));
         tween->tween_interval(0.3);
         tween->tween_callback(Callable(this, "_apply_damage").bind(attacker, target, skill));
         tween->tween_interval(0.5);
-        tween->tween_callback(Callable(anim, "play").bind(idle_anim));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(attacker, idle_anim));
     }
 
-    // 8. 最後に相手をIdleに戻す
     if (target_anim)
     {
         String target_idle = resolve_anim_name(target_anim, "Idle");
-        tween->tween_callback(Callable(target_anim, "play").bind(target_idle));
+        tween->tween_callback(Callable(this, "_safe_play_anim").bind(target, target_idle));
     }
 }
 
@@ -1092,14 +1068,11 @@ void BattleScene::_check_battle_end()
 
 void BattleScene::_on_draw_or_end()
 {
-    // ▼ 変更: どちらかのHPが0以下の時はコマンドUIを再表示しない
-    if (is_transitioning || player_hp <= 0 || enemy_hp <= 0) return;
+    // ★追加: どちらかが死んでいる場合はボタンを復活させない
+    if (player_hp <= 0 || enemy_hp <= 0) return;
 
     has_selected = false;
     _update_ui_buttons();
-    
-    // 必要に応じてメッセージ表示
-    // show_message("コマンドを選択してください"); 
 }
 
 void BattleScene::show_message(const String& text)
@@ -1161,37 +1134,27 @@ void BattleScene::_update_hp_bar_look(ProgressBar* bar, int current, int max)
 
 void BattleScene::_play_death_sequence(Node3D* model, bool is_player_side)
 {
-    // ボタン無効化
     if (skill_button_1) skill_button_1->set_disabled(true);
     if (skill_button_2) skill_button_2->set_disabled(true);
     if (skill_button_3) skill_button_3->set_disabled(true);
 
-    if (model)
-    {
+    if (model) {
         AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(model->find_child("AnimationPlayer", true, false));
-        if (anim)
-        {
-            // Death または Die アニメを探して再生
+        if (anim) {
             String death_anim = resolve_anim_name(anim, "Death");
             if (!anim->has_animation(death_anim)) death_anim = resolve_anim_name(anim, "Die");
-            
             anim->play(death_anim);
         }
     }
 
-    // アニメーション時間分待ってから次の処理へ（Tweenで遅延実行）
     Ref<Tween> t = create_tween();
-    t->tween_interval(2.0); // 2秒待つ
+    t->tween_interval(2.0);
     
-    if (is_player_side)
-    {
-        // 自分が死んだ場合 -> 次のモンスターがいるかチェックする処理へ
+    if (is_player_side) {
         t->tween_callback(Callable(this, "_check_next_monster_or_end"));
-    }
-    else
-    {
-        // 敵が死んだ場合 -> 敵からのリアクション（RPC）を待つだけなので、メッセージだけ出す
-        t->tween_callback(Callable(this, "show_message").bind("相手が倒れた！次のポケモンを待っています..."));
+    } else {
+        // ★修正: 文字化け防止
+        t->tween_callback(Callable(this, "show_message").bind(String::utf8("相手が倒れた！次のモンスターを待っています...")));
     }
 }
 
@@ -1201,22 +1164,15 @@ void BattleScene::_check_next_monster_or_end()
     if (!gm) return;
 
     TypedArray<MonsterData> party = gm->get_party();
-    
-    // 次のインデックスへ
     my_monster_index++;
 
-    // まだ控えがいるか？
-    if (my_monster_index < party.size())
-    {
-        // ★いる場合：次のモンスターのデータを準備してRPCを送る
+    if (my_monster_index < party.size()) {
         Ref<MonsterData> next_m = party[my_monster_index];
-        
         Dictionary next_data;
         next_data["path"] = next_m->get_model_path();
-        next_data["hp"] = next_m->get_max_hp(); // 次の子は満タン
+        next_data["hp"] = next_m->get_max_hp();
         next_data["speed"] = next_m->get_speed();
         
-        // スキル情報の構築
         Array skill_array;
         TypedArray<SkillData> skills = next_m->get_skills();
         for(int i=0; i<skills.size(); i++) {
@@ -1231,89 +1187,61 @@ void BattleScene::_check_next_monster_or_end()
             }
         }
         next_data["skills"] = skill_array;
-
-        // 自分のサイドID (ホストなら1, クライアントなら2)
         int my_side = get_tree()->get_multiplayer()->is_server() ? 1 : 2;
         
-        show_message(String::utf8("行け！ ") + next_m->get_monster_name() + "!");
-        
-        // 全員に「俺は交代するぞ」と伝える
+        // ★修正: 文字化け防止
+        show_message(String::utf8("行け！ ") + next_m->get_monster_name() + String::utf8("！"));
         rpc("_rpc_swap_monster", my_side, next_data);
-    }
-    else
-    {
-        // ★いない場合：全滅（敗北）
-        show_message("手持ちのモンスターがいません...");
-        
-        // 全員に「俺は負けた」と伝える
+    } else {
+        // ★修正: 文字化け防止
+        show_message(String::utf8("手持ちのモンスターがいません..."));
         rpc("_rpc_notify_defeat"); 
     }
 }
 
 void BattleScene::_rpc_swap_monster(int side, const Dictionary& next_monster_data)
 {
+    // ... (前半の変数定義や is_me の判定などはそのまま)
     bool am_i_host = (get_tree()->get_multiplayer()->get_unique_id() == 1);
-    
-    // side: 1=Host, 2=Client
-    // 自分がHostでside=1なら「自分」、side=2なら「敵」
     bool is_me = (side == 1 && am_i_host) || (side == 2 && !am_i_host);
-
     String path = next_monster_data["path"];
     int max_hp = next_monster_data["hp"];
     int speed = next_monster_data["speed"];
     Array skill_data = next_monster_data["skills"];
 
-    if (is_me)
-    {
-        // 自分の更新
+    if (is_me) {
         _spawn_model_at(path, player_spawn_pos, true);
-        player_hp = max_hp;
-        player_max_hp = max_hp;
+        player_hp = max_hp; player_max_hp = max_hp;
         _update_hp_bar_look(player_hp_bar, player_hp, player_max_hp);
         
-        // スキルボタン更新
         current_skills.clear();
         for(int i=0; i<skill_data.size(); i++) {
             Dictionary d = skill_data[i];
             Ref<SkillData> s; s.instantiate();
-            s->set_skill_name(d["name"]);
-            s->set_hand_type(d["hand"]);
-            s->set_animation_name(d["anim"]);
-            s->set_is_physical(d["phys"]);
+            s->set_skill_name(d["name"]); s->set_hand_type(d["hand"]);
+            s->set_animation_name(d["anim"]); s->set_is_physical(d["phys"]);
             current_skills.append(s);
         }
         _update_ui_buttons();
-        
-        // 交代したので選択フラグ解除
         has_selected = false;
-        
-        // GameManagerの現在のHPも更新しておく（ダメージ計算用）
         GameManager::get_singleton()->set_player_current_hp(player_hp);
-    }
-    else
-    {
-        // 敵の更新
+    } else {
         _spawn_model_at(path, enemy_spawn_pos, false);
-        enemy_hp = max_hp;
-        enemy_max_hp = max_hp; // 本当は送ってもらうべきだが、とりあえず満タン
+        enemy_hp = max_hp; enemy_max_hp = max_hp; 
         _update_hp_bar_look(enemy_hp_bar, enemy_hp, enemy_max_hp);
         
-        // 敵のスキルリスト更新
         enemy_player_skills.clear();
         for(int i=0; i<skill_data.size(); i++) {
             Dictionary d = skill_data[i];
             Ref<SkillData> s; s.instantiate();
-            s->set_skill_name(d["name"]);
-            s->set_hand_type(d["hand"]);
-            s->set_animation_name(d["anim"]);
-            s->set_is_physical(d["phys"]);
+            s->set_skill_name(d["name"]); s->set_hand_type(d["hand"]);
+            s->set_animation_name(d["anim"]); s->set_is_physical(d["phys"]);
             enemy_player_skills.append(s);
         }
-        
-        // GameManagerの敵ステータス更新
         GameManager::get_singleton()->set_next_enemy_speed(speed);
         
-        show_message("相手がモンスターを繰り出した！");
+        // ★修正: 文字化け防止
+        show_message(String::utf8("相手がモンスターを繰り出した！"));
     }
 }
 
@@ -1321,4 +1249,19 @@ void BattleScene::_on_return_button_pressed()
 {
     // 街へ戻る
     get_tree()->change_scene_to_file("res://scenes/town.tscn");
+}
+
+void BattleScene::_safe_play_anim(Node3D* target, const String& anim_name)
+{
+    if (!target || anim_name.is_empty()) return;
+    
+    // HPが0以下（死んでいる）場合はアニメーションを上書きしない
+    if (player_spawn_pos && player_spawn_pos->is_ancestor_of(target) && player_hp <= 0) return;
+    if (enemy_spawn_pos && enemy_spawn_pos->is_ancestor_of(target) && enemy_hp <= 0) return;
+    
+    AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(target->find_child("AnimationPlayer", true, false));
+    if (anim)
+    {
+        anim->play(anim_name);
+    }
 }
