@@ -1,0 +1,10 @@
+[configuration]
+
+entry_symbol = "gdexample_library_init"
+compatibility_minimum = 4.1
+
+[libraries]
+
+; スクリーンショットの情報に合わせてパスとファイル名を修正しました
+windows.debug.x86_64 = "res://game/bin/catan.dll"
+windows.release.x86_64 = "res://game/bin/catan.dll"

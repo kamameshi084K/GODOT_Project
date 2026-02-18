@@ -2,6 +2,8 @@
 
 // 登録する自作クラスのヘッダー
 #include "hex_tile.hpp"
+#include "board.hpp"
+#include "catan_game.hpp"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -22,6 +24,10 @@ void initialize_catan_module(ModuleInitializationLevel p_level)
 
     // GodotエディタおよびエンジンにHexTileクラスを登録
     ClassDB::register_class<HexTile>();
+    // GodotエディタおよびエンジンにBoardクラスを登録
+    ClassDB::register_class<Board>();
+    // GodotエディタおよびエンジンにCatanGameクラスを登録
+    ClassDB::register_class<CatanGame>();
 }
 
 /**

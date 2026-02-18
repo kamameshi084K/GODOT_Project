@@ -1,64 +1,145 @@
-[gd_scene load_steps=2 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=7 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
+[ext_resource type="Texture2D" uid="uid://cc4pn87enjx2w" path="res://assets/images/pasture.png" id="2_sugp2"]
+[ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="3_jyhfs"]
+[ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="4_tefeu"]
+[ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="5_o6xl0"]
+[ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="6_tipki"]
 
-[node name="Main" type="Node2D"]
+[node name="Main" type="CatanGame"]
 
-[node name="Board" type="Node2D" parent="."]
+[node name="Board" type="Board" parent="."]
 
 [node name="HexTile" parent="Board" instance=ExtResource("1_o5qli")]
+r = -2
+number = 6
 position = Vector2(216, 136.00002)
 
 [node name="HexTile2" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(328, 136)
+q = 1
+r = -2
+tile_type = 2
+number = 3
+position = Vector2(310.00003, 136)
+texture = ExtResource("2_sugp2")
 
 [node name="HexTile3" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(440, 136)
+q = 2
+r = -2
+tile_type = 2
+number = 8
+position = Vector2(404, 136)
+texture = ExtResource("2_sugp2")
 
 [node name="HexTile4" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(160, 224)
+q = -1
+r = -1
+tile_type = 3
+position = Vector2(169.00002, 217.00002)
+texture = ExtResource("3_jyhfs")
 
 [node name="HexTile5" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(272, 224.00002)
+r = -1
+tile_type = 4
+number = 4
+position = Vector2(263, 217.00002)
+texture = ExtResource("4_tefeu")
 
 [node name="HexTile6" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(384, 224)
+q = 1
+r = -1
+tile_type = 3
+number = 5
+position = Vector2(357, 217)
+texture = ExtResource("3_jyhfs")
 
 [node name="HexTile7" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(496, 223.99998)
+q = 2
+r = -1
+number = 10
+position = Vector2(451.00003, 216.99997)
 
 [node name="HexTile8" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(103.99999, 312)
+q = -2
+number = 5
+position = Vector2(122, 298)
 
 [node name="HexTile9" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(216.00002, 312)
+q = -1
+tile_type = 1
+number = 9
+position = Vector2(216.00002, 298)
+texture = ExtResource("5_o6xl0")
 
 [node name="HexTile10" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(328.00003, 312)
+tile_type = 5
+number = 0
+position = Vector2(310, 298)
+texture = ExtResource("6_tipki")
 
 [node name="HexTile11" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(440, 312)
+q = 1
+tile_type = 4
+number = 6
+position = Vector2(404, 298)
+texture = ExtResource("4_tefeu")
 
 [node name="HexTile12" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(552, 312.00003)
+q = 2
+tile_type = 3
+number = 9
+position = Vector2(498, 298)
+texture = ExtResource("3_jyhfs")
 
 [node name="HexTile13" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(160.00002, 400)
+q = -2
+r = 1
+tile_type = 3
+number = 10
+position = Vector2(169, 379)
+texture = ExtResource("3_jyhfs")
 
 [node name="HexTile14" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(272, 400)
+q = -1
+r = 1
+tile_type = 4
+number = 11
+position = Vector2(263, 379)
+texture = ExtResource("4_tefeu")
 
 [node name="HexTile15" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(384, 400.00003)
+r = 1
+number = 3
+position = Vector2(357, 379)
 
 [node name="HexTile16" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(496, 400.00003)
+q = 1
+r = 1
+tile_type = 2
+number = 12
+position = Vector2(451, 379)
+texture = ExtResource("2_sugp2")
 
 [node name="HexTile17" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(216, 488)
+q = -2
+r = 2
+tile_type = 1
+number = 8
+position = Vector2(216, 460)
+texture = ExtResource("5_o6xl0")
 
 [node name="HexTile18" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(328, 488.00006)
+q = -1
+r = 2
+tile_type = 2
+number = 4
+position = Vector2(310, 460)
+texture = ExtResource("2_sugp2")
 
 [node name="HexTile19" parent="Board" instance=ExtResource("1_o5qli")]
-position = Vector2(440, 488)
+r = 2
+tile_type = 1
+number = 11
+position = Vector2(404, 460)
+texture = ExtResource("5_o6xl0")
