@@ -1,0 +1,64 @@
+[gd_scene load_steps=2 format=3 uid="uid://cdxebb2yknhew"]
+
+[ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
+
+[node name="Main" type="Node2D"]
+
+[node name="Board" type="Node2D" parent="."]
+
+[node name="HexTile" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(216, 136.00002)
+
+[node name="HexTile2" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(328, 136)
+
+[node name="HexTile3" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(440, 136)
+
+[node name="HexTile4" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(160, 224)
+
+[node name="HexTile5" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(272, 224.00002)
+
+[node name="HexTile6" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(384, 224)
+
+[node name="HexTile7" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(496, 223.99998)
+
+[node name="HexTile8" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(103.99999, 312)
+
+[node name="HexTile9" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(216.00002, 312)
+
+[node name="HexTile10" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(328.00003, 312)
+
+[node name="HexTile11" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(440, 312)
+
+[node name="HexTile12" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(552, 312.00003)
+
+[node name="HexTile13" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(160.00002, 400)
+
+[node name="HexTile14" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(272, 400)
+
+[node name="HexTile15" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(384, 400.00003)
+
+[node name="HexTile16" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(496, 400.00003)
+
+[node name="HexTile17" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(216, 488)
+
+[node name="HexTile18" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(328, 488.00006)
+
+[node name="HexTile19" parent="Board" instance=ExtResource("1_o5qli")]
+position = Vector2(440, 488)

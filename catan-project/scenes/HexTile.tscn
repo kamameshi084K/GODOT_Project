@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://cbtvxhr5volln"]
+
+[ext_resource type="Shader" uid="uid://ceee4w7ipsiqe" path="res://Hex.gdshader" id="1_ha4sb"]
+[ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="2_twun4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8cws7"]
+shader = ExtResource("1_ha4sb")
+
+[node name="HexTile" type="Sprite2D"]
+material = SubResource("ShaderMaterial_8cws7")
+rotation = 1.5707964
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_twun4")

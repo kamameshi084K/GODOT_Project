@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+import os
+import sys
+
+# godot-cppのビルド設定を読み込む
+# (同じ階層にある godot-cpp フォルダを参照)
+env = SConscript("godot-cpp/SConstruct")
+
+# インクルードパスの設定
+# "src" を追加して、ヘッダーファイル(.h)を正しく読み込めるようにします
+env.Append(CPPPATH=[".", "src"])
+
+# ソースファイルをすべて取得
+# (src フォルダの中にある .cpp を探します)
+sources = Glob("src/*.cpp")
+
+# DLLの出力先と名前
+# 名前を "gdexample" から "catan" に変更しました
+# 出力先を "game/bin/" (Godotプロジェクトの中) に変更しました
+if env["platform"] == "macos":
+    library = env.SharedLibrary(
+        "bin/catan.macos.template_debug.framework/catan",
+        source=sources,
+    )
+else:
+    library = env.SharedLibrary(
+        "game/bin/catan",
+        source=sources,
+    )
+
+Default(library)

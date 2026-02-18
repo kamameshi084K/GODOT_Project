@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile Godot C++",
+            "type": "shell",
+            "command": "scons",
+            "args": [
+                "platform=windows",
+                "target=template_debug",
+                "-j4"  // 並列ビルド数
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}" // srcフォルダで実行する設定
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

@@ -48,6 +48,7 @@ void BattleScene::_bind_methods()
     ClassDB::bind_method(D_METHOD("_on_draw_or_end"), &BattleScene::_on_draw_or_end);
 
     ClassDB::bind_method(D_METHOD("_check_next_monster_or_end"), &BattleScene::_check_next_monster_or_end);
+    ClassDB::bind_method(D_METHOD("_show_wait_message_if_still_dead"), &BattleScene::_show_wait_message_if_still_dead);
 
     ClassDB::bind_method(D_METHOD("show_message", "text"), &BattleScene::show_message);
 
@@ -1154,7 +1155,7 @@ void BattleScene::_play_death_sequence(Node3D* model, bool is_player_side)
         t->tween_callback(Callable(this, "_check_next_monster_or_end"));
     } else {
         // ★修正: 文字化け防止
-        t->tween_callback(Callable(this, "show_message").bind(String::utf8("相手が倒れた！次のモンスターを待っています...")));
+        t->tween_callback(Callable(this, "_show_wait_message_if_still_dead"));
     }
 }
 
@@ -1239,6 +1240,9 @@ void BattleScene::_rpc_swap_monster(int side, const Dictionary& next_monster_dat
             enemy_player_skills.append(s);
         }
         GameManager::get_singleton()->set_next_enemy_speed(speed);
+
+        _update_ui_buttons();
+        has_selected = false;
         
         // ★修正: 文字化け防止
         show_message(String::utf8("相手がモンスターを繰り出した！"));
@@ -1263,5 +1267,14 @@ void BattleScene::_safe_play_anim(Node3D* target, const String& anim_name)
     if (anim)
     {
         anim->play(anim_name);
+    }
+}
+
+void BattleScene::_show_wait_message_if_still_dead()
+{
+    // もし相手のHPが0のままなら（まだ復活していないなら）メッセージを出す
+    // すでに _rpc_swap_monster が届いて回復している場合は何もしない
+    if (enemy_hp <= 0) {
+        show_message(String::utf8("相手が倒れた！次のモンスターを待っています..."));
     }
 }

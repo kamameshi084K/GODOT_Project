@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Godot C++ Debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // ↓↓↓ ここをあなたのGodot.exeの絶対パスに変えてください ↓↓↓
+            "program": "C:/GodotEngine/Godot_v4.5.1-stable_win64.exe",
+            "args": [
+                "--path",
+                "${workspaceFolder}", // プロジェクトの場所
+                "--editor"            // これを消すとゲームがいきなり始まります
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "internalConsole",
+            "preLaunchTask": "Compile Godot C++" 
+        }
+    ]
+}
