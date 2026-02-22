@@ -52,6 +52,19 @@ namespace godot
          * @param roll_value 決定されたダイスの合計値
          */
         void notify_dice_result(int roll_value);
+
+        void start_game();
+
+        // [RPC] 実際に全員の画面を切り替える
+        void rpc_change_scene(const String& scene_path);
+
+        void request_build_settlement(const String& vertex_name);
+
+        // 2. [RPC] サーバーだけが受け取る処理関数
+        void server_process_build(const String& vertex_name);
+
+        // 3. [RPC] サーバーから全員へ「ここに家を建てろ！」と命令する関数
+        void client_sync_build(const String& vertex_name, int player_id);
     };
 
 } // namespace godot

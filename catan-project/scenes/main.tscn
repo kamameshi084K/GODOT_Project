@@ -1,13 +1,15 @@
-[gd_scene load_steps=7 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=8 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
+[ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://cc4pn87enjx2w" path="res://assets/images/pasture.png" id="2_sugp2"]
 [ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="3_jyhfs"]
 [ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="4_tefeu"]
 [ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="5_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="6_tipki"]
 
-[node name="Main" type="CatanGame"]
+[node name="Main" type="Node2D"]
+script = ExtResource("1_o6xl0")
 
 [node name="Board" type="Board" parent="."]
 
@@ -143,3 +145,21 @@ tile_type = 1
 number = 11
 position = Vector2(404, 460)
 texture = ExtResource("5_o6xl0")
+
+[node name="GameUI" type="CanvasLayer" parent="."]
+
+[node name="RollButton" type="Button" parent="GameUI"]
+offset_left = 248.0
+offset_top = 248.0
+offset_right = 909.0
+offset_bottom = 393.0
+theme_override_font_sizes/font_size = 100
+text = "サイコロを振る！"
+
+[node name="DiceLabel" type="Label" parent="GameUI"]
+offset_left = 968.0
+offset_top = 8.0
+offset_right = 1097.0
+offset_bottom = 58.0
+theme_override_font_sizes/font_size = 36
+text = "出目:ーー"

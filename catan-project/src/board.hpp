@@ -26,6 +26,10 @@ public:
     // 座標を指定してタイルを取得する便利関数
     // C++やGDScriptから「board.get_tile(0, 0)」のように呼べるようになります
     HexTile* get_tile(int q, int r);
+
+    Array get_unique_vertices(float hex_radius);
+
+    Array get_unique_edges(float hex_radius);
 };
 
 } // namespace godot
