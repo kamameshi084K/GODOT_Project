@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=15 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -7,6 +7,19 @@
 [ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="4_tefeu"]
 [ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="5_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="6_tipki"]
+[ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="8_eb6dy"]
+[ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="9_trceg"]
+[ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="10_a8y0u"]
+[ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="11_jkv2x"]
+[ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_muem4"]
+font_size = 34
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eb6dy"]
+bg_color = Color(0, 0.45490196, 0.96862745, 1)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_o6xl0")
@@ -163,3 +176,92 @@ offset_right = 1097.0
 offset_bottom = 58.0
 theme_override_font_sizes/font_size = 36
 text = "出目:ーー"
+
+[node name="ResourceCards" type="HBoxContainer" parent="GameUI"]
+offset_left = 483.0
+offset_top = 437.0
+offset_right = 1149.0
+offset_bottom = 645.0
+
+[node name="WoodCard" type="TextureRect" parent="GameUI/ResourceCards"]
+layout_mode = 2
+texture = ExtResource("8_eb6dy")
+expand_mode = 3
+
+[node name="CountLabel" type="Label" parent="GameUI/ResourceCards/WoodCard"]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 160.0
+offset_right = 100.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 38
+text = "0"
+label_settings = SubResource("LabelSettings_muem4")
+
+[node name="BrickCard" type="TextureRect" parent="GameUI/ResourceCards"]
+layout_mode = 2
+texture = ExtResource("9_trceg")
+expand_mode = 3
+
+[node name="CountLabel" type="Label" parent="GameUI/ResourceCards/BrickCard"]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 160.0
+offset_right = 100.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 38
+text = "0"
+label_settings = SubResource("LabelSettings_muem4")
+
+[node name="SheepCard" type="TextureRect" parent="GameUI/ResourceCards"]
+layout_mode = 2
+texture = ExtResource("10_a8y0u")
+expand_mode = 3
+
+[node name="CountLabel" type="Label" parent="GameUI/ResourceCards/SheepCard"]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 160.0
+offset_right = 100.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 38
+text = "0"
+label_settings = SubResource("LabelSettings_muem4")
+
+[node name="WheatCard" type="TextureRect" parent="GameUI/ResourceCards"]
+layout_mode = 2
+texture = ExtResource("11_jkv2x")
+expand_mode = 3
+
+[node name="CountLabel" type="Label" parent="GameUI/ResourceCards/WheatCard"]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 160.0
+offset_right = 100.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 38
+text = "0"
+label_settings = SubResource("LabelSettings_muem4")
+
+[node name="OreCard" type="TextureRect" parent="GameUI/ResourceCards"]
+layout_mode = 2
+texture = ExtResource("12_jbj1t")
+expand_mode = 3
+
+[node name="CountLabel" type="Label" parent="GameUI/ResourceCards/OreCard"]
+layout_mode = 0
+offset_left = 57.0
+offset_top = 160.0
+offset_right = 100.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 38
+text = "0"
+label_settings = SubResource("LabelSettings_muem4")
+
+[node name="TurnEndButton" type="Button" parent="GameUI"]
+offset_left = 618.0
+offset_top = 305.0
+offset_right = 747.0
+offset_bottom = 436.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
+text = "ターン終了"

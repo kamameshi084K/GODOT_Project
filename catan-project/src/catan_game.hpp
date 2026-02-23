@@ -3,9 +3,34 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/multiplayer_api.hpp>
 #include <godot_cpp/classes/e_net_multiplayer_peer.hpp>
+#include <godot_cpp/variant/vector2.hpp>
+#include <map>
+#include <vector> // ★ 追加：プレイヤーリストの管理用
+#include <godot_cpp/variant/packed_int32_array.hpp>
+
 
 namespace godot
 {
+    struct VertexData {
+        Vector2 position;      // 頂点の位置（例: "A", "B", ... に対応）
+        int owner_id = 0;      // 0: 空き地, 1以上: 持ち主のプレイヤーID
+        int building_type = 0; // 0: なし, 1: 開拓地(家), 2: 都市
+    };
+
+    struct EdgeData {
+        Vector2 midpoint;      // ★ 追加：この辺の中心座標
+        int owner_id = 0;      
+    };
+
+    struct PlayerData {
+        // ★ テスト用：最初から資源を10個ずつ持たせておく
+        int wood = 10;
+        int brick = 10;
+        int sheep = 10;
+        int wheat = 10;
+        int ore = 10;
+    };
+
     /**
      * @class CatanGame
      * @brief マルチプレイヤー通信とゲーム進行（ダイスロール等）を管理するクラス
@@ -65,6 +90,37 @@ namespace godot
 
         // 3. [RPC] サーバーから全員へ「ここに家を建てろ！」と命令する関数
         void client_sync_build(const String& vertex_name, int player_id);
+
+        // 街道（辺）建築用の関数
+        void request_build_road(const String& edge_name);
+        void server_process_build_road(const String& edge_name);
+        void client_sync_build_road(const String& edge_name, int player_id);
+
+        std::map<String, VertexData> board_vertices;
+        std::map<String, EdgeData> board_edges;
+
+        void register_vertex(const String& vertex_name, Vector2 pos);
+
+        std::map<int, PlayerData> players;
+
+        // サーバー側で資源を増やし、全員に同期する関数
+        void add_resource(int player_id, const String& resource_type, int amount);
+        
+        // [RPC] サーバーから全員へ「このプレイヤーの資源がこうなったよ」と教える関数
+        void client_sync_resources(int player_id, int wood, int brick, int sheep, int wheat, int ore);
+
+        void distribute_resources_for_hex(Vector2 hex_center, float hex_radius, const String& resource_type);
+
+        void register_edge(const String& edge_name, Vector2 midpoint);
+
+        std::vector<int> player_order; // プレイヤーIDの順番リスト
+        int current_turn_index = 0;    // 今リストの何番目の人のターンか
+
+        // ★ 追加：ターン管理用の関数
+        void start_turn_system();      // サーバーがゲーム開始時に呼ぶ
+        void request_end_turn();       // クライアントが「ターン終了」ボタンを押した時
+        void server_process_end_turn();// サーバーがターン交代を処理する
+        void client_sync_turn(int player_id); // 全員に「次はこの人のターンだよ」と知らせる
     };
 
 } // namespace godot
