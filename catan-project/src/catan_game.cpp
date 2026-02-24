@@ -3,6 +3,8 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/multiplayer_peer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/variant/array.hpp>
+#include <random>
 
 using namespace godot;
 
@@ -55,8 +57,24 @@ void CatanGame::_bind_methods()
     ClassDB::bind_method(D_METHOD("server_process_end_turn"), &CatanGame::server_process_end_turn);
     ClassDB::bind_method(D_METHOD("client_sync_turn", "player_id"), &CatanGame::client_sync_turn);
 
+    ClassDB::bind_method(D_METHOD("client_sync_player_list", "player_info_list"), &CatanGame::client_sync_player_list);
+    ClassDB::bind_method(D_METHOD("request_steal", "victim_id"), &CatanGame::request_steal);
+    ClassDB::bind_method(D_METHOD("server_process_steal", "victim_id"), &CatanGame::server_process_steal);
+    
+
+    ADD_SIGNAL(MethodInfo("player_list_updated", PropertyInfo(Variant::ARRAY, "player_info_list")));
     // 画面(GDScript)に「ターンが切り替わったよ」と知らせるシグナル
     ADD_SIGNAL(MethodInfo("turn_changed", PropertyInfo(Variant::INT, "player_id")));
+
+    ClassDB::bind_method(D_METHOD("request_move_robber", "pos"), &CatanGame::request_move_robber);
+    ClassDB::bind_method(D_METHOD("server_process_move_robber", "pos"), &CatanGame::server_process_move_robber);
+    // client_sync_robber は上書き
+    ClassDB::bind_method(D_METHOD("client_sync_robber", "pos", "victims"), &CatanGame::client_sync_robber);
+    
+   // robber_moved は上書き
+    ADD_SIGNAL(MethodInfo("robber_moved", PropertyInfo(Variant::VECTOR2, "pos"), PropertyInfo(Variant::ARRAY, "victims")));
+
+    ClassDB::bind_method(D_METHOD("register_player_name", "name"), &CatanGame::register_player_name);
 }
 
 CatanGame::CatanGame()
@@ -142,6 +160,41 @@ CatanGame::CatanGame()
     sync_turn_conf["call_local"] = true;
     sync_turn_conf["channel"] = 0;
     rpc_config("client_sync_turn", sync_turn_conf);
+
+    Dictionary req_robber;
+    req_robber["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_robber["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_robber["call_local"] = true;
+    req_robber["channel"] = 0;
+    rpc_config("server_process_move_robber", req_robber);
+
+    Dictionary sync_robber;
+    sync_robber["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_robber["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_robber["call_local"] = true;
+    sync_robber["channel"] = 0;
+    rpc_config("client_sync_robber", sync_robber);
+
+    Dictionary sync_plist;
+    sync_plist["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_plist["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_plist["call_local"] = true;
+    sync_plist["channel"] = 0;
+    rpc_config("client_sync_player_list", sync_plist);
+
+    Dictionary req_steal;
+    req_steal["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_steal["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_steal["call_local"] = true;
+    req_steal["channel"] = 0;
+    rpc_config("server_process_steal", req_steal);
+
+    Dictionary reg_name_conf;
+    reg_name_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    reg_name_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    reg_name_conf["call_local"] = true;
+    reg_name_conf["channel"] = 0;
+    rpc_config("register_player_name", reg_name_conf);
 }
 
 CatanGame::~CatanGame()
@@ -162,13 +215,35 @@ void CatanGame::join_game(const String& address, int port)
     UtilityFunctions::print("Connecting to ", address, ":", port);
 }
 
-void CatanGame::request_roll_dice()
-{
-    if (!get_tree()->get_multiplayer()->is_server())
-    {
-        return;
-    }
-    int dice_roll = (rand() % 6 + 1) + (rand() % 6 + 1);
+void CatanGame::request_roll_dice() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
+    if (has_rolled_dice_this_turn) return;
+
+    has_rolled_dice_this_turn = true;
+
+    // ▼▼▼ ここからメルセンヌ・ツイスタ仕様に変更！ ▼▼▼
+    
+    // 1. ハードウェアのノイズなどから、予測不可能な「本物の乱数の種」を作る
+    std::random_device rd;
+    
+    // 2. その種を使って、メルセンヌ・ツイスタ（32ビット版）のエンジンを起動！
+    std::mt19937 gen(rd());
+    
+    // 3. エンジンから出てくる乱数を、「1〜6の均等な確率」に整えるフィルターを作る
+    std::uniform_int_distribution<> distrib(1, 6);
+
+    // 4. サイコロを2個振る
+    int dice1 = distrib(gen);
+    int dice2 = distrib(gen);
+    int dice_roll = dice1 + dice2;
+    
+    // ▲▲▲ 変更ここまで ▲▲▲
+
     rpc("notify_dice_result", dice_roll);
 }
 
@@ -203,6 +278,16 @@ void CatanGame::server_process_build(const String& vertex_name) {
     if (!get_tree()->get_multiplayer()->is_server()) return;
     int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     if (sender_id == 0) sender_id = 1;
+
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) {
+        UtilityFunctions::print("Server: あなたのターンではないため建築できません！");
+        return;
+    }
+    // ★ 不正チェック2：サイコロを振る前に建てようとした
+    if (!has_rolled_dice_this_turn) {
+        UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
+        return;
+    }
 
     // ★ 1. コストチェック（開拓地＝木1,土1,羊1,麦1）
     PlayerData& p = players[sender_id];
@@ -251,6 +336,16 @@ void CatanGame::server_process_build_road(const String& edge_name) {
     if (!get_tree()->get_multiplayer()->is_server()) return;
     int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     if (sender_id == 0) sender_id = 1;
+
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) {
+        UtilityFunctions::print("Server: あなたのターンではないため建築できません！");
+        return;
+    }
+    // ★ 不正チェック2：サイコロを振る前に建てようとした
+    if (!has_rolled_dice_this_turn) {
+        UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
+        return;
+    }
 
     // ★ 1. コストチェック（街道＝木1,土1）
     PlayerData& p = players[sender_id];
@@ -370,20 +465,35 @@ void CatanGame::register_edge(const String& edge_name, Vector2 midpoint) {
 // サーバーがプレイヤー全員のリストを作って最初のターンを開始する
 void CatanGame::start_turn_system() {
     if (!get_tree()->get_multiplayer()->is_server()) return;
-
     player_order.clear();
-    player_order.push_back(1); // ホスト(ID:1)を最初に追加
-
-    // 接続している他のプレイヤー(クライアント)を取得して追加
+    player_order.push_back(1);
     PackedInt32Array peers = get_tree()->get_multiplayer()->get_peers();
-    for (int i = 0; i < peers.size(); i++) {
-        player_order.push_back(peers[i]);
-    }
-
-    current_turn_index = 0;
+    for (int i = 0; i < peers.size(); i++) player_order.push_back(peers[i]);
     
-    // 全員に最初のプレイヤーのターンであることを通知！
+    current_turn_index = 0;
+    has_rolled_dice_this_turn = false;
+
+    // ★ リストを作成して送信
+    Array player_info_list;
+    for (int i = 0; i < player_order.size(); i++) {
+        int pid = player_order[i];
+        players[pid].turn_index = i; 
+        Dictionary info;
+        info["id"] = pid;
+        info["turn_index"] = players[pid].turn_index;
+        info["name"] = players[pid].player_name;
+        info["vp"] = 0;
+        int total_hand = players[pid].wood + players[pid].brick + players[pid].sheep + players[pid].wheat + players[pid].ore;
+        info["hand_count"] = total_hand;
+        info["dev_cards"] = players[pid].dev_cards;
+        player_info_list.push_back(info);
+    }
     rpc("client_sync_turn", player_order[current_turn_index]);
+    rpc("client_sync_player_list", player_info_list); // ★ 送信
+}
+
+void CatanGame::client_sync_player_list(Array player_info_list) {
+    emit_signal("player_list_updated", player_info_list);
 }
 
 void CatanGame::request_end_turn() {
@@ -403,7 +513,7 @@ void CatanGame::server_process_end_turn() {
 
     // 次の人のインデックスへ（最後まで行ったら0に戻る）
     current_turn_index = (current_turn_index + 1) % player_order.size();
-    
+    has_rolled_dice_this_turn = false;
     // 全員に「次の人のターンになったよ」と通知！
     rpc("client_sync_turn", player_order[current_turn_index]);
 }
@@ -411,4 +521,79 @@ void CatanGame::server_process_end_turn() {
 void CatanGame::client_sync_turn(int player_id) {
     UtilityFunctions::print("Turn changed to Player: ", player_id);
     emit_signal("turn_changed", player_id);
+}
+
+void CatanGame::request_move_robber(Vector2 pos) {
+    rpc_id(1, "server_process_move_robber", pos);
+}
+
+void CatanGame::server_process_move_robber(Vector2 pos) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    Array victims;
+    float hex_radius = 54.0f;
+    for (const auto& pair : board_vertices) {
+        if (pair.second.owner_id != 0 && pair.second.owner_id != sender_id) {
+            float dist = pair.second.position.distance_to(pos);
+            if (dist > (hex_radius - 5.0f) && dist < (hex_radius + 5.0f)) {
+                if (!victims.has(pair.second.owner_id)) {
+                    victims.push_back(pair.second.owner_id);
+                }
+            }
+        }
+    }
+    rpc("client_sync_robber", pos, victims);
+}
+
+void CatanGame::client_sync_robber(Vector2 pos, Array victims) {
+    emit_signal("robber_moved", pos, victims);
+}
+
+// クライアントから「奪って！」というお願いをサーバーに送る
+void CatanGame::request_steal(int victim_id) {
+    rpc_id(1, "server_process_steal", victim_id);
+}
+
+// サーバーが実際に相手の手札からランダムに奪う処理
+void CatanGame::server_process_steal(int victim_id) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    PlayerData& v_data = players[victim_id];
+    PlayerData& s_data = players[sender_id];
+    
+    // 奪う相手の全資源をクジ引きの箱に入れる
+    std::vector<String> available_resources;
+    for (int i = 0; i < v_data.wood; i++) available_resources.push_back("wood");
+    for (int i = 0; i < v_data.brick; i++) available_resources.push_back("brick");
+    for (int i = 0; i < v_data.sheep; i++) available_resources.push_back("sheep");
+    for (int i = 0; i < v_data.wheat; i++) available_resources.push_back("wheat");
+    for (int i = 0; i < v_data.ore; i++) available_resources.push_back("ore");
+
+    if (!available_resources.empty()) {
+        int res_index = UtilityFunctions::randi_range(0, available_resources.size() - 1);
+        String stolen_res = available_resources[res_index];
+
+        if (stolen_res == "wood") { v_data.wood--; s_data.wood++; }
+        else if (stolen_res == "brick") { v_data.brick--; s_data.brick++; }
+        else if (stolen_res == "sheep") { v_data.sheep--; s_data.sheep++; }
+        else if (stolen_res == "wheat") { v_data.wheat--; s_data.wheat++; }
+        else if (stolen_res == "ore") { v_data.ore--; s_data.ore++; }
+
+        // 両方の画面のUIの数字を更新
+        rpc("client_sync_resources", victim_id, v_data.wood, v_data.brick, v_data.sheep, v_data.wheat, v_data.ore);
+        rpc("client_sync_resources", sender_id, s_data.wood, s_data.brick, s_data.sheep, s_data.wheat, s_data.ore);
+    }
+}
+
+void CatanGame::register_player_name(const String& name) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1; // サーバー自身の場合
+
+    players[sender_id].player_name = name;
 }

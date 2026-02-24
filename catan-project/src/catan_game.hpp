@@ -23,12 +23,14 @@ namespace godot
     };
 
     struct PlayerData {
-        // ★ テスト用：最初から資源を10個ずつ持たせておく
         int wood = 10;
         int brick = 10;
         int sheep = 10;
         int wheat = 10;
         int ore = 10;
+        int turn_index = 0;
+        int dev_cards = 0; // ★ 追加：発展カードの枚数
+        String player_name = "Unknown";
     };
 
     /**
@@ -121,6 +123,14 @@ namespace godot
         void request_end_turn();       // クライアントが「ターン終了」ボタンを押した時
         void server_process_end_turn();// サーバーがターン交代を処理する
         void client_sync_turn(int player_id); // 全員に「次はこの人のターンだよ」と知らせる
+        bool has_rolled_dice_this_turn = false; // ターン中にダイスを振ったかどうかのフラグ
+        void request_move_robber(Vector2 pos);
+        void server_process_move_robber(Vector2 pos);
+        void client_sync_robber(Vector2 pos, Array victims);
+        void client_sync_player_list(Array player_info_list);
+        void request_steal(int victim_id);
+        void server_process_steal(int victim_id);
+        void register_player_name(const String& name);
     };
 
 } // namespace godot

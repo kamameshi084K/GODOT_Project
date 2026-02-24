@@ -29,14 +29,14 @@ script = ExtResource("1_o6xl0")
 [node name="HexTile" parent="Board" instance=ExtResource("1_o5qli")]
 r = -2
 number = 6
-position = Vector2(216, 136.00002)
+position = Vector2(171.20001, 107.20002)
 
 [node name="HexTile2" parent="Board" instance=ExtResource("1_o5qli")]
 q = 1
 r = -2
 tile_type = 2
 number = 3
-position = Vector2(310.00003, 136)
+position = Vector2(265.20004, 107.200005)
 texture = ExtResource("2_sugp2")
 
 [node name="HexTile3" parent="Board" instance=ExtResource("1_o5qli")]
@@ -44,21 +44,21 @@ q = 2
 r = -2
 tile_type = 2
 number = 8
-position = Vector2(404, 136)
+position = Vector2(359.2, 107.200005)
 texture = ExtResource("2_sugp2")
 
 [node name="HexTile4" parent="Board" instance=ExtResource("1_o5qli")]
 q = -1
 r = -1
 tile_type = 3
-position = Vector2(169.00002, 217.00002)
+position = Vector2(124.20003, 188.20003)
 texture = ExtResource("3_jyhfs")
 
 [node name="HexTile5" parent="Board" instance=ExtResource("1_o5qli")]
 r = -1
 tile_type = 4
 number = 4
-position = Vector2(263, 217.00002)
+position = Vector2(218.20001, 188.20003)
 texture = ExtResource("4_tefeu")
 
 [node name="HexTile6" parent="Board" instance=ExtResource("1_o5qli")]
@@ -66,45 +66,45 @@ q = 1
 r = -1
 tile_type = 3
 number = 5
-position = Vector2(357, 217)
+position = Vector2(312.2, 188.20001)
 texture = ExtResource("3_jyhfs")
 
 [node name="HexTile7" parent="Board" instance=ExtResource("1_o5qli")]
 q = 2
 r = -1
 number = 10
-position = Vector2(451.00003, 216.99997)
+position = Vector2(406.20004, 188.19998)
 
 [node name="HexTile8" parent="Board" instance=ExtResource("1_o5qli")]
 q = -2
 number = 5
-position = Vector2(122, 298)
+position = Vector2(77.20001, 269.2)
 
 [node name="HexTile9" parent="Board" instance=ExtResource("1_o5qli")]
 q = -1
 tile_type = 1
 number = 9
-position = Vector2(216.00002, 298)
+position = Vector2(171.20003, 269.2)
 texture = ExtResource("5_o6xl0")
 
 [node name="HexTile10" parent="Board" instance=ExtResource("1_o5qli")]
 tile_type = 5
 number = 0
-position = Vector2(310, 298)
+position = Vector2(265.2, 269.2)
 texture = ExtResource("6_tipki")
 
 [node name="HexTile11" parent="Board" instance=ExtResource("1_o5qli")]
 q = 1
 tile_type = 4
 number = 6
-position = Vector2(404, 298)
+position = Vector2(359.2, 269.2)
 texture = ExtResource("4_tefeu")
 
 [node name="HexTile12" parent="Board" instance=ExtResource("1_o5qli")]
 q = 2
 tile_type = 3
 number = 9
-position = Vector2(498, 298)
+position = Vector2(453.2, 269.2)
 texture = ExtResource("3_jyhfs")
 
 [node name="HexTile13" parent="Board" instance=ExtResource("1_o5qli")]
@@ -112,7 +112,7 @@ q = -2
 r = 1
 tile_type = 3
 number = 10
-position = Vector2(169, 379)
+position = Vector2(124.20001, 350.2)
 texture = ExtResource("3_jyhfs")
 
 [node name="HexTile14" parent="Board" instance=ExtResource("1_o5qli")]
@@ -120,20 +120,20 @@ q = -1
 r = 1
 tile_type = 4
 number = 11
-position = Vector2(263, 379)
+position = Vector2(218.20001, 350.2)
 texture = ExtResource("4_tefeu")
 
 [node name="HexTile15" parent="Board" instance=ExtResource("1_o5qli")]
 r = 1
 number = 3
-position = Vector2(357, 379)
+position = Vector2(312.2, 350.2)
 
 [node name="HexTile16" parent="Board" instance=ExtResource("1_o5qli")]
 q = 1
 r = 1
 tile_type = 2
 number = 12
-position = Vector2(451, 379)
+position = Vector2(406.2, 350.2)
 texture = ExtResource("2_sugp2")
 
 [node name="HexTile17" parent="Board" instance=ExtResource("1_o5qli")]
@@ -141,7 +141,7 @@ q = -2
 r = 2
 tile_type = 1
 number = 8
-position = Vector2(216, 460)
+position = Vector2(171.20001, 431.2)
 texture = ExtResource("5_o6xl0")
 
 [node name="HexTile18" parent="Board" instance=ExtResource("1_o5qli")]
@@ -149,14 +149,14 @@ q = -1
 r = 2
 tile_type = 2
 number = 4
-position = Vector2(310, 460)
+position = Vector2(265.2, 431.2)
 texture = ExtResource("2_sugp2")
 
 [node name="HexTile19" parent="Board" instance=ExtResource("1_o5qli")]
 r = 2
 tile_type = 1
 number = 11
-position = Vector2(404, 460)
+position = Vector2(359.2, 431.2)
 texture = ExtResource("5_o6xl0")
 
 [node name="GameUI" type="CanvasLayer" parent="."]
@@ -260,8 +260,15 @@ label_settings = SubResource("LabelSettings_muem4")
 
 [node name="TurnEndButton" type="Button" parent="GameUI"]
 offset_left = 618.0
-offset_top = 305.0
+offset_top = 323.0
 offset_right = 747.0
 offset_bottom = 436.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "ターン終了"
+
+[node name="PlayerList" type="VBoxContainer" parent="GameUI"]
+offset_left = 742.0
+offset_top = 59.0
+offset_right = 1149.0
+offset_bottom = 351.0
+scale = Vector2(0.19, 0.19)

@@ -1,0 +1,74 @@
+[gd_scene load_steps=6 format=3 uid="uid://dtlc568wg37e0"]
+
+[ext_resource type="Texture2D" uid="uid://b5x28vodqnf5c" path="res://assets/images/UI/player_ui_red.png" id="1_sk4pr"]
+[ext_resource type="Script" uid="uid://ca440ud1gelx0" path="res://script/player_ui.gd" id="2_48xfa"]
+[ext_resource type="Texture2D" uid="uid://diw0x7fpgdwm3" path="res://assets/images/UI/player_ui_blue.png" id="3_7ctsh"]
+[ext_resource type="Texture2D" uid="uid://bub3n34eddpma" path="res://assets/images/UI/player_ui_green.png" id="4_bkx2g"]
+[ext_resource type="Texture2D" uid="uid://dcgeyyukkqbdn" path="res://assets/images/UI/player_ui_purple.png" id="5_n31oh"]
+
+[node name="PlayerUI" type="TextureRect"]
+offset_right = 2138.0
+offset_bottom = 438.0
+texture = ExtResource("1_sk4pr")
+script = ExtResource("2_48xfa")
+bg_textures = Array[Texture2D]([ExtResource("1_sk4pr"), ExtResource("3_7ctsh"), ExtResource("4_bkx2g"), ExtResource("5_n31oh")])
+
+[node name="GlowEffect" type="ColorRect" parent="."]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = -5.0
+offset_right = 6.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 0, 1)
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 742.0
+offset_bottom = 167.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 113
+text = "Player"
+
+[node name="VPLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1733.0
+offset_top = 102.0
+offset_right = 1825.0
+offset_bottom = 323.0
+theme_override_font_sizes/font_size = 161
+text = "0"
+
+[node name="HandLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 955.0
+offset_top = 21.0
+offset_right = 1045.0
+offset_bottom = 126.0
+theme_override_font_sizes/font_size = 76
+text = "0"
+
+[node name="DevLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1357.0
+offset_top = 21.0
+offset_right = 1428.0
+offset_bottom = 126.0
+theme_override_font_sizes/font_size = 76
+text = "0"
+
+[node name="ClickOverlay" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true

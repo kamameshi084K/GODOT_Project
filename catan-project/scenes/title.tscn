@@ -57,3 +57,7 @@ text = "Waiting..."
 layout_mode = 2
 disabled = true
 text = "Start Game"
+
+[node name="NameInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+text = "名前を入力"
