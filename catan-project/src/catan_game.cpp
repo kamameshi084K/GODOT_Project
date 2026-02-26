@@ -55,7 +55,7 @@ void CatanGame::_bind_methods()
     ClassDB::bind_method(D_METHOD("start_turn_system"), &CatanGame::start_turn_system);
     ClassDB::bind_method(D_METHOD("request_end_turn"), &CatanGame::request_end_turn);
     ClassDB::bind_method(D_METHOD("server_process_end_turn"), &CatanGame::server_process_end_turn);
-    ClassDB::bind_method(D_METHOD("client_sync_turn", "player_id"), &CatanGame::client_sync_turn);
+    ClassDB::bind_method(D_METHOD("client_sync_turn", "player_id", "phase"), &CatanGame::client_sync_turn);
 
     ClassDB::bind_method(D_METHOD("client_sync_player_list", "player_info_list"), &CatanGame::client_sync_player_list);
     ClassDB::bind_method(D_METHOD("request_steal", "victim_id"), &CatanGame::request_steal);
@@ -64,7 +64,7 @@ void CatanGame::_bind_methods()
 
     ADD_SIGNAL(MethodInfo("player_list_updated", PropertyInfo(Variant::ARRAY, "player_info_list")));
     // 画面(GDScript)に「ターンが切り替わったよ」と知らせるシグナル
-    ADD_SIGNAL(MethodInfo("turn_changed", PropertyInfo(Variant::INT, "player_id")));
+    ADD_SIGNAL(MethodInfo("turn_changed", PropertyInfo(Variant::INT, "player_id"), PropertyInfo(Variant::INT, "phase")));
 
     ClassDB::bind_method(D_METHOD("request_move_robber", "pos"), &CatanGame::request_move_robber);
     ClassDB::bind_method(D_METHOD("server_process_move_robber", "pos"), &CatanGame::server_process_move_robber);
@@ -75,6 +75,26 @@ void CatanGame::_bind_methods()
     ADD_SIGNAL(MethodInfo("robber_moved", PropertyInfo(Variant::VECTOR2, "pos"), PropertyInfo(Variant::ARRAY, "victims")));
 
     ClassDB::bind_method(D_METHOD("register_player_name", "name"), &CatanGame::register_player_name);
+
+    ClassDB::bind_method(D_METHOD("request_build_city", "vertex_name"), &CatanGame::request_build_city);
+    ClassDB::bind_method(D_METHOD("server_process_build_city", "vertex_name"), &CatanGame::server_process_build_city);
+    ClassDB::bind_method(D_METHOD("client_sync_build_city", "vertex_name", "player_id"), &CatanGame::client_sync_build_city);
+    
+    // 画面に「都市が建ったよ」と知らせるシグナル
+    ADD_SIGNAL(MethodInfo("city_built", PropertyInfo(Variant::STRING, "vertex_name"), PropertyInfo(Variant::INT, "player_id")));
+
+    ClassDB::bind_method(D_METHOD("request_bank_trade", "give_res", "get_res"), &CatanGame::request_bank_trade);
+    ClassDB::bind_method(D_METHOD("server_process_bank_trade", "give_res", "get_res"), &CatanGame::server_process_bank_trade);
+    ClassDB::bind_method(D_METHOD("request_buy_dev_card"), &CatanGame::request_buy_dev_card);
+    ClassDB::bind_method(D_METHOD("server_process_buy_dev_card"), &CatanGame::server_process_buy_dev_card);
+    ClassDB::bind_method(D_METHOD("client_sync_dev_card_bought", "player_id"), &CatanGame::client_sync_dev_card_bought);
+    
+    // ★追加：自分専用の枚数同期
+    ADD_SIGNAL(MethodInfo("dev_card_bought", PropertyInfo(Variant::INT, "player_id")));
+    // ▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // ★追加：自分専用の枚数同期
+    ClassDB::bind_method(D_METHOD("client_sync_private_dev_cards", "knight", "vp", "road", "plenty", "mono"), &CatanGame::client_sync_private_dev_cards);
 }
 
 CatanGame::CatanGame()
@@ -195,6 +215,44 @@ CatanGame::CatanGame()
     reg_name_conf["call_local"] = true;
     reg_name_conf["channel"] = 0;
     rpc_config("register_player_name", reg_name_conf);
+
+    // RPC設定（_bind_methods内、またはコンストラクタ内で他のrpc_configと一緒に）
+    Dictionary server_city_conf;
+    server_city_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    server_city_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    server_city_conf["call_local"] = true;
+    server_city_conf["channel"] = 0;
+    rpc_config("server_process_build_city", server_city_conf);
+
+    Dictionary client_city_conf;
+    client_city_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    client_city_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    client_city_conf["call_local"] = true;
+    client_city_conf["channel"] = 0;
+    rpc_config("client_sync_build_city", client_city_conf);
+
+    Dictionary trade_conf;
+    trade_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    trade_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    trade_conf["call_local"] = true;
+    trade_conf["channel"] = 0;
+    rpc_config("server_process_bank_trade", trade_conf);
+
+    // -- RPC設定 --
+    Dictionary buy_dev_conf;
+    buy_dev_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    buy_dev_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    buy_dev_conf["call_local"] = true;
+    buy_dev_conf["channel"] = 0;
+    rpc_config("server_process_buy_dev_card", buy_dev_conf);
+
+    // ★ 自分だけに送るRPC設定（RPC_MODE_AUTHORITY）
+    Dictionary sync_priv_dev_conf;
+    sync_priv_dev_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_priv_dev_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_priv_dev_conf["call_local"] = true;
+    sync_priv_dev_conf["channel"] = 0;
+    rpc_config("client_sync_private_dev_cards", sync_priv_dev_conf);
 }
 
 CatanGame::~CatanGame()
@@ -284,16 +342,31 @@ void CatanGame::server_process_build(const String& vertex_name) {
         return;
     }
     // ★ 不正チェック2：サイコロを振る前に建てようとした
-    if (!has_rolled_dice_this_turn) {
-        UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
-        return;
-    }
+    
 
-    // ★ 1. コストチェック（開拓地＝木1,土1,羊1,麦1）
     PlayerData& p = players[sender_id];
-    if (p.wood < 1 || p.brick < 1 || p.sheep < 1 || p.wheat < 1) {
-        UtilityFunctions::print("Server: 資源が足りないため家を建てられません！");
-        return;
+
+    // ★変更: フェーズごとのチェック処理
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        // 初期配置フェーズの場合
+        if (setup_settlements_built_this_turn >= 1) {
+            UtilityFunctions::print("Server: 初期配置では家を1つしか建てられません！");
+            return;
+        }
+        // コストは消費しない（無料）
+    } else {
+        // 通常ゲームの場合
+        if (!has_rolled_dice_this_turn) {
+            UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
+            return;
+        }
+        if (p.wood < 1 || p.brick < 1 || p.sheep < 1 || p.wheat < 1) {
+            UtilityFunctions::print("Server: 資源が足りないため家を建てられません！");
+            return;
+        }
+        // コスト消費
+        p.wood -= 1; p.brick -= 1; p.sheep -= 1; p.wheat -= 1;
+        rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
     }
 
     // すでに家がないかチェック
@@ -308,17 +381,21 @@ void CatanGame::server_process_build(const String& vertex_name) {
         }
     }
 
-    // ★ 2. コスト消費とUI更新！
-    p.wood -= 1;
-    p.brick -= 1;
-    p.sheep -= 1;
-    p.wheat -= 1;
-    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        setup_settlements_built_this_turn++;
+    }
 
     board_vertices[vertex_name].owner_id = sender_id;
     board_vertices[vertex_name].building_type = 1;
 
     rpc("client_sync_build", vertex_name, sender_id);
+
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        // 家と道の両方を建て終わったかチェック
+        if (setup_settlements_built_this_turn >= 1 && setup_roads_built_this_turn >= 1) {
+            advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
+        }
+    }
 }
 
 // 3. 全員が受け取って画面を更新する
@@ -342,16 +419,22 @@ void CatanGame::server_process_build_road(const String& edge_name) {
         return;
     }
     // ★ 不正チェック2：サイコロを振る前に建てようとした
-    if (!has_rolled_dice_this_turn) {
-        UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
-        return;
-    }
+    
 
     // ★ 1. コストチェック（街道＝木1,土1）
     PlayerData& p = players[sender_id];
-    if (p.wood < 1 || p.brick < 1) {
-        UtilityFunctions::print("Server: 資源が足りないため道を引けません！");
-        return;
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        if (setup_roads_built_this_turn >= 1) {
+            UtilityFunctions::print("Server: 初期配置では道を1つしか引けません！");
+            return;
+        }
+        // 初期配置時は、直前に建てた家から繋がっているかの厳密なチェックが必要ですが、
+        // まずは「通常の接続ルール（自分の家か道に繋がっている）」をそのまま使います。
+    } else {
+        if (!has_rolled_dice_this_turn) { return; }
+        if (p.wood < 1 || p.brick < 1) { return; }
+        p.wood -= 1; p.brick -= 1;
+        rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
     }
 
     if (board_edges[edge_name].owner_id != 0) return; 
@@ -391,13 +474,19 @@ void CatanGame::server_process_build_road(const String& edge_name) {
         return;
     }
 
-    // ★ 3. コスト消費とUI更新！
-    p.wood -= 1;
-    p.brick -= 1;
-    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        setup_roads_built_this_turn++;
+    }
 
     board_edges[edge_name].owner_id = sender_id;
     rpc("client_sync_build_road", edge_name, sender_id);
+
+    if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
+        // 家と道の両方を建て終わったかチェック
+        if (setup_settlements_built_this_turn >= 1 && setup_roads_built_this_turn >= 1) {
+            advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
+        }
+    }
 }
 
 void CatanGame::client_sync_build_road(const String& edge_name, int player_id) {
@@ -465,6 +554,7 @@ void CatanGame::register_edge(const String& edge_name, Vector2 midpoint) {
 // サーバーがプレイヤー全員のリストを作って最初のターンを開始する
 void CatanGame::start_turn_system() {
     if (!get_tree()->get_multiplayer()->is_server()) return;
+    initialize_dev_deck();
     player_order.clear();
     player_order.push_back(1);
     PackedInt32Array peers = get_tree()->get_multiplayer()->get_peers();
@@ -472,6 +562,10 @@ void CatanGame::start_turn_system() {
     
     current_turn_index = 0;
     has_rolled_dice_this_turn = false;
+
+    current_phase = PHASE_SETUP_1;
+    setup_settlements_built_this_turn = 0;
+    setup_roads_built_this_turn = 0;
 
     // ★ リストを作成して送信
     Array player_info_list;
@@ -488,8 +582,8 @@ void CatanGame::start_turn_system() {
         info["dev_cards"] = players[pid].dev_cards;
         player_info_list.push_back(info);
     }
-    rpc("client_sync_turn", player_order[current_turn_index]);
-    rpc("client_sync_player_list", player_info_list); // ★ 送信
+    rpc("client_sync_turn", player_order[current_turn_index], current_phase); 
+    rpc("client_sync_player_list", player_info_list);
 }
 
 void CatanGame::client_sync_player_list(Array player_info_list) {
@@ -515,12 +609,12 @@ void CatanGame::server_process_end_turn() {
     current_turn_index = (current_turn_index + 1) % player_order.size();
     has_rolled_dice_this_turn = false;
     // 全員に「次の人のターンになったよ」と通知！
-    rpc("client_sync_turn", player_order[current_turn_index]);
+    rpc("client_sync_turn", player_order[current_turn_index], current_phase);
 }
 
-void CatanGame::client_sync_turn(int player_id) {
-    UtilityFunctions::print("Turn changed to Player: ", player_id);
-    emit_signal("turn_changed", player_id);
+void CatanGame::client_sync_turn(int player_id, int phase) {
+    UtilityFunctions::print("Turn changed to Player: ", player_id, " Phase: ", phase);
+    emit_signal("turn_changed", player_id, phase);
 }
 
 void CatanGame::request_move_robber(Vector2 pos) {
@@ -596,4 +690,194 @@ void CatanGame::register_player_name(const String& name) {
     if (sender_id == 0) sender_id = 1; // サーバー自身の場合
 
     players[sender_id].player_name = name;
+}
+
+void CatanGame::advance_setup_turn() {
+    if (current_phase == PHASE_SETUP_1) {
+        current_turn_index++;
+        if (current_turn_index >= player_order.size()) {
+            // 1巡目終了。最後の人（4番目）は連続でターンを行う
+            current_phase = PHASE_SETUP_2;
+            current_turn_index = player_order.size() - 1; 
+        }
+    } else if (current_phase == PHASE_SETUP_2) {
+        current_turn_index--;
+        if (current_turn_index < 0) {
+            // 2巡目終了。通常フェーズへ移行し、1番目の人から開始
+            current_phase = PHASE_MAIN;
+            current_turn_index = 0;
+            UtilityFunctions::print("Server: 初期配置完了！通常フェーズに移行します。");
+        }
+    }
+
+    // 次のターンのために建築回数をリセット
+    setup_settlements_built_this_turn = 0;
+    setup_roads_built_this_turn = 0;
+    has_rolled_dice_this_turn = false;
+
+    // 全員に「次はこの人のターンだよ」と通知
+    rpc("client_sync_turn", player_order[current_turn_index], current_phase);
+}
+
+void CatanGame::request_build_city(const String& vertex_name) {
+    rpc_id(1, "server_process_build_city", vertex_name);
+}
+
+void CatanGame::server_process_build_city(const String& vertex_name) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    // ターンとフェーズのチェック
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
+    if (current_phase != PHASE_MAIN) return; // 初期配置では都市化できない
+    if (!has_rolled_dice_this_turn) return;  // サイコロを振った後のみ
+
+    PlayerData& p = players[sender_id];
+
+    // ★ 1. コストチェック（麦2、鉄3）
+    if (p.wheat < 2 || p.ore < 3) {
+        UtilityFunctions::print("Server: 資源が足りないため都市化できません！");
+        return;
+    }
+
+    // ★ 2. 対象チェック（自分の家であること）
+    if (board_vertices[vertex_name].owner_id != sender_id) {
+        UtilityFunctions::print("Server: 自分の家以外の場所は都市化できません！");
+        return;
+    }
+    if (board_vertices[vertex_name].building_type != 1) {
+        UtilityFunctions::print("Server: すでに都市化されているか、家がありません！");
+        return;
+    }
+
+    // ★ 3. コスト消費とアップグレード
+    p.wheat -= 2;
+    p.ore -= 3;
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+
+    board_vertices[vertex_name].building_type = 2; // ここを2にするだけで資源が2倍もらえるようになる！
+    rpc("client_sync_build_city", vertex_name, sender_id);
+}
+
+void CatanGame::client_sync_build_city(const String& vertex_name, int player_id) {
+    emit_signal("city_built", vertex_name, player_id);
+}
+
+void CatanGame::request_bank_trade(const String& give_res, const String& get_res) {
+    // サーバー(ID: 1)にトレードをリクエスト
+    rpc_id(1, "server_process_bank_trade", give_res, get_res);
+}
+
+void CatanGame::server_process_bank_trade(const String& give_res, const String& get_res) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    // ★ 1. ターンのチェック（自分のターンで、通常フェーズのみ）
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) {
+        UtilityFunctions::print("Server: あなたのターンではありません！");
+        return;
+    }
+    if (current_phase != PHASE_MAIN) {
+        UtilityFunctions::print("Server: 初期配置中はトレードできません！");
+        return;
+    }
+
+    PlayerData& p = players[sender_id];
+
+    // ★ 2. 払う資源が4つ以上あるかチェックして減らす
+    bool can_trade = false;
+    if (give_res == "wood" && p.wood >= 4) { p.wood -= 4; can_trade = true; }
+    else if (give_res == "brick" && p.brick >= 4) { p.brick -= 4; can_trade = true; }
+    else if (give_res == "sheep" && p.sheep >= 4) { p.sheep -= 4; can_trade = true; }
+    else if (give_res == "wheat" && p.wheat >= 4) { p.wheat -= 4; can_trade = true; }
+    else if (give_res == "ore" && p.ore >= 4) { p.ore -= 4; can_trade = true; }
+
+    if (!can_trade) {
+        UtilityFunctions::print("Server: 資源が4つ足りないためトレードできません！");
+        return;
+    }
+
+    // ★ 3. 欲しい資源を1つ増やす
+    if (get_res == "wood") p.wood += 1;
+    else if (get_res == "brick") p.brick += 1;
+    else if (get_res == "sheep") p.sheep += 1;
+    else if (get_res == "wheat") p.wheat += 1;
+    else if (get_res == "ore") p.ore += 1;
+
+    // ★ 4. 全員に新しい資源の枚数を同期する
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+    UtilityFunctions::print("Server: Player ", sender_id, " traded 4 ", give_res, " for 1 ", get_res);
+}
+
+void CatanGame::server_process_buy_dev_card() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
+    if (current_phase != PHASE_MAIN) return;
+    if (!has_rolled_dice_this_turn) return;
+
+    PlayerData& p = players[sender_id];
+
+    if (p.wheat < 1 || p.sheep < 1 || p.ore < 1) {
+        UtilityFunctions::print("Server: 資源が足りないため発展カードを買えません！");
+        return;
+    }
+
+    if (dev_card_deck.empty()) {
+        UtilityFunctions::print("Server: 発展カードの山札がもうありません！");
+        return;
+    }
+
+    // コスト消費
+    p.wheat -= 1; p.sheep -= 1; p.ore -= 1;
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+
+    // 一番上のカードを引いて、該当する種類を増やす
+    String drawn_card = dev_card_deck.back();
+    dev_card_deck.pop_back();
+    p.dev_cards += 1;
+
+    if (drawn_card == "knight") p.dev_knight++;
+    else if (drawn_card == "vp") p.dev_vp++;
+    else if (drawn_card == "road_building") p.dev_road++;
+    else if (drawn_card == "year_of_plenty") p.dev_plenty++;
+    else if (drawn_card == "monopoly") p.dev_mono++;
+
+    // 全員に「全体の枚数が増えたよ」と通知
+    rpc("client_sync_dev_card_bought", sender_id);
+
+    // ★ 本人にだけ「各カードの最新枚数」を同期する
+    rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+}
+
+void CatanGame::client_sync_private_dev_cards(int knight, int vp, int road, int plenty, int mono) {
+    emit_signal("private_dev_cards_synced", knight, vp, road, plenty, mono);
+}
+
+void CatanGame::initialize_dev_deck() {
+    dev_card_deck.clear();
+    for(int i=0; i<14; i++) dev_card_deck.push_back("knight");        // 騎士
+    for(int i=0; i<5; i++)  dev_card_deck.push_back("vp");            // 勝利点
+    for(int i=0; i<2; i++)  dev_card_deck.push_back("road_building"); // 街道建設
+    for(int i=0; i<2; i++)  dev_card_deck.push_back("year_of_plenty");// 収穫
+    for(int i=0; i<2; i++)  dev_card_deck.push_back("monopoly");      // 独占
+
+    // シャッフル
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(dev_card_deck.begin(), dev_card_deck.end(), g);
+}
+
+// クライアントがサーバーに「カード買いたい！」とお願いする関数
+void CatanGame::request_buy_dev_card() {
+    rpc_id(1, "server_process_buy_dev_card");
+}
+
+// サーバーから「この人がカードを買ったよ」と全員に教える関数
+void CatanGame::client_sync_dev_card_bought(int player_id) {
+    emit_signal("dev_card_bought", player_id);
 }

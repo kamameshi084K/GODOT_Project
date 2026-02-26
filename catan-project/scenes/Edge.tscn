@@ -14,7 +14,7 @@ offset_top = -4.0
 offset_right = 20.0
 offset_bottom = 4.0
 mouse_filter = 2
-color = Color(1, 1, 1, 0.4862745)
+color = Color(1, 1, 1, 0.69803923)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_gx0yh")

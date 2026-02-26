@@ -23,15 +23,31 @@ namespace godot
     };
 
     struct PlayerData {
-        int wood = 10;
-        int brick = 10;
-        int sheep = 10;
-        int wheat = 10;
-        int ore = 10;
+        int wood = 0;
+        int brick = 0;
+        int sheep = 0;
+        int wheat = 0;
+        int ore = 0;
+        
         int turn_index = 0;
-        int dev_cards = 0; // ★ 追加：発展カードの枚数
+        int dev_cards = 0; // 全員に見える「合計枚数」用
+
+    // ★追加：自分だけが見る種類ごとの枚数
+        int dev_knight = 0;
+        int dev_vp = 0;
+        int dev_road = 0;
+        int dev_plenty = 0;
+        int dev_mono = 0;
+        
         String player_name = "Unknown";
     };
+
+    // ゲームの進行フェーズを表す列挙型（enum）を定義
+        enum GamePhase {
+            PHASE_SETUP_1, // 初期配置1巡目 (1→2→3→4)
+            PHASE_SETUP_2, // 初期配置2巡目 (4→3→2→1)
+            PHASE_MAIN     // 通常ゲーム (サイコロを振って進行)
+        };
 
     /**
      * @class CatanGame
@@ -44,6 +60,11 @@ namespace godot
     private:
         // 通信接続用のネットワークピア
         Ref<ENetMultiplayerPeer> peer;
+        GamePhase current_phase = PHASE_SETUP_1; // 現在のフェーズ
+
+        // 初期配置フェーズ中、そのターンに建てた数を記録する変数
+        int setup_settlements_built_this_turn = 0;
+        int setup_roads_built_this_turn = 0;
 
     protected:
         // Godotへのメソッド・RPC設定の登録用
@@ -122,7 +143,7 @@ namespace godot
         void start_turn_system();      // サーバーがゲーム開始時に呼ぶ
         void request_end_turn();       // クライアントが「ターン終了」ボタンを押した時
         void server_process_end_turn();// サーバーがターン交代を処理する
-        void client_sync_turn(int player_id); // 全員に「次はこの人のターンだよ」と知らせる
+        void client_sync_turn(int player_id, int phase); // 全員に「次はこの人のターンだよ」と知らせる
         bool has_rolled_dice_this_turn = false; // ターン中にダイスを振ったかどうかのフラグ
         void request_move_robber(Vector2 pos);
         void server_process_move_robber(Vector2 pos);
@@ -131,6 +152,25 @@ namespace godot
         void request_steal(int victim_id);
         void server_process_steal(int victim_id);
         void register_player_name(const String& name);
+        void advance_setup_turn();
+        void request_build_city(const String& vertex_name);
+        void server_process_build_city(const String& vertex_name);
+        void client_sync_build_city(const String& vertex_name, int player_id);
+        // クライアントが「これを4つ払って、これを1つもらう！」とお願いする関数
+        void request_bank_trade(const String& give_res, const String& get_res);
+
+        // サーバーがそのお願いを受け取って、実際に計算する関数
+        void server_process_bank_trade(const String& give_res, const String& get_res);
+        void request_buy_dev_card();
+        void server_process_buy_dev_card();
+
+        // 全員に「この人がカードを買って合計枚数が増えたよ」と知らせる用
+        void client_sync_dev_card_bought(int player_id);
+
+        // ★追加：引いた本人にだけ「今の君の各カードの所持枚数はこれだよ！」と教える用
+        void client_sync_private_dev_cards(int knight, int vp, int road, int plenty, int mono);
+        std::vector<String> dev_card_deck; // 山札
+        void initialize_dev_deck();        // 山札を準備する関数
     };
 
 } // namespace godot

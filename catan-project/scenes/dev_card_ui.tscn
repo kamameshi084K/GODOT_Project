@@ -1,0 +1,124 @@
+[gd_scene load_steps=7 format=3 uid="uid://bpk1cimgrt8py"]
+
+[ext_resource type="Script" uid="uid://f08p050pjj4a" path="res://script/dev_card_ui.gd" id="1_ycrwv"]
+[ext_resource type="Texture2D" uid="uid://dt5alixo1jjox" path="res://assets/images/cards/knight.png" id="2_xryi5"]
+[ext_resource type="Texture2D" uid="uid://c5t1d4xn7xp8i" path="res://assets/images/cards/point.png" id="3_d741c"]
+[ext_resource type="Texture2D" uid="uid://d3mp3afl48itk" path="res://assets/images/cards/harvest.png" id="4_seiv8"]
+[ext_resource type="Texture2D" uid="uid://cnn2g8tmkrff8" path="res://assets/images/cards/roadbuilding.png" id="5_lck0b"]
+[ext_resource type="Texture2D" uid="uid://bxq167jou8iue" path="res://assets/images/cards/monopoly.png" id="6_r8xtx"]
+
+[node name="DevCardUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ycrwv")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 64.0
+offset_right = -64.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0.5019608)
+
+[node name="BuyButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 408.0
+offset_top = 384.0
+offset_right = 744.0
+offset_bottom = 540.0
+theme_override_font_sizes/font_size = 54
+text = "購入！
+(麦1,羊1,鉄1)"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 896.0
+offset_top = 448.0
+offset_right = 1004.0
+offset_bottom = 511.0
+theme_override_font_sizes/font_size = 40
+text = "閉じる"
+
+[node name="Knight" type="Sprite2D" parent="."]
+position = Vector2(192, 224)
+scale = Vector2(0.09162491, 0.08664259)
+texture = ExtResource("2_xryi5")
+
+[node name="Point" type="Sprite2D" parent="."]
+position = Vector2(384, 224.00002)
+scale = Vector2(0.09162491, 0.0866426)
+texture = ExtResource("3_d741c")
+
+[node name="Harvest" type="Sprite2D" parent="."]
+position = Vector2(768, 224)
+scale = Vector2(0.09162491, 0.0866426)
+texture = ExtResource("4_seiv8")
+
+[node name="Road" type="Sprite2D" parent="."]
+position = Vector2(576, 224)
+scale = Vector2(0.09162491, 0.0866426)
+texture = ExtResource("5_lck0b")
+
+[node name="Monopoly" type="Sprite2D" parent="."]
+position = Vector2(960, 224.00002)
+scale = Vector2(0.09162491, 0.0866426)
+texture = ExtResource("6_r8xtx")
+
+[node name="KnightLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 184.0
+offset_top = 280.0
+offset_right = 200.0
+offset_bottom = 319.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "0"
+
+[node name="VPLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 376.0
+offset_top = 280.0
+offset_right = 392.0
+offset_bottom = 319.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "0"
+
+[node name="RoadLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 280.0
+offset_right = 584.0
+offset_bottom = 319.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "0"
+
+[node name="PlentyLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 760.0
+offset_top = 280.0
+offset_right = 776.0
+offset_bottom = 319.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "0"
+
+[node name="MonoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 952.0
+offset_top = 280.0
+offset_right = 968.0
+offset_bottom = 319.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "0"

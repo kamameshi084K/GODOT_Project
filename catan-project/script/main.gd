@@ -10,6 +10,10 @@ extends Node2D
 @onready var wheat_label = $GameUI/ResourceCards/WheatCard/CountLabel
 @onready var ore_label = $GameUI/ResourceCards/OreCard/CountLabel
 @onready var turn_end_btn = $GameUI/TurnEndButton
+@onready var open_trade_btn = $GameUI/OpenTradeButton
+@onready var trade_ui = $GameUI/TradeUI
+@onready var open_dev_btn = $GameUI/OpenDevCardButton
+@onready var dev_ui = $GameUI/DevCardUI
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -51,10 +55,20 @@ func _ready():
 	GameManager.road_built.connect(_on_road_built)
 	GameManager.resources_updated.connect(_on_resources_updated)
 	GameManager.robber_moved.connect(_on_robber_moved)
+	GameManager.city_built.connect(_on_city_built)
 
 	call_deferred("_generate_intersections")
 	call_deferred("_generate_edges")
 	call_deferred("_setup_robber")
+	
+	# トレード画面を開くボタンの設定
+	open_trade_btn.pressed.connect(func(): trade_ui.show())
+	open_trade_btn.disabled = true
+	trade_ui.hide() # ゲーム開始時はトレード画面を隠しておく
+	
+	open_dev_btn.pressed.connect(func(): dev_ui.show())
+	open_dev_btn.disabled = true
+	dev_ui.hide()
 
 func _on_roll_pressed():
 	GameManager.rpc_id(1, "request_roll_dice")
@@ -109,28 +123,20 @@ func _on_settlement_built(vertex_name: String, player_id: int):
 	var container = $Intersections
 	var vertex_node = container.get_node_or_null(vertex_name)
 	
-	if vertex_node != null and vertex_node.has_node("Sprite2D"):
-		if player_id == 1:
-			vertex_node.get_node("Sprite2D").modulate = Color.RED
-		else:
-			vertex_node.get_node("Sprite2D").modulate = Color.BLUE
-		vertex_node.get_node("Sprite2D").scale = Vector2(0.25, 0.25)
+	if vertex_node != null:
+		# ★変更: Sprite2Dを探すのではなく、Intersectionの関数を呼ぶ！
+		vertex_node.update_building(player_id, 1)
 		
-	# ★追加：家が建ったら右側のUIのVPを増やす！
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
 		player_uis[player_id].add_vp(1)
 		
 func _on_road_built(edge_name: String, player_id: int):
 	var container = $Edges
 	var edge_node = container.get_node_or_null(edge_name)
-	if edge_node != null and edge_node.has_node("ColorRect"):
-		if player_id == 1:
-			edge_node.get_node("ColorRect").color = Color.RED
-		else:
-			edge_node.get_node("ColorRect").color = Color.BLUE
-		var rect = edge_node.get_node("ColorRect")
-		rect.size.y = 8
-		rect.position.y = -4
+	
+	if edge_node != null:
+		# ★修正：ColorRectを直接いじるのをやめて、edge.gd の関数にお任せする！
+		edge_node.build_road(player_id)
 		
 func _on_resources_updated(player_id: int, wood: int, brick: int, sheep: int, wheat: int, ore: int):
 	if player_id == multiplayer.get_unique_id():
@@ -161,20 +167,24 @@ func _distribute_resources(roll: int):
 				_: continue
 			GameManager.distribute_resources_for_hex(tile.position, hex_radius_math, type_str)
 
-func _on_turn_changed(active_player_id: int):
+func _on_turn_changed(active_player_id: int, phase: int = 2):
 	is_my_turn = (active_player_id == multiplayer.get_unique_id())
+	
 	if is_my_turn:
-		roll_btn.show()
-		roll_btn.disabled = false
-		roll_btn.modulate = Color.LIGHT_SKY_BLUE
-		turn_end_btn.disabled = true
-		turn_end_btn.modulate = Color.DIM_GRAY
+		if phase == 0 or phase == 1:
+			# 初期配置フェーズ
+			open_trade_btn.disabled = true 
+			open_dev_btn.disabled = true # ★追加: 初期配置は購入不可
+		else:
+			# 通常フェーズ
+			open_trade_btn.disabled = false 
+			open_dev_btn.disabled = false # ★追加: ボタン解禁！
 	else:
-		roll_btn.hide()
-		roll_btn.disabled = true
-		turn_end_btn.disabled = true
-		turn_end_btn.modulate = Color.DIM_GRAY
-		roll_btn.modulate = Color.DIM_GRAY
+		# 自分のターンじゃない時
+		open_trade_btn.disabled = true 
+		open_dev_btn.disabled = true # ★追加
+		trade_ui.hide() 
+		dev_ui.hide() # ★追加: ターンが変わったら強制的に閉じる
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -247,3 +257,14 @@ func _on_steal_requested(target_id: int):
 		
 	turn_end_btn.disabled = false
 	turn_end_btn.modulate = Color.LIGHT_SKY_BLUE
+
+func _on_city_built(vertex_name: String, player_id: int):
+	var container = $Intersections
+	var vertex_node = container.get_node_or_null(vertex_name)
+	
+	if vertex_node != null:
+		# レベル2（都市）として更新！大きく描画される
+		vertex_node.update_building(player_id, 2)
+		
+	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
+		player_uis[player_id].add_vp(1) # 都市になるとさらに+1点

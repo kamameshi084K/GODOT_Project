@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=17 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -12,6 +12,8 @@
 [ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="10_a8y0u"]
 [ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="11_jkv2x"]
 [ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
+[ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
+[ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="14_a8y0u"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
 font_size = 34
@@ -266,9 +268,30 @@ offset_bottom = 436.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "ターン終了"
 
+[node name="OpenTradeButton" type="Button" parent="GameUI"]
+offset_left = 752.0
+offset_top = 323.0
+offset_right = 881.0
+offset_bottom = 436.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
+text = "交換"
+
+[node name="OpenDevCardButton" type="Button" parent="GameUI"]
+offset_left = 886.0
+offset_top = 323.0
+offset_right = 1015.0
+offset_bottom = 436.0
+theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
+text = "発展カード"
+
 [node name="PlayerList" type="VBoxContainer" parent="GameUI"]
 offset_left = 742.0
 offset_top = 59.0
 offset_right = 1149.0
 offset_bottom = 351.0
 scale = Vector2(0.19, 0.19)
+
+[node name="TradeUI" parent="GameUI" instance=ExtResource("13_trceg")]
+visible = false
+
+[node name="DevCardUI" parent="GameUI" instance=ExtResource("14_a8y0u")]

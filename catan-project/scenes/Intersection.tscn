@@ -1,16 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://0uhek2gwu48x"]
+[gd_scene load_steps=3 format=3 uid="uid://0uhek2gwu48x"]
 
 [ext_resource type="Script" uid="uid://sr28ybiobe6q" path="res://script/intersection.gd" id="1_7k44d"]
-[ext_resource type="Texture2D" uid="uid://dw671itqwd7bh" path="res://icon.svg" id="1_nor1w"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_14i3x"]
 
 [node name="Intersection" type="Area2D"]
 script = ExtResource("1_7k44d")
-
-[node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("1_nor1w")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_14i3x")

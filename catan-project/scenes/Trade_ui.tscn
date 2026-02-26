@@ -1,0 +1,103 @@
+[gd_scene load_steps=2 format=3 uid="uid://chy5gutyayo0m"]
+
+[ext_resource type="Script" uid="uid://c1k2415xehj4k" path="res://script/trade_ui.gd" id="1_7h57m"]
+
+[node name="TradeUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7h57m")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 64.0
+offset_right = -64.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0.5019608)
+
+[node name="GiveOption" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 192.0
+offset_right = 512.0
+offset_bottom = 320.0
+
+[node name="GetOption" type="OptionButton" parent="."]
+layout_mode = 0
+offset_left = 640.0
+offset_top = 192.0
+offset_right = 896.0
+offset_bottom = 320.0
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 704.0
+offset_top = 136.0
+offset_right = -320.0
+offset_bottom = -464.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.77254903)
+
+[node name="Label2" type="Label" parent="ColorRect2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 33
+text = "貰う資源"
+
+[node name="ColorRect3" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 320.0
+offset_top = 136.0
+offset_right = -704.0
+offset_bottom = -464.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.77254903)
+
+[node name="Label" type="Label" parent="ColorRect3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 33
+text = "払う資源"
+
+[node name="TradeButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 384.0
+offset_right = 705.0
+offset_bottom = 466.0
+theme_override_font_sizes/font_size = 54
+text = "交換する！"
+
+[node name="CloseButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 896.0
+offset_top = 448.0
+offset_right = 1004.0
+offset_bottom = 511.0
+theme_override_font_sizes/font_size = 40
+text = "閉じる"

@@ -58,9 +58,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 75.0
-offset_top = 29.0
+offset_top = -28.0
 offset_right = 125.0
-offset_bottom = 79.0
+offset_bottom = 22.0
 grow_vertical = 2
 text = "グー"
 
@@ -69,9 +69,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 75.0
-offset_top = 90.0
+offset_top = 33.0
 offset_right = 125.0
-offset_bottom = 140.0
+offset_bottom = 83.0
 grow_vertical = 2
 text = "チョキ"
 
@@ -80,9 +80,9 @@ anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
 offset_left = 75.0
-offset_top = 152.0
+offset_top = 95.0
 offset_right = 125.0
-offset_bottom = 202.0
+offset_bottom = 145.0
 grow_vertical = 2
 text = "パー"
 
@@ -149,3 +149,10 @@ offset_right = 52.5
 grow_horizontal = 2
 grow_vertical = 0
 text = "街へ戻る"
+
+[node name="DefendButton" type="Button" parent="UI"]
+offset_left = 76.0
+offset_top = 478.0
+offset_right = 149.0
+offset_bottom = 527.0
+text = "防御"

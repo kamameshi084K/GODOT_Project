@@ -56,6 +56,7 @@ void BattleScene::_bind_methods()
     ClassDB::bind_method(D_METHOD("_on_return_button_pressed"), &BattleScene::_on_return_button_pressed);
 
     ClassDB::bind_method(D_METHOD("_safe_play_anim", "target", "anim_name"), &BattleScene::_safe_play_anim);
+    ClassDB::bind_method(D_METHOD("_on_defend_pressed"), &BattleScene::_on_defend_pressed);
 }
 
 BattleScene::BattleScene()
@@ -75,6 +76,10 @@ BattleScene::BattleScene()
 
     server_host_hand = "";
     server_client_hand = "";
+    defend_button = nullptr;
+    my_last_hand = "";
+    server_host_defending = false;
+    server_client_defending = false;
 
     Dictionary rpc_config_any;
     rpc_config_any["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
@@ -176,6 +181,16 @@ void BattleScene::_ready()
     result_panel = get_node<Control>("UI/ResultPanel");
     result_label = get_node<Label>("UI/ResultPanel/ResultLabel");
     return_button = get_node<Button>("UI/ResultPanel/ReturnButton");
+    // _ready() の中（他のボタン設定の近く）に追加
+    Node* btn_def = find_child("DefendButton");
+    if (btn_def) {
+        defend_button = Object::cast_to<Button>(btn_def);
+        defend_button->connect("pressed", Callable(this, "_on_defend_pressed"));
+        defend_button->set_disabled(true);
+    }
+
+    // 画像のロード部分に防御用も追加
+    tex_defend = ResourceLoader::get_singleton()->load("res://assets/textures/defend.png");
 
     if (return_button) {
         return_button->connect("pressed", Callable(this, "_on_return_button_pressed"));
@@ -436,15 +451,24 @@ void BattleScene::_on_skill_3_pressed()
     }
 }
 
+void BattleScene::_on_defend_pressed()
+{
+    UtilityFunctions::print("Used Defend");
+    _submit_hand("defend");
+}
+
 void BattleScene::_submit_hand(const String& hand)
 {
     if(has_selected) return;
     has_selected = true;
+
+    my_last_hand = hand;
     
     //修正: 新しいボタンを無効化
     if(skill_button_1) skill_button_1->set_disabled(true);
     if(skill_button_2) skill_button_2->set_disabled(true);
     if(skill_button_3) skill_button_3->set_disabled(true);
+    if(defend_button) defend_button->set_disabled(true);
     
     if (get_tree()->get_multiplayer()->is_server())
     {
@@ -472,8 +496,22 @@ void BattleScene::_rpc_submit_hand(const String& hand)
     {
         command_received_count = 0; 
         
+        // ★追加: 防御フラグを保存しておく（_apply_damageで使うため）
+        server_host_defending = (server_host_hand == "defend");
+        server_client_defending = (server_client_hand == "defend");
+
         int winner_side = 0;
-        if (server_host_hand == server_client_hand) winner_side = 0;
+        
+        // ★変更: 防御を考慮した勝敗判定
+        if (server_host_hand == server_client_hand) {
+            winner_side = 0; // あいこ、または両方防御
+        } 
+        else if (server_client_hand == "defend") {
+            winner_side = 1; // ホストの攻撃、クライアントは防御
+        }
+        else if (server_host_hand == "defend") {
+            winner_side = 2; // クライアントの攻撃、ホストは防御
+        }
         else if ((server_host_hand == "rock" && server_client_hand == "scissors") ||
                  (server_host_hand == "scissors" && server_client_hand == "paper") ||
                  (server_host_hand == "paper" && server_client_hand == "rock"))
@@ -485,13 +523,26 @@ void BattleScene::_rpc_submit_hand(const String& hand)
             winner_side = 2;
         }
 
-        int first_attacker = 1; 
+        int first_attacker = winner_side; 
+
         GameManager* gm = GameManager::get_singleton();
         if (gm && winner_side == 0)
         {
-            if (gm->get_next_enemy_speed() > gm->get_player_speed()) first_attacker = 2;
+            // ★追加: あいこ（winner_side == 0）の時は素早さで先行を上書きする
+            int host_speed = gm->get_player_speed(); 
+            int client_speed = gm->get_next_enemy_speed();
+
+            if (host_speed > client_speed) {
+                first_attacker = 1; // ホストが早い
+            } else if (client_speed > host_speed) {
+                first_attacker = 2; // クライアントが早い
+            } else {
+                // 素早さが完全に同じ場合は、50%の確率でランダムに先行を決める
+                first_attacker = (UtilityFunctions::randi() % 2) + 1;
+            }
         }
 
+        // rpcの引数の順番はご自身の元のコードに合わせています
         rpc("_rpc_resolve_janken", server_host_hand, server_client_hand, winner_side, first_attacker);
         server_host_hand = "";
         server_client_hand = "";
@@ -569,15 +620,16 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
     float right_target_x = (center_x + offset_from_center) - (tex_size.x / 2.0);
 
     // (A) 「画面外から中央へ」ガッと移動 (0.3秒)
-    seq->set_parallel(true); // 並列実行開始
+    seq->set_parallel(true); // ★並列実行開始（2つの手を同時に動かす）
     seq->tween_property(left_hand_rect, "position:x", left_target_x, 0.3)->set_trans(Tween::TRANS_CUBIC)->set_ease(Tween::EASE_OUT);
     seq->tween_property(right_hand_rect, "position:x", right_target_x, 0.3)->set_trans(Tween::TRANS_CUBIC)->set_ease(Tween::EASE_OUT);
-    
-    // (B) 衝突の衝撃で少し揺らすなど（省略可だが、間を作る）
-    seq->chain()->tween_interval(0.2); // 移動完了後、0.2秒溜める
+
+    // (B) 衝突の衝撃で少し揺らすなど
+    seq->set_parallel(false); // ★追加: ここで並列を解除！順番通りに戻す
+    seq->tween_interval(0.2); // 移動完了後、0.2秒溜める
 
     // (C) 勝敗演出：勝ったほうを前に、負けたほうを暗く (0.3秒かけて変化)
-    seq->set_parallel(true);
+    seq->set_parallel(true); // ★再び並列モード（UIの色と大きさを同時に変える）
     
     // 勝った時の拡大サイズ (0.2 -> 0.3)
     Vector2 win_scale = Vector2(0.3, 0.3);
@@ -597,22 +649,76 @@ void BattleScene::_rpc_resolve_janken(const String& h_hand, const String& c_hand
     }
 
     // (D) 結果をじっくり見せる時間 (0.8秒)
-    seq->chain()->tween_interval(0.8);
+    seq->set_parallel(false); // ★超重要追加: ここで完全に直列モードに戻す！
+    seq->tween_interval(0.8);
 
     // (E) 手を隠す
     seq->tween_callback(Callable(this, "_hide_janken_ui"));
+    // (F) 攻撃へ移行 or ターン終了 （ここから下を上書き）
 
-    // (F) 攻撃へ移行 or ターン終了
-    if (attacker_node && defender_node && skill_to_use.is_valid())
+    // 先行と後攻のノード・スキルを判定
+    bool am_i_first_attacker = (is_server && first_attacker == 1) || (!is_server && first_attacker == 2);
+
+    Node3D* first_atk_node = am_i_first_attacker ? player_model : enemy_model;
+    Node3D* first_def_node = am_i_first_attacker ? enemy_model : player_model;
+    Ref<SkillData> first_skill = _get_skill_by_hand(am_i_first_attacker ? current_skills : enemy_player_skills, am_i_first_attacker ? my_hand_str : enemy_hand_str);
+
+    Node3D* second_atk_node = am_i_first_attacker ? enemy_model : player_model;
+    Node3D* second_def_node = am_i_first_attacker ? player_model : enemy_model;
+    Ref<SkillData> second_skill = _get_skill_by_hand(am_i_first_attacker ? enemy_player_skills : current_skills, am_i_first_attacker ? enemy_hand_str : my_hand_str);
+
+    if (winner_side == 0 && my_hand_str != "defend" && enemy_hand_str != "defend") 
     {
-        seq->tween_callback(Callable(this, "_perform_attack_sequence").bind(attacker_node, defender_node, skill_to_use));
-        seq->tween_interval(2.0); 
-        seq->tween_callback(Callable(this, "_on_draw_or_end"));
+        // ★ あいこ（両方が攻撃手）の場合、素早さ順で交互に攻撃する
+        if (first_atk_node && first_def_node && first_skill.is_valid() && second_skill.is_valid())
+        {
+            // 1人目の攻撃
+            seq->tween_callback(Callable(this, "_perform_attack_sequence").bind(first_atk_node, first_def_node, first_skill));
+            seq->tween_interval(2.0); // アニメーションを待つ
+            
+            // 2人目の反撃（1人目の攻撃で倒れていれば自動でキャンセルされる）
+            seq->tween_callback(Callable(this, "_perform_attack_sequence").bind(second_atk_node, second_def_node, second_skill));
+            seq->tween_interval(2.0); // アニメーションを待つ
+            
+            seq->tween_callback(Callable(this, "_on_draw_or_end"));
+        }
+        else
+        {
+            seq->tween_interval(0.5);
+            seq->tween_callback(Callable(this, "_on_draw_or_end"));
+        }
     }
-    else
+    else 
     {
-        seq->tween_interval(0.5);
-        seq->tween_callback(Callable(this, "_on_draw_or_end")); 
+        // ★ 勝敗がついた（一方が攻撃） または 両方防御 の場合
+        Node3D* attacker_node = nullptr;
+        Node3D* defender_node = nullptr;
+        Ref<SkillData> skill_to_use;
+
+        if (winner_side != 0) {
+            if (i_won) {
+                attacker_node = player_model;
+                defender_node = enemy_model;
+                skill_to_use = _get_skill_by_hand(current_skills, my_hand_str);
+            } else {
+                attacker_node = enemy_model;
+                defender_node = player_model;
+                skill_to_use = _get_skill_by_hand(enemy_player_skills, enemy_hand_str);
+            }
+        }
+
+        if (attacker_node && defender_node && skill_to_use.is_valid())
+        {
+            seq->tween_callback(Callable(this, "_perform_attack_sequence").bind(attacker_node, defender_node, skill_to_use));
+            seq->tween_interval(2.0); 
+            seq->tween_callback(Callable(this, "_on_draw_or_end"));
+        }
+        else
+        {
+            // 両方防御などの場合は何もせずターン終了
+            seq->tween_interval(0.5);
+            seq->tween_callback(Callable(this, "_on_draw_or_end")); 
+        }
     }
 }
 
@@ -662,7 +768,6 @@ void BattleScene::_update_ui_buttons()
     auto update_btn = [&](Button* btn, int index)
     {
         if (!btn) return;
-
         if (current_skills.size() > index)
         {
             Ref<SkillData> skill = current_skills[index];
@@ -670,16 +775,21 @@ void BattleScene::_update_ui_buttons()
             {
                 int type = skill->get_hand_type();
                 String type_str = _hand_type_to_string(type);
-                btn->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
-                btn->set_disabled(false);
 
-                // 手の種類に応じてボタンの色を変える
-                switch (type)
-                {
-                    case 0: btn->set_modulate(color_rock); break;     // Rock
-                    case 1: btn->set_modulate(color_scissors); break; // Scissors
-                    case 2: btn->set_modulate(color_paper); break;    // Paper
-                    default: btn->set_modulate(Color(1, 1, 1)); break;
+                // ★追加: 前回と同じ手ならロックする
+                if (type_str == my_last_hand) {
+                    btn->set_text(skill->get_skill_name() + "\n(" + type_str + ") - LOCK");
+                    btn->set_disabled(true);
+                    btn->set_modulate(color_disable);
+                } else {
+                    btn->set_text(skill->get_skill_name() + "\n(" + type_str + ")");
+                    btn->set_disabled(false);
+                    switch (type) {
+                        case 0: btn->set_modulate(color_rock); break;
+                        case 1: btn->set_modulate(color_scissors); break;
+                        case 2: btn->set_modulate(color_paper); break;
+                        default: btn->set_modulate(Color(1, 1, 1)); break;
+                    }
                 }
             }
         }
@@ -687,13 +797,26 @@ void BattleScene::_update_ui_buttons()
         {
             btn->set_text("- Empty -");
             btn->set_disabled(true);
-            btn->set_modulate(color_disable); // 空っぽならグレー
+            btn->set_modulate(color_disable);
         }
     };
 
     update_btn(skill_button_1, 0);
     update_btn(skill_button_2, 1);
     update_btn(skill_button_3, 2);
+
+    // ★防御ボタンの更新（防御も連続使用不可にする場合）
+    if (defend_button) {
+        if (my_last_hand == "defend") {
+            defend_button->set_text("防御\n- LOCK -");
+            defend_button->set_disabled(true);
+            defend_button->set_modulate(color_disable);
+        } else {
+            defend_button->set_text("防御");
+            defend_button->set_disabled(false);
+            defend_button->set_modulate(Color(0.8, 0.8, 0.8)); // 好きな色
+        }
+    }
 }
 
 // UI更新などで使うヘルパー関数
@@ -762,6 +885,7 @@ void BattleScene::_show_janken_ui(String p_hand, String e_hand)
         if (hand == "rock") target_tex = tex_rock;
         else if (hand == "scissors") target_tex = tex_scissors;
         else if (hand == "paper") target_tex = tex_paper;
+        else if (hand == "defend") target_tex = tex_defend;
 
         if (target_tex.is_valid()) {
             rect->set_texture(target_tex);
@@ -796,6 +920,7 @@ void BattleScene::_hide_janken_ui()
 
 void BattleScene::_perform_attack_sequence(Node3D* attacker, Node3D* target, const Ref<SkillData>& skill)
 {
+    if (player_hp <= 0 || enemy_hp <= 0) return;
     if (!attacker || !target || !skill.is_valid()) return;
 
     AnimationPlayer* anim = Object::cast_to<AnimationPlayer>(attacker->find_child("AnimationPlayer", true, false));
@@ -970,36 +1095,29 @@ void BattleScene::_apply_damage(Node3D* attacker, Node3D* target, const Ref<Skil
 
     bool is_host_attacking = (attacker == player_spawn_pos->get_child(0));
     
-    // GameManagerから現在のステータスを取得（簡易的な実装）
+    // ★追加: 攻撃される側が防御しているか確認
+    bool is_target_defending = is_host_attacking ? server_client_defending : server_host_defending;
+
     GameManager* gm = GameManager::get_singleton();
-    int atk = 0;
-    int def = 0;
+    int atk = is_host_attacking ? gm->get_player_attack() : gm->get_next_enemy_attack();
+    int def = is_host_attacking ? gm->get_next_enemy_defense() : gm->get_player_defense();
 
-    if (is_host_attacking)
-    {
-        // 攻撃側がホスト（自分）なら、自分の攻撃力 vs 敵の防御力
-        atk = gm->get_player_attack();
-        def = gm->get_next_enemy_defense();
-    }
-    else
-    {
-        // 攻撃側がクライアント（敵）なら、敵の攻撃力 vs 自分の防御力
-        atk = gm->get_next_enemy_attack();
-        def = gm->get_player_defense();
-    }
-
-    // ★計算式: (攻撃力 + 技の威力) - (防御力 / 2)
-    // ※防御力で完全に0にならないよう、最低でも 1 は通るようにする
     int base_damage = atk + skill->get_power();
     int damage = base_damage - (def / 2);
-    
-    if (damage < 1) damage = 1; // 最低保証ダメージ
+    if (damage < 1) damage = 1;
 
-    // target_side: 1ならホストが被弾、2ならクライアントが被弾
+    // ★修正: 防御成功時はダメージを半減（0.5倍）にする
+    if (is_target_defending) {
+        damage = damage / 2;
+        
+        // （お好みで）半減した結果0ダメージになってしまうのを防ぎ、最低1ダメージは与える安全装置
+        if (damage < 1) damage = 1; 
+    }
+
     int target_side = is_host_attacking ? 2 : 1;
-
     rpc("_rpc_sync_hp", target_side, damage);
 }
+
 // --- 実質的なHP減少とUI更新を行うRPC関数 ---
 void BattleScene::_rpc_sync_hp(int target_side, int final_damage)
 {

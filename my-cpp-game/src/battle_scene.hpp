@@ -265,5 +265,17 @@ namespace godot
         void _safe_play_anim(Node3D* target, const String& anim_name);
 
         void _show_wait_message_if_still_dead();
+
+        // UI用
+        Button* defend_button;
+        Ref<Texture2D> tex_defend; // 防御の画像用
+
+        // 戦略用ステータス
+        String my_last_hand; // 自分が直前に出した手
+        bool server_host_defending;   // サーバー側で計算用（ホストが防御中か）
+        bool server_client_defending; // サーバー側で計算用（クライアントが防御中か）
+
+        // 防御ボタンが押された時の関数
+        void _on_defend_pressed();
     };
 }
