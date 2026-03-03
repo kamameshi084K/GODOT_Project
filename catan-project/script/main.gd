@@ -56,6 +56,7 @@ func _ready():
 	GameManager.resources_updated.connect(_on_resources_updated)
 	GameManager.robber_moved.connect(_on_robber_moved)
 	GameManager.city_built.connect(_on_city_built)
+	GameManager.prompt_knight_robber.connect(_on_prompt_knight_robber)
 
 	call_deferred("_generate_intersections")
 	call_deferred("_generate_edges")
@@ -82,6 +83,8 @@ func _on_dice_rolled(roll_value: int):
 	await get_tree().create_timer(1.0).timeout
 	
 	if is_my_turn:
+		open_trade_btn.disabled = false
+		open_dev_btn.disabled = false
 		if roll_value == 7:
 			print("★盗賊を移動させてください！")
 			is_moving_robber = true
@@ -177,8 +180,11 @@ func _on_turn_changed(active_player_id: int, phase: int = 2):
 			open_dev_btn.disabled = true # ★追加: 初期配置は購入不可
 		else:
 			# 通常フェーズ
-			open_trade_btn.disabled = false 
-			open_dev_btn.disabled = false # ★追加: ボタン解禁！
+			roll_btn.show()
+			roll_btn.disabled = false
+			open_trade_btn.disabled = true 
+			open_dev_btn.disabled = true 
+			turn_end_btn.disabled = true
 	else:
 		# 自分のターンじゃない時
 		open_trade_btn.disabled = true 
@@ -268,3 +274,16 @@ func _on_city_built(vertex_name: String, player_id: int):
 		
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
 		player_uis[player_id].add_vp(1) # 都市になるとさらに+1点
+
+func _on_prompt_knight_robber():
+	print("★ 騎士カードを使用しました！盗賊を移動させてください。")
+	
+	# 発展カードUIを閉じる
+	dev_ui.hide()
+	
+	# 盗賊移動モードをONにする！
+	is_moving_robber = true
+	
+	# 盗賊を動かし終わるまでは、ターン終了させないようにする
+	turn_end_btn.disabled = true
+	turn_end_btn.modulate = Color.DIM_GRAY

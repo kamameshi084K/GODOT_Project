@@ -22,7 +22,6 @@ offset_right = -64.0
 offset_bottom = -72.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 1, 1, 0.5019608)
 
 [node name="GiveOption" type="OptionButton" parent="."]
 layout_mode = 0

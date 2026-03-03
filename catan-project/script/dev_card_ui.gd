@@ -9,6 +9,8 @@ extends Control
 @onready var plenty_label = $PlentyLabel
 @onready var mono_label = $MonoLabel
 
+@onready var play_knight_btn = $PlayKnightButton
+
 func _ready():
 	# 購入ボタンと閉じるボタンの設定
 	buy_btn.pressed.connect(func(): GameManager.request_buy_dev_card())
@@ -16,6 +18,7 @@ func _ready():
 	
 	# ★ サーバーから自分だけに送られてくる「最新の枚数」を受信！
 	GameManager.private_dev_cards_synced.connect(_on_private_dev_cards_synced)
+	play_knight_btn.pressed.connect(func(): GameManager.request_play_knight())
 
 func _on_private_dev_cards_synced(knight: int, vp: int, road: int, plenty: int, mono: int):
 	# 届いた数字をそのままラベルに上書きするだけ
@@ -24,3 +27,5 @@ func _on_private_dev_cards_synced(knight: int, vp: int, road: int, plenty: int, 
 	road_label.text = "街道: " + str(road)
 	plenty_label.text = "収穫: " + str(plenty)
 	mono_label.text = "独占: " + str(mono)
+	
+	play_knight_btn.disabled = (knight <= 0)

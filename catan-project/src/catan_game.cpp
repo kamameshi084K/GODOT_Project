@@ -91,10 +91,24 @@ void CatanGame::_bind_methods()
     
     // ★追加：自分専用の枚数同期
     ADD_SIGNAL(MethodInfo("dev_card_bought", PropertyInfo(Variant::INT, "player_id")));
+
+    ClassDB::bind_method(D_METHOD("request_play_knight"), &CatanGame::request_play_knight);
+    ClassDB::bind_method(D_METHOD("server_process_play_knight"), &CatanGame::server_process_play_knight);
+    ClassDB::bind_method(D_METHOD("client_prompt_knight_robber"), &CatanGame::client_prompt_knight_robber);
+    
+    // 画面(GDScript)に「盗賊を動かして！」と指示を出すシグナル
+    ADD_SIGNAL(MethodInfo("prompt_knight_robber"));
     // ▲▲▲▲▲▲▲▲▲▲▲▲
 
     // ★追加：自分専用の枚数同期
     ClassDB::bind_method(D_METHOD("client_sync_private_dev_cards", "knight", "vp", "road", "plenty", "mono"), &CatanGame::client_sync_private_dev_cards);
+
+    ADD_SIGNAL(MethodInfo("private_dev_cards_synced", 
+        PropertyInfo(Variant::INT, "knight"), 
+        PropertyInfo(Variant::INT, "vp"), 
+        PropertyInfo(Variant::INT, "road"), 
+        PropertyInfo(Variant::INT, "plenty"), 
+        PropertyInfo(Variant::INT, "mono")));
 }
 
 CatanGame::CatanGame()
@@ -253,6 +267,21 @@ CatanGame::CatanGame()
     sync_priv_dev_conf["call_local"] = true;
     sync_priv_dev_conf["channel"] = 0;
     rpc_config("client_sync_private_dev_cards", sync_priv_dev_conf);
+
+    Dictionary req_play_knight;
+    req_play_knight["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_play_knight["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_play_knight["call_local"] = true;
+    req_play_knight["channel"] = 0;
+    rpc_config("server_process_play_knight", req_play_knight);
+
+    // サーバーから「使った本人にだけ」指示を出す
+    Dictionary prompt_knight;
+    prompt_knight["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    prompt_knight["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    prompt_knight["call_local"] = true;
+    prompt_knight["channel"] = 0;
+    rpc_config("client_prompt_knight_robber", prompt_knight);
 }
 
 CatanGame::~CatanGame()
@@ -880,4 +909,41 @@ void CatanGame::request_buy_dev_card() {
 // サーバーから「この人がカードを買ったよ」と全員に教える関数
 void CatanGame::client_sync_dev_card_bought(int player_id) {
     emit_signal("dev_card_bought", player_id);
+}
+
+void CatanGame::request_play_knight() {
+    rpc_id(1, "server_process_play_knight");
+}
+
+void CatanGame::server_process_play_knight() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    // 自分のターンかチェック
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
+
+    PlayerData& p = players[sender_id];
+    
+    // 騎士カードを持っているかチェック
+    if (p.dev_knight <= 0) {
+        UtilityFunctions::print("Server: 騎士カードを持っていません！");
+        return;
+    }
+
+    // カードを消費する
+    p.dev_knight -= 1;
+    p.dev_cards -= 1;
+
+    UtilityFunctions::print("Server: Player ", sender_id, " played a Knight!");
+
+    // 自分のUIの枚数を減らすよう同期
+    rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+
+    // 本人に「盗賊を動かして！」と命令を出す
+    rpc_id(sender_id, "client_prompt_knight_robber");
+}
+
+void CatanGame::client_prompt_knight_robber() {
+    emit_signal("prompt_knight_robber");
 }

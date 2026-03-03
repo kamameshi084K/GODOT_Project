@@ -25,9 +25,9 @@ namespace godot
     struct PlayerData {
         int wood = 0;
         int brick = 0;
-        int sheep = 0;
-        int wheat = 0;
-        int ore = 0;
+        int sheep = 10;
+        int wheat = 10;
+        int ore = 10;
         
         int turn_index = 0;
         int dev_cards = 0; // 全員に見える「合計枚数」用
@@ -171,6 +171,9 @@ namespace godot
         void client_sync_private_dev_cards(int knight, int vp, int road, int plenty, int mono);
         std::vector<String> dev_card_deck; // 山札
         void initialize_dev_deck();        // 山札を準備する関数
+        void request_play_knight();
+        void server_process_play_knight();
+        void client_prompt_knight_robber();
     };
 
 } // namespace godot
