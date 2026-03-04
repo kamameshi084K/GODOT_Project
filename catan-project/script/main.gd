@@ -14,6 +14,7 @@ extends Node2D
 @onready var trade_ui = $GameUI/TradeUI
 @onready var open_dev_btn = $GameUI/OpenDevCardButton
 @onready var dev_ui = $GameUI/DevCardUI
+@onready var discard_ui = $GameUI/DiscardUI
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -57,6 +58,9 @@ func _ready():
 	GameManager.robber_moved.connect(_on_robber_moved)
 	GameManager.city_built.connect(_on_city_built)
 	GameManager.prompt_knight_robber.connect(_on_prompt_knight_robber)
+	GameManager.prompt_discard.connect(_on_prompt_discard)
+	GameManager.notify_robber_phase.connect(_on_notify_robber_phase)
+	discard_ui.hide()
 
 	call_deferred("_generate_intersections")
 	call_deferred("_generate_edges")
@@ -86,8 +90,10 @@ func _on_dice_rolled(roll_value: int):
 		open_trade_btn.disabled = false
 		open_dev_btn.disabled = false
 		if roll_value == 7:
-			print("★盗賊を移動させてください！")
-			is_moving_robber = true
+			print("★7が出ました！全員のバースト処理を待っています...")
+			# まだターン終了させない
+			turn_end_btn.disabled = true
+			turn_end_btn.modulate = Color.DIM_GRAY
 		else:
 			turn_end_btn.disabled = false
 			turn_end_btn.modulate = Color.LIGHT_SKY_BLUE
@@ -285,5 +291,16 @@ func _on_prompt_knight_robber():
 	is_moving_robber = true
 	
 	# 盗賊を動かし終わるまでは、ターン終了させないようにする
+	turn_end_btn.disabled = true
+	turn_end_btn.modulate = Color.DIM_GRAY
+
+func _on_prompt_discard(amount: int):
+	print("★ バーストしました！ ", amount, "枚捨ててください。")
+	discard_ui.setup(amount)
+
+func _on_notify_robber_phase():
+	print("★ 全員のバースト処理が完了しました！盗賊を移動させてください。")
+	is_moving_robber = true
+	# 盗賊を動かし終わるまでターン終了は禁止
 	turn_end_btn.disabled = true
 	turn_end_btn.modulate = Color.DIM_GRAY

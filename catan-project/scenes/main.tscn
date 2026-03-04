@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=19 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
 [ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
 [ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="14_a8y0u"]
+[ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/discard_ui.tscn" id="15_jkv2x"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a8y0u"]
 bg_color = Color(0, 0, 0, 0.8392157)
@@ -299,3 +300,6 @@ scale = Vector2(0.19, 0.19)
 visible = false
 
 [node name="DevCardUI" parent="GameUI" instance=ExtResource("14_a8y0u")]
+visible = false
+
+[node name="DiscardUI" parent="GameUI" instance=ExtResource("15_jkv2x")]

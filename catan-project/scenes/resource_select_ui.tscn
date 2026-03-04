@@ -1,0 +1,121 @@
+[gd_scene load_steps=6 format=3 uid="uid://cpp4fwdhu1k18"]
+
+[ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="1_fchjv"]
+[ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="2_yh8v3"]
+[ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="3_antdu"]
+[ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="4_ncjbo"]
+[ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="5_my4rw"]
+
+[node name="ResourceSelectUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 64.0
+offset_right = -64.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 390.0
+offset_top = 96.0
+offset_right = 761.0
+offset_bottom = 157.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 43
+text = "みんなから何を奪う？"
+
+[node name="ConfirmButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 464.0
+offset_right = 704.0
+offset_bottom = 560.0
+theme_override_font_sizes/font_size = 64
+text = "確定"
+
+[node name="WoodCard" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.11111111
+anchor_top = 0.25925925
+anchor_right = 0.22259289
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("1_fchjv")
+metadata/_edit_use_anchors_ = true
+
+[node name="Brick" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2777778
+anchor_top = 0.25925928
+anchor_right = 0.38925955
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("2_yh8v3")
+metadata/_edit_use_anchors_ = true
+
+[node name="Wheat" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.6111111
+anchor_top = 0.25925925
+anchor_right = 0.7225929
+anchor_bottom = 0.57419294
+offset_right = 1314.573
+offset_bottom = 2088.9229
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("3_antdu")
+metadata/_edit_use_anchors_ = true
+
+[node name="Sheep" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.44444445
+anchor_top = 0.25925928
+anchor_right = 0.5559262
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("4_ncjbo")
+metadata/_edit_use_anchors_ = true
+
+[node name="ore" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.7777778
+anchor_top = 0.25925925
+anchor_right = 0.8892596
+anchor_bottom = 0.57419294
+offset_right = 1314.573
+offset_bottom = 2088.9229
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("5_my4rw")
+metadata/_edit_use_anchors_ = true

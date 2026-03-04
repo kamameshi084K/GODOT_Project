@@ -109,6 +109,25 @@ void CatanGame::_bind_methods()
         PropertyInfo(Variant::INT, "road"), 
         PropertyInfo(Variant::INT, "plenty"), 
         PropertyInfo(Variant::INT, "mono")));
+
+    ClassDB::bind_method(D_METHOD("client_prompt_discard", "amount", "w", "b", "s", "wh", "o"), &CatanGame::client_prompt_discard);
+    ClassDB::bind_method(D_METHOD("request_discard", "w", "b", "s", "wh", "o"), &CatanGame::request_discard);
+    ClassDB::bind_method(D_METHOD("server_process_discard", "w", "b", "s", "wh", "o"), &CatanGame::server_process_discard);
+    ClassDB::bind_method(D_METHOD("client_notify_robber_phase"), &CatanGame::client_notify_robber_phase);
+
+    ADD_SIGNAL(MethodInfo("prompt_discard", 
+        PropertyInfo(Variant::INT, "amount"),
+        PropertyInfo(Variant::INT, "w"),
+        PropertyInfo(Variant::INT, "b"),
+        PropertyInfo(Variant::INT, "s"),
+        PropertyInfo(Variant::INT, "wh"),
+        PropertyInfo(Variant::INT, "o")));
+    ADD_SIGNAL(MethodInfo("notify_robber_phase"));
+    ClassDB::bind_method(D_METHOD("request_play_monopoly", "res_type"), &CatanGame::request_play_monopoly);
+    ClassDB::bind_method(D_METHOD("server_process_play_monopoly", "res_type"), &CatanGame::server_process_play_monopoly);
+    
+    ClassDB::bind_method(D_METHOD("request_play_plenty", "res1", "res2"), &CatanGame::request_play_plenty);
+    ClassDB::bind_method(D_METHOD("server_process_play_plenty", "res1", "res2"), &CatanGame::server_process_play_plenty);
 }
 
 CatanGame::CatanGame()
@@ -282,6 +301,35 @@ CatanGame::CatanGame()
     prompt_knight["call_local"] = true;
     prompt_knight["channel"] = 0;
     rpc_config("client_prompt_knight_robber", prompt_knight);
+
+    Dictionary prompt_disc;
+    prompt_disc["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    prompt_disc["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    prompt_disc["call_local"] = true;
+    prompt_disc["channel"] = 0;
+    rpc_config("client_prompt_discard", prompt_disc);
+    rpc_config("client_notify_robber_phase", prompt_disc);
+
+    Dictionary req_disc;
+    req_disc["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_disc["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_disc["call_local"] = true;
+    req_disc["channel"] = 0;
+    rpc_config("server_process_discard", req_disc);
+
+    Dictionary req_mono;
+    req_mono["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_mono["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_mono["call_local"] = true;
+    req_mono["channel"] = 0;
+    rpc_config("server_process_play_monopoly", req_mono);
+
+    Dictionary req_plenty;
+    req_plenty["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_plenty["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_plenty["call_local"] = true;
+    req_plenty["channel"] = 0;
+    rpc_config("server_process_play_plenty", req_plenty);
 }
 
 CatanGame::~CatanGame()
@@ -328,10 +376,13 @@ void CatanGame::request_roll_dice() {
     int dice1 = distrib(gen);
     int dice2 = distrib(gen);
     int dice_roll = dice1 + dice2;
-    
-    // ▲▲▲ 変更ここまで ▲▲▲
 
     rpc("notify_dice_result", dice_roll);
+
+    // ★追加: 7が出たらバースト処理をキックする！
+    if (dice_roll == 7) {
+        server_process_roll_seven(sender_id);
+    }
 }
 
 void CatanGame::notify_dice_result(int roll_value)
@@ -946,4 +997,139 @@ void CatanGame::server_process_play_knight() {
 
 void CatanGame::client_prompt_knight_robber() {
     emit_signal("prompt_knight_robber");
+}
+
+void CatanGame::server_process_roll_seven(int roller_id) {
+    pending_discard_players = 0;
+
+    // 全プレイヤーの手札をチェック
+    for (int pid : player_order) {
+        PlayerData& p = players[pid];
+        int total_hand = p.wood + p.brick + p.sheep + p.wheat + p.ore;
+        
+        // 7枚より多く（8枚以上）持っているなら半分捨てる！
+        if (total_hand > 7) {
+            int amount_to_discard = total_hand / 2; 
+            pending_discard_players++;
+            
+            // ★変更: 対象者に「〇枚捨ててね」と同時に「今の所持数」も送る！
+            rpc_id(pid, "client_prompt_discard", amount_to_discard, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+        }
+    }
+
+    // もし誰も8枚以上持っていなかったら、すぐに盗賊移動フェーズへ！
+    if (pending_discard_players == 0) {
+        rpc_id(roller_id, "client_notify_robber_phase");
+    }
+}
+
+void CatanGame::client_prompt_discard(int amount, int w, int b, int s, int wh, int o) {
+    emit_signal("prompt_discard", amount, w, b, s, wh, o);
+}
+
+void CatanGame::request_discard(int w, int b, int s, int wh, int o) {
+    rpc_id(1, "server_process_discard", w, b, s, wh, o);
+}
+
+void CatanGame::server_process_discard(int w, int b, int s, int wh, int o) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    PlayerData& p = players[sender_id];
+    p.wood -= w; p.brick -= b; p.sheep -= s; p.wheat -= wh; p.ore -= o;
+    
+    // 減らした後の資源を同期
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+
+    // 捨て終わったので待機人数を1人減らす！
+    pending_discard_players--;
+
+    // 全員が捨て終わったら、サイコロを振った人に「盗賊を動かしていいよ」と許可を出す
+    if (pending_discard_players <= 0) {
+        pending_discard_players = 0;
+        int roller_id = player_order[current_turn_index];
+        rpc_id(roller_id, "client_notify_robber_phase");
+    }
+}
+
+void CatanGame::client_notify_robber_phase() {
+    emit_signal("notify_robber_phase");
+}
+
+void CatanGame::request_play_monopoly(const String& res_type) {
+    rpc_id(1, "server_process_play_monopoly", res_type);
+}
+
+void CatanGame::server_process_play_monopoly(const String& res_type) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    PlayerData& p = players[sender_id];
+    if (p.dev_mono <= 0) return; // カードを持っていない
+
+    // カード消費
+    p.dev_mono -= 1;
+    p.dev_cards -= 1;
+
+    int total_stolen = 0;
+    
+    // 全員（自分以外）から指定された資源を全て没収する
+    for (auto& pair : players) {
+        int target_id = pair.first;
+        if (target_id == sender_id) continue;
+        
+        PlayerData& target_p = pair.second;
+        int amount = 0;
+        
+        if (res_type == "wood") { amount = target_p.wood; target_p.wood = 0; }
+        else if (res_type == "brick") { amount = target_p.brick; target_p.brick = 0; }
+        else if (res_type == "sheep") { amount = target_p.sheep; target_p.sheep = 0; }
+        else if (res_type == "wheat") { amount = target_p.wheat; target_p.wheat = 0; }
+        else if (res_type == "ore") { amount = target_p.ore; target_p.ore = 0; }
+        
+        total_stolen += amount;
+        // 奪われた人のUIを更新
+        rpc("client_sync_resources", target_id, target_p.wood, target_p.brick, target_p.sheep, target_p.wheat, target_p.ore);
+    }
+
+    // 集めた資源を自分に足す
+    if (res_type == "wood") p.wood += total_stolen;
+    else if (res_type == "brick") p.brick += total_stolen;
+    else if (res_type == "sheep") p.sheep += total_stolen;
+    else if (res_type == "wheat") p.wheat += total_stolen;
+    else if (res_type == "ore") p.ore += total_stolen;
+
+    UtilityFunctions::print("Server: Player ", sender_id, " played Monopoly on ", res_type, ". Got ", total_stolen);
+
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+    rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+}
+
+// ---------------- 収穫（Year of Plenty）の処理 ----------------
+void CatanGame::request_play_plenty(const String& res1, const String& res2) {
+    rpc_id(1, "server_process_play_plenty", res1, res2);
+}
+
+void CatanGame::server_process_play_plenty(const String& res1, const String& res2) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    PlayerData& p = players[sender_id];
+    if (p.dev_plenty <= 0) return; // カードを持っていない
+
+    // カード消費
+    p.dev_plenty -= 1;
+    p.dev_cards -= 1;
+
+    // 指定された資源を銀行から1つずつもらう（同じ種類を2つ選ぶことも可能）
+    if (res1 == "wood") p.wood++; else if (res1 == "brick") p.brick++; else if (res1 == "sheep") p.sheep++; else if (res1 == "wheat") p.wheat++; else if (res1 == "ore") p.ore++;
+    if (res2 == "wood") p.wood++; else if (res2 == "brick") p.brick++; else if (res2 == "sheep") p.sheep++; else if (res2 == "wheat") p.wheat++; else if (res2 == "ore") p.ore++;
+
+    UtilityFunctions::print("Server: Player ", sender_id, " played Year of Plenty for ", res1, " and ", res2);
+
+    rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+    rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
 }

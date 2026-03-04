@@ -65,6 +65,7 @@ namespace godot
         // 初期配置フェーズ中、そのターンに建てた数を記録する変数
         int setup_settlements_built_this_turn = 0;
         int setup_roads_built_this_turn = 0;
+        int pending_discard_players = 0;
 
     protected:
         // Godotへのメソッド・RPC設定の登録用
@@ -174,6 +175,16 @@ namespace godot
         void request_play_knight();
         void server_process_play_knight();
         void client_prompt_knight_robber();
+        void server_process_roll_seven(int roller_id);
+        void client_prompt_discard(int amount, int w, int b, int s, int wh, int o);
+        void request_discard(int w, int b, int s, int wh, int o);
+        void server_process_discard(int w, int b, int s, int wh, int o);
+        void client_notify_robber_phase();
+        void request_play_monopoly(const String& res_type);
+        void server_process_play_monopoly(const String& res_type);
+        
+        void request_play_plenty(const String& res1, const String& res2);
+        void server_process_play_plenty(const String& res1, const String& res2);
     };
 
 } // namespace godot

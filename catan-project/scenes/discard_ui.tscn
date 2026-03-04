@@ -1,0 +1,258 @@
+[gd_scene load_steps=7 format=3 uid="uid://17vvt1hd0fad"]
+
+[ext_resource type="Script" uid="uid://cuyxfmw3kjqxj" path="res://script/discard_ui.gd" id="1_7meyq"]
+[ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="2_hhoih"]
+[ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="3_y52t0"]
+[ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="4_sdfhl"]
+[ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="5_e3h22"]
+[ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="6_vghga"]
+
+[node name="DiscardUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7meyq")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = 64.0
+offset_right = -64.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 376.0
+offset_top = 96.0
+offset_right = 776.0
+offset_bottom = 157.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 43
+text = "あと X 枚捨ててください"
+
+[node name="ConfirmButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 464.0
+offset_right = 704.0
+offset_bottom = 560.0
+theme_override_font_sizes/font_size = 64
+text = "確定"
+
+[node name="WoodCard" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.11111111
+anchor_top = 0.25925925
+anchor_right = 0.22259289
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("2_hhoih")
+metadata/_edit_use_anchors_ = true
+
+[node name="WoodCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 184.0
+offset_top = 336.0
+offset_right = 198.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="Brick" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2777778
+anchor_top = 0.25925928
+anchor_right = 0.38925955
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("3_y52t0")
+metadata/_edit_use_anchors_ = true
+
+[node name="BrickCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 376.0
+offset_top = 336.0
+offset_right = 390.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="Wheat" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.6111111
+anchor_top = 0.25925925
+anchor_right = 0.7225929
+anchor_bottom = 0.57419294
+offset_right = 1314.573
+offset_bottom = 2088.9229
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("4_sdfhl")
+metadata/_edit_use_anchors_ = true
+
+[node name="WheatCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 761.0
+offset_top = 336.0
+offset_right = 775.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="Sheep" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.44444445
+anchor_top = 0.25925928
+anchor_right = 0.5559262
+anchor_bottom = 0.57419276
+offset_right = 1314.573
+offset_bottom = 2088.923
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("5_e3h22")
+metadata/_edit_use_anchors_ = true
+
+[node name="SheepCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 568.0
+offset_top = 336.0
+offset_right = 582.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="ore" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.7777778
+anchor_top = 0.25925925
+anchor_right = 0.8892596
+anchor_bottom = 0.57419294
+offset_right = 1314.573
+offset_bottom = 2088.9229
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.089, 0.089)
+texture = ExtResource("6_vghga")
+metadata/_edit_use_anchors_ = true
+
+[node name="OreCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 953.0
+offset_top = 336.0
+offset_right = 967.0
+offset_bottom = 370.0
+theme_override_font_sizes/font_size = 24
+text = "0"
+
+[node name="WoodPlus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 144.0
+offset_top = 384.0
+offset_right = 184.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "＋"
+
+[node name="WoodMinus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 198.0
+offset_top = 384.0
+offset_right = 238.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "ー"
+
+[node name="BrickPlus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 336.0
+offset_top = 384.0
+offset_right = 376.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "＋"
+
+[node name="BrickMinus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 390.0
+offset_top = 384.0
+offset_right = 430.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "ー"
+
+[node name="SheepPlus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 528.0
+offset_top = 384.0
+offset_right = 568.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "＋"
+
+[node name="SheepMinus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 582.0
+offset_top = 384.0
+offset_right = 622.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "ー"
+
+[node name="WheatPlus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 720.0
+offset_top = 384.0
+offset_right = 760.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "＋"
+
+[node name="WheatMinus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 774.0
+offset_top = 384.0
+offset_right = 814.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "ー"
+
+[node name="OrePlus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 912.0
+offset_top = 384.0
+offset_right = 952.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "＋"
+
+[node name="OreMinus" type="Button" parent="."]
+layout_mode = 0
+offset_left = 966.0
+offset_top = 384.0
+offset_right = 1006.0
+offset_bottom = 424.0
+theme_override_font_sizes/font_size = 23
+text = "ー"
