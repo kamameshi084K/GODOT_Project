@@ -23,8 +23,8 @@ namespace godot
     };
 
     struct PlayerData {
-        int wood = 0;
-        int brick = 0;
+        int wood = 10;
+        int brick = 10;
         int sheep = 10;
         int wheat = 10;
         int ore = 10;
@@ -38,6 +38,7 @@ namespace godot
         int dev_road = 0;
         int dev_plenty = 0;
         int dev_mono = 0;
+        int free_roads_available = 0;
         
         String player_name = "Unknown";
     };
@@ -185,6 +186,9 @@ namespace godot
         
         void request_play_plenty(const String& res1, const String& res2);
         void server_process_play_plenty(const String& res1, const String& res2);
+        void request_play_road_building();
+        void server_process_play_road_building();
+        void client_prompt_road_building();
     };
 
 } // namespace godot

@@ -130,7 +130,26 @@ offset_right = 240.0
 offset_bottom = 360.0
 text = "使う"
 
-[node name="Button" type="Button" parent="."]
+[node name="PlayPlentyButton" type="Button" parent="."]
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = 720.0
+offset_top = 328.0
+offset_right = 816.0
+offset_bottom = 360.0
+text = "使う"
+
+[node name="PlayMonoButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 912.0
+offset_top = 328.0
+offset_right = 1008.0
+offset_bottom = 360.0
+text = "使う"
+
+[node name="PlayRoadButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 528.0
+offset_top = 328.0
+offset_right = 624.0
+offset_bottom = 360.0
+text = "使う"

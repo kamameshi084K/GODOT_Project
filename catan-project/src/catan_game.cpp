@@ -128,6 +128,13 @@ void CatanGame::_bind_methods()
     
     ClassDB::bind_method(D_METHOD("request_play_plenty", "res1", "res2"), &CatanGame::request_play_plenty);
     ClassDB::bind_method(D_METHOD("server_process_play_plenty", "res1", "res2"), &CatanGame::server_process_play_plenty);
+
+    ClassDB::bind_method(D_METHOD("request_play_road_building"), &CatanGame::request_play_road_building);
+    ClassDB::bind_method(D_METHOD("server_process_play_road_building"), &CatanGame::server_process_play_road_building);
+    ClassDB::bind_method(D_METHOD("client_prompt_road_building"), &CatanGame::client_prompt_road_building);
+    
+    // GDScriptに「道2本引いていいよ！」と伝えるシグナル
+    ADD_SIGNAL(MethodInfo("prompt_road_building"));
 }
 
 CatanGame::CatanGame()
@@ -330,6 +337,20 @@ CatanGame::CatanGame()
     req_plenty["call_local"] = true;
     req_plenty["channel"] = 0;
     rpc_config("server_process_play_plenty", req_plenty);
+
+    Dictionary req_road_b;
+    req_road_b["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    req_road_b["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    req_road_b["call_local"] = true;
+    req_road_b["channel"] = 0;
+    rpc_config("server_process_play_road_building", req_road_b);
+
+    Dictionary prompt_road_b;
+    prompt_road_b["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    prompt_road_b["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    prompt_road_b["call_local"] = true;
+    prompt_road_b["channel"] = 0;
+    rpc_config("client_prompt_road_building", prompt_road_b);
 }
 
 CatanGame::~CatanGame()
@@ -494,54 +515,36 @@ void CatanGame::server_process_build_road(const String& edge_name) {
     int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     if (sender_id == 0) sender_id = 1;
 
-    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) {
-        UtilityFunctions::print("Server: あなたのターンではないため建築できません！");
-        return;
-    }
-    // ★ 不正チェック2：サイコロを振る前に建てようとした
-    
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
 
-    // ★ 1. コストチェック（街道＝木1,土1）
     PlayerData& p = players[sender_id];
+    bool using_free_road = false;
+
+    // ★ 1. 事前チェック（コストや無料枠があるか確認。まだ減らさない！）
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
-        if (setup_roads_built_this_turn >= 1) {
-            UtilityFunctions::print("Server: 初期配置では道を1つしか引けません！");
-            return;
-        }
-        // 初期配置時は、直前に建てた家から繋がっているかの厳密なチェックが必要ですが、
-        // まずは「通常の接続ルール（自分の家か道に繋がっている）」をそのまま使います。
+        if (setup_roads_built_this_turn >= 1) return;
     } else {
-        if (!has_rolled_dice_this_turn) { return; }
-        if (p.wood < 1 || p.brick < 1) { return; }
-        p.wood -= 1; p.brick -= 1;
-        rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+        if (!has_rolled_dice_this_turn) return;
+        if (p.free_roads_available > 0) {
+            using_free_road = true; // 無料枠を使う
+        } else if (p.wood < 1 || p.brick < 1) {
+            return; // お金が足りない
+        }
     }
 
+    // ★ 2. 建築可能かどうかの接続チェック
     if (board_edges[edge_name].owner_id != 0) return; 
 
-    // ★ 2. 接続ルール（自分の家、または自分の道に繋がっているか？）のチェック
     bool is_connected = false;
     Vector2 edge_pos = board_edges[edge_name].midpoint;
-
     for (const auto& v_pair : board_vertices) {
-        // 辺の中心から約25px（余裕を持って35未満）にある頂点が、この辺の両端の交差点
         if (edge_pos.distance_to(v_pair.second.position) < 35.0f) {
-            
-            // パターンA: その交差点に自分の家がある
-            if (v_pair.second.owner_id == sender_id) {
-                is_connected = true;
-                break;
-            }
-            
-            // パターンB: その交差点に繋がる「他の自分の道」がある
+            if (v_pair.second.owner_id == sender_id) { is_connected = true; break; }
             for (const auto& e_pair : board_edges) {
-                if (e_pair.first == edge_name) continue; // 自分自身は無視
-                
+                if (e_pair.first == edge_name) continue;
                 if (e_pair.second.owner_id == sender_id) {
-                    // その道も同じ交差点に繋がっているなら（頂点から距離35未満）
                     if (v_pair.second.position.distance_to(e_pair.second.midpoint) < 35.0f) {
-                        is_connected = true;
-                        break;
+                        is_connected = true; break;
                     }
                 }
             }
@@ -550,21 +553,30 @@ void CatanGame::server_process_build_road(const String& edge_name) {
     }
 
     if (!is_connected) {
-        UtilityFunctions::print("Server: 自分の家か道に繋がっていない場所には引けません！");
+        UtilityFunctions::print("Server: 繋がっていない場所です！");
         return;
     }
 
+    // ★ 3. すべてのチェックを通過したので、ここで初めてコストを消費する！
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
         setup_roads_built_this_turn++;
+    } else {
+        if (using_free_road) {
+            p.free_roads_available--; // 無料枠を1つ消費！
+            UtilityFunctions::print("Server: 無料で道を引きました。残り無料枠: ", p.free_roads_available);
+        } else {
+            p.wood -= 1; p.brick -= 1;
+            rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
+        }
     }
 
+    // ★ 4. 建築を確定して全員の画面を更新
     board_edges[edge_name].owner_id = sender_id;
     rpc("client_sync_build_road", edge_name, sender_id);
 
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
-        // 家と道の両方を建て終わったかチェック
         if (setup_settlements_built_this_turn >= 1 && setup_roads_built_this_turn >= 1) {
-            advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
+            advance_setup_turn();
         }
     }
 }
@@ -1132,4 +1144,31 @@ void CatanGame::server_process_play_plenty(const String& res1, const String& res
 
     rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
     rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+}
+
+void CatanGame::request_play_road_building() {
+    rpc_id(1, "server_process_play_road_building");
+}
+
+void CatanGame::server_process_play_road_building() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    PlayerData& p = players[sender_id];
+    if (p.dev_road <= 0) return; // 持っていない
+
+    // カード消費
+    p.dev_road -= 1;
+    p.dev_cards -= 1;
+    
+    // ★ ここが要！無料の道を2本付与する！
+    p.free_roads_available += 2;
+
+    rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+    rpc_id(sender_id, "client_prompt_road_building"); // 画面に指示
+}
+
+void CatanGame::client_prompt_road_building() {
+    emit_signal("prompt_road_building");
 }

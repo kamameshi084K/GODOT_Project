@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=20 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -15,9 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
 [ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="14_a8y0u"]
 [ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/discard_ui.tscn" id="15_jkv2x"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a8y0u"]
-bg_color = Color(0, 0, 0, 0.8392157)
+[ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/resource_select_ui.tscn" id="16_jbj1t"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
 font_size = 34
@@ -26,6 +24,9 @@ outline_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eb6dy"]
 bg_color = Color(0, 0.45490196, 0.96862745, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a8y0u"]
+bg_color = Color(0, 0, 0, 1)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_o6xl0")
@@ -167,15 +168,6 @@ texture = ExtResource("5_o6xl0")
 
 [node name="GameUI" type="CanvasLayer" parent="."]
 
-[node name="RollButton" type="Button" parent="GameUI"]
-offset_left = 248.0
-offset_top = 248.0
-offset_right = 909.0
-offset_bottom = 393.0
-theme_override_font_sizes/font_size = 100
-theme_override_styles/normal = SubResource("StyleBoxFlat_a8y0u")
-text = "サイコロを振る！"
-
 [node name="DiceLabel" type="Label" parent="GameUI"]
 offset_left = 968.0
 offset_top = 8.0
@@ -289,6 +281,15 @@ offset_bottom = 436.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "発展カード"
 
+[node name="RollButton" type="Button" parent="GameUI"]
+offset_left = 248.0
+offset_top = 248.0
+offset_right = 909.0
+offset_bottom = 393.0
+theme_override_font_sizes/font_size = 100
+theme_override_styles/normal = SubResource("StyleBoxFlat_a8y0u")
+text = "サイコロを振る！"
+
 [node name="PlayerList" type="VBoxContainer" parent="GameUI"]
 offset_left = 742.0
 offset_top = 59.0
@@ -303,3 +304,24 @@ visible = false
 visible = false
 
 [node name="DiscardUI" parent="GameUI" instance=ExtResource("15_jkv2x")]
+visible = false
+
+[node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("16_jbj1t")]
+visible = false
+
+[node name="MessageWindow" type="ColorRect" parent="GameUI"]
+offset_top = 528.0
+offset_right = 480.0
+offset_bottom = 648.0
+color = Color(0, 0, 0, 0.49803922)
+
+[node name="MessageLabel" type="Label" parent="GameUI/MessageWindow"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 30
+text = "メッセージ"
+autowrap_mode = 2

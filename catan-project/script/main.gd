@@ -15,6 +15,8 @@ extends Node2D
 @onready var open_dev_btn = $GameUI/OpenDevCardButton
 @onready var dev_ui = $GameUI/DevCardUI
 @onready var discard_ui = $GameUI/DiscardUI
+@onready var resource_select_ui = $GameUI/ResourceSelectUI
+@onready var message_label = $GameUI/MessageWindow/MessageLabel
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -29,6 +31,7 @@ var is_my_turn = false
 var is_moving_robber = false
 var robber_scene = preload("res://scenes/Robber.tscn")
 var robber_icon: Node2D # Sprite2DからNode2Dに変更（シーンを実体化するため）
+var free_roads_left = 0
 
 func _ready():
 	GameManager.dice_rolled.connect(_on_dice_rolled)
@@ -60,6 +63,7 @@ func _ready():
 	GameManager.prompt_knight_robber.connect(_on_prompt_knight_robber)
 	GameManager.prompt_discard.connect(_on_prompt_discard)
 	GameManager.notify_robber_phase.connect(_on_notify_robber_phase)
+	GameManager.prompt_road_building.connect(_on_prompt_road_building)
 	discard_ui.hide()
 
 	call_deferred("_generate_intersections")
@@ -74,6 +78,20 @@ func _ready():
 	open_dev_btn.pressed.connect(func(): dev_ui.show())
 	open_dev_btn.disabled = true
 	dev_ui.hide()
+	
+	resource_select_ui.hide()
+	
+	# DevUIからシグナルが来たら、リソース選択画面を開く
+	dev_ui.play_mono_pressed.connect(func(): 
+		resource_select_ui.setup("monopoly")
+		dev_ui.hide()
+	)
+	dev_ui.play_plenty_pressed.connect(func(): 
+		resource_select_ui.setup("plenty")
+		dev_ui.hide()
+	)
+	
+	show_info("カタンへようこそ！あなたのターンを待っています...")
 
 func _on_roll_pressed():
 	GameManager.rpc_id(1, "request_roll_dice")
@@ -90,7 +108,7 @@ func _on_dice_rolled(roll_value: int):
 		open_trade_btn.disabled = false
 		open_dev_btn.disabled = false
 		if roll_value == 7:
-			print("★7が出ました！全員のバースト処理を待っています...")
+			show_info("★7が出ました！全員のバースト処理を待っています...")
 			# まだターン終了させない
 			turn_end_btn.disabled = true
 			turn_end_btn.modulate = Color.DIM_GRAY
@@ -144,9 +162,21 @@ func _on_road_built(edge_name: String, player_id: int):
 	var edge_node = container.get_node_or_null(edge_name)
 	
 	if edge_node != null:
-		# ★修正：ColorRectを直接いじるのをやめて、edge.gd の関数にお任せする！
 		edge_node.build_road(player_id)
 		
+	# 無料の道のカウントダウンとメッセージ表示
+	if player_id == multiplayer.get_unique_id() and free_roads_left > 0:
+		free_roads_left -= 1
+		if free_roads_left > 0:
+			show_info("★ 街道建設：無料で引ける道は残り【1本】です！")
+		else:
+			show_info("★ 街道建設：無料分の道をすべて引き終わりました！")
+
+func _on_prompt_road_building():
+	free_roads_left = 2
+	show_info("★ 街道建設：無料で道を【2本】引けます！好きな場所をクリックしてください。")
+	dev_ui.hide()
+
 func _on_resources_updated(player_id: int, wood: int, brick: int, sheep: int, wheat: int, ore: int):
 	if player_id == multiplayer.get_unique_id():
 		wood_label.text = str(wood)
@@ -224,7 +254,7 @@ func _on_robber_moved(pos: Vector2, victims: Array):
 			
 			if is_my_turn:
 				if victims.size() > 0:
-					print("★奪える相手のUIが光ります！クリックして奪ってください。")
+					show_info("★奪える相手のUIが光ります！クリックして奪ってください。")
 					for vid in victims:
 						if player_uis.has(vid):
 							player_uis[vid].set_stealable(true) # UIを光らせてクリック解禁！
@@ -282,25 +312,23 @@ func _on_city_built(vertex_name: String, player_id: int):
 		player_uis[player_id].add_vp(1) # 都市になるとさらに+1点
 
 func _on_prompt_knight_robber():
-	print("★ 騎士カードを使用しました！盗賊を移動させてください。")
-	
-	# 発展カードUIを閉じる
+	show_info("★ 騎士カードを使用しました！盗賊を移動させてください。")
 	dev_ui.hide()
-	
-	# 盗賊移動モードをONにする！
 	is_moving_robber = true
-	
-	# 盗賊を動かし終わるまでは、ターン終了させないようにする
 	turn_end_btn.disabled = true
 	turn_end_btn.modulate = Color.DIM_GRAY
 
-func _on_prompt_discard(amount: int):
-	print("★ バーストしました！ ", amount, "枚捨ててください。")
-	discard_ui.setup(amount)
+func _on_prompt_discard(amount: int, w: int=0, b: int=0, s: int=0, wh: int=0, o: int=0):
+	show_info("★ バーストしました！ " + str(amount) + " 枚捨ててください。")
+	discard_ui.setup(amount, w, b, s, wh, o)
 
 func _on_notify_robber_phase():
-	print("★ 全員のバースト処理が完了しました！盗賊を移動させてください。")
+	show_info("★ 全員のバースト処理が完了しました！盗賊を移動させてください。")
 	is_moving_robber = true
-	# 盗賊を動かし終わるまでターン終了は禁止
 	turn_end_btn.disabled = true
 	turn_end_btn.modulate = Color.DIM_GRAY
+
+func show_info(msg: String):
+	if message_label != null:
+		message_label.text = msg
+	print(msg) # コンソールにも履歴として残しておく
