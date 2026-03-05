@@ -70,6 +70,7 @@ func _ready():
 	call_deferred("_generate_intersections")
 	call_deferred("_generate_edges")
 	call_deferred("_setup_robber")
+	call_deferred("_setup_ports")
 	
 	# トレード画面を開くボタンの設定
 	open_trade_btn.pressed.connect(func(): trade_ui.show())
@@ -351,3 +352,27 @@ func _on_game_won(winner_id: int):
 	open_dev_btn.disabled = true
 	turn_end_btn.modulate = Color.DIM_GRAY
 	roll_btn.modulate = Color.DIM_GRAY
+
+func _setup_ports():
+	var ports_container = get_node_or_null("Ports")
+	if ports_container == null: return
+	
+	var intersections = $Intersections.get_children()
+	
+	var all_descendants = ports_container.find_children("*", "", true, false)
+	
+	for port in all_descendants:
+		if "port_type" in port:
+			var distances = []
+			for vertex in intersections:
+				var dist = port.global_position.distance_to(vertex.global_position)
+				distances.append({"node": vertex, "dist": dist})
+			
+			# 距離が短い（近い）順に並び替え
+			distances.sort_custom(func(a, b): return a["dist"] < b["dist"])
+			
+			# ★変更: 画像の配置に合わせて、一番近い【1つ】の頂点だけを登録する！
+			var v1 = distances[0]["node"]
+			
+			# C++(サーバー)に登録！
+			GameManager.register_port(v1.name, port.port_type)

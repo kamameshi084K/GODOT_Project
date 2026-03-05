@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=26 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -14,11 +14,14 @@
 [ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="10_a8y0u"]
 [ext_resource type="Texture2D" uid="uid://c2bvpa7y3y7la" path="res://assets/images/brick_trade.png" id="10_gqmmt"]
 [ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="11_jkv2x"]
+[ext_resource type="Texture2D" uid="uid://cwp82leny4g3f" path="res://assets/images/sheep_trade.png" id="11_jscy8"]
 [ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
+[ext_resource type="Texture2D" uid="uid://c328u7pkqgtbk" path="res://assets/images/wheat_trade.png" id="12_pm3ni"]
 [ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
 [ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="14_a8y0u"]
 [ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/discard_ui.tscn" id="15_jkv2x"]
 [ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/resource_select_ui.tscn" id="16_jbj1t"]
+[ext_resource type="Texture2D" uid="uid://d3na7n1vjjo7o" path="res://assets/images/ore_trade.png" id="22_y6deb"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
 font_size = 34
@@ -174,19 +177,19 @@ texture = ExtResource("5_o6xl0")
 [node name="Wood" type="Node" parent="Ports"]
 
 [node name="Port" parent="Ports/Wood" instance=ExtResource("2_muem4")]
-position = Vector2(61.999985, 394)
-rotation = 2.3463843
-scale = Vector2(0.19, 0.19)
+position = Vector2(76.999985, 389)
+rotation = 1.5707964
+scale = Vector2(0.08, 0.19)
 port_type = "wood"
 
 [node name="Port2" parent="Ports/Wood" instance=ExtResource("2_muem4")]
-position = Vector2(101.000015, 413)
-rotation = -0.3482873
-scale = Vector2(0.19, 0.19)
+position = Vector2(111.00001, 413.00006)
+rotation = -0.6370452
+scale = Vector2(0.08, 0.19)
 port_type = "wood"
 
 [node name="WoodTrade" type="Sprite2D" parent="Ports/Wood"]
-position = Vector2(54.000004, 432)
+position = Vector2(78, 426)
 scale = Vector2(0.03, 0.03)
 texture = ExtResource("9_0ld40")
 
@@ -196,18 +199,140 @@ texture = ExtResource("9_0ld40")
 position = Vector2(218.00002, 471.00006)
 rotation = 1.5707964
 scale = Vector2(0.1, 0.19)
-port_type = "wood"
+port_type = "brick"
 
 [node name="Port2" parent="Ports/Brick" instance=ExtResource("2_muem4")]
 position = Vector2(254.99997, 493.00003)
 rotation = -0.6370452
 scale = Vector2(0.08, 0.19)
-port_type = "wood"
+port_type = "brick"
 
 [node name="BrickTrade" type="Sprite2D" parent="Ports/Brick"]
 position = Vector2(224, 503.99997)
 scale = Vector2(0.03, 0.03)
 texture = ExtResource("10_gqmmt")
+
+[node name="3_1" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(406.99994, 471.99997)
+rotation = 1.5707964
+scale = Vector2(0.1, 0.19)
+
+[node name="Port2" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(370.99985, 493.99994)
+rotation = 0.6370452
+scale = Vector2(0.08, 0.19)
+
+[node name="Label" type="Label" parent="Ports/3_1"]
+offset_left = 390.0
+offset_top = 488.0
+offset_right = 414.0
+offset_bottom = 511.0
+text = "3:1"
+
+[node name="Port3" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(464, 370.99997)
+rotation = -0.6370452
+scale = Vector2(0.08, 0.19)
+
+[node name="Port4" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(464, 330)
+rotation = 0.6370452
+scale = Vector2(0.08, 0.19)
+
+[node name="Label2" type="Label" parent="Ports/3_1"]
+offset_left = 474.0
+offset_top = 338.0
+offset_right = 498.0
+offset_bottom = 361.0
+text = "3:1"
+
+[node name="Port5" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(406.00012, 65.99998)
+rotation = 1.5707964
+scale = Vector2(0.1, 0.19)
+
+[node name="Port6" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(371, 47.00002)
+rotation = -0.5235988
+scale = Vector2(0.08, 0.19)
+
+[node name="Label3" type="Label" parent="Ports/3_1"]
+offset_left = 388.0
+offset_top = 28.0
+offset_right = 412.0
+offset_bottom = 51.0
+text = "3:1"
+
+[node name="Port7" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(18.999987, 289)
+rotation = 0.5235988
+scale = Vector2(0.08, 0.19)
+
+[node name="Port8" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+position = Vector2(19, 251)
+rotation = -0.5235988
+scale = Vector2(0.08, 0.19)
+
+[node name="Label4" type="Label" parent="Ports/3_1"]
+offset_left = 1.0
+offset_top = 256.0
+offset_right = 25.0
+offset_bottom = 279.0
+text = "3:1"
+
+[node name="Sheep" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/Sheep" instance=ExtResource("2_muem4")]
+position = Vector2(113.000015, 128)
+rotation = 0.5235988
+scale = Vector2(0.08, 0.19)
+port_type = "sheep"
+
+[node name="Port2" parent="Ports/Sheep" instance=ExtResource("2_muem4")]
+position = Vector2(77.99999, 150)
+rotation = 1.5707964
+scale = Vector2(0.08, 0.19)
+port_type = "sheep"
+
+[node name="SheepTrade" type="Sprite2D" parent="Ports/Sheep"]
+position = Vector2(86.00003, 121.000015)
+scale = Vector2(0.03, 0.03)
+texture = ExtResource("11_jscy8")
+
+[node name="Ore" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/Ore" instance=ExtResource("2_muem4")]
+position = Vector2(253, 46.999996)
+rotation = 0.5235988
+scale = Vector2(0.08, 0.19)
+port_type = "ore"
+
+[node name="Port2" parent="Ports/Ore" instance=ExtResource("2_muem4")]
+position = Vector2(218, 69)
+rotation = 1.5707964
+scale = Vector2(0.08, 0.19)
+port_type = "ore"
+
+[node name="Wheat" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/Wheat" instance=ExtResource("2_muem4")]
+position = Vector2(463, 207.99997)
+rotation = -0.6370452
+scale = Vector2(0.08, 0.19)
+port_type = "wheat"
+
+[node name="Port2" parent="Ports/Wheat" instance=ExtResource("2_muem4")]
+position = Vector2(463, 167)
+rotation = 0.6370452
+scale = Vector2(0.08, 0.19)
+port_type = "wheat"
+
+[node name="WheatTrade" type="Sprite2D" parent="Ports/Wheat"]
+position = Vector2(488, 192)
+scale = Vector2(0.03, 0.03)
+texture = ExtResource("12_pm3ni")
 
 [node name="GameUI" type="CanvasLayer" parent="."]
 
@@ -369,3 +494,8 @@ visible = false
 
 [node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("16_jbj1t")]
 visible = false
+
+[node name="OreTrade" type="Sprite2D" parent="."]
+position = Vector2(224.00002, 41.000008)
+scale = Vector2(0.03, 0.03)
+texture = ExtResource("22_y6deb")

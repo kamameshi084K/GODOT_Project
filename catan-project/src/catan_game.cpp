@@ -140,6 +140,8 @@ void CatanGame::_bind_methods()
     
     // 画面に「〇〇の勝ち！」と伝えるシグナル
     ADD_SIGNAL(MethodInfo("game_won", PropertyInfo(Variant::INT, "winner_id")));
+
+    ClassDB::bind_method(D_METHOD("register_port", "vertex_name", "port_type"), &CatanGame::register_port);
 }
 
 CatanGame::CatanGame()
@@ -901,15 +903,43 @@ void CatanGame::server_process_bank_trade(const String& give_res, const String& 
     PlayerData& p = players[sender_id];
 
     // ★ 2. 払う資源が4つ以上あるかチェックして減らす
+    int trade_rate = 4; // 基本のレートは4:1
+
+    // プレイヤーが家（または都市）を建てている頂点をすべて確認し、港がないか探す！
+    bool has_general_port = false; // 3:1港を持っているか
+    bool has_special_port = false; // 払う資源の2:1港を持っているか
+
+    for (const auto& pair : board_vertices) {
+        // 自分の家または都市が建っている場所なら...
+        if (pair.second.owner_id == sender_id) {
+            String p_type = pair.second.port_type;
+            if (p_type == "3:1") {
+                has_general_port = true;
+            } else if (p_type == give_res) {
+                // 払おうとしている資源と同じ種類の港を持っていたら！
+                has_special_port = true;
+            }
+        }
+    }
+
+    // 割引を適用する（2:1港が最優先）
+    if (has_special_port) {
+        trade_rate = 2;
+    } else if (has_general_port) {
+        trade_rate = 3;
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ★ 2. 割引されたレート(trade_rate)分の資源を持っているかチェックして減らす
     bool can_trade = false;
-    if (give_res == "wood" && p.wood >= 4) { p.wood -= 4; can_trade = true; }
-    else if (give_res == "brick" && p.brick >= 4) { p.brick -= 4; can_trade = true; }
-    else if (give_res == "sheep" && p.sheep >= 4) { p.sheep -= 4; can_trade = true; }
-    else if (give_res == "wheat" && p.wheat >= 4) { p.wheat -= 4; can_trade = true; }
-    else if (give_res == "ore" && p.ore >= 4) { p.ore -= 4; can_trade = true; }
+    if (give_res == "wood" && p.wood >= trade_rate) { p.wood -= trade_rate; can_trade = true; }
+    else if (give_res == "brick" && p.brick >= trade_rate) { p.brick -= trade_rate; can_trade = true; }
+    else if (give_res == "sheep" && p.sheep >= trade_rate) { p.sheep -= trade_rate; can_trade = true; }
+    else if (give_res == "wheat" && p.wheat >= trade_rate) { p.wheat -= trade_rate; can_trade = true; }
+    else if (give_res == "ore" && p.ore >= trade_rate) { p.ore -= trade_rate; can_trade = true; }
 
     if (!can_trade) {
-        UtilityFunctions::print("Server: 資源が4つ足りないためトレードできません！");
+        UtilityFunctions::print("Server: 資源が ", trade_rate, " 個足りないためトレードできません！");
         return;
     }
 
@@ -922,7 +952,7 @@ void CatanGame::server_process_bank_trade(const String& give_res, const String& 
 
     // ★ 4. 全員に新しい資源の枚数を同期する
     rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
-    UtilityFunctions::print("Server: Player ", sender_id, " traded 4 ", give_res, " for 1 ", get_res);
+    UtilityFunctions::print("Server: Player ", sender_id, " traded ", trade_rate, " ", give_res, " for 1 ", get_res);
 }
 
 void CatanGame::server_process_buy_dev_card() {
@@ -1225,4 +1255,11 @@ void CatanGame::server_check_victory(int player_id) {
 
 void CatanGame::client_announce_winner(int winner_id) {
     emit_signal("game_won", winner_id);
+}
+
+void CatanGame::register_port(const String& vertex_name, const String& port_type) {
+    if (board_vertices.count(vertex_name) > 0) {
+        board_vertices[vertex_name].port_type = port_type;
+        UtilityFunctions::print("Server: Port registered at ", vertex_name, " [Type: ", port_type, "]");
+    }
 }

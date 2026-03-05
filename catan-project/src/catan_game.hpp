@@ -15,6 +15,7 @@ namespace godot
         Vector2 position;      // 頂点の位置（例: "A", "B", ... に対応）
         int owner_id = 0;      // 0: 空き地, 1以上: 持ち主のプレイヤーID
         int building_type = 0; // 0: なし, 1: 開拓地(家), 2: 都市
+        String port_type = ""; // 港の種類（例: "3:1", "wood", "brick", ...）
     };
 
     struct EdgeData {
@@ -191,6 +192,7 @@ namespace godot
         void client_prompt_road_building();
         void server_check_victory(int player_id);
         void client_announce_winner(int winner_id);
+        void register_port(const String& vertex_name, const String& port_type);
     };
 
 } // namespace godot
