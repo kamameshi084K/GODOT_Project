@@ -135,6 +135,11 @@ void CatanGame::_bind_methods()
     
     // GDScriptに「道2本引いていいよ！」と伝えるシグナル
     ADD_SIGNAL(MethodInfo("prompt_road_building"));
+
+    ClassDB::bind_method(D_METHOD("client_announce_winner", "winner_id"), &CatanGame::client_announce_winner);
+    
+    // 画面に「〇〇の勝ち！」と伝えるシグナル
+    ADD_SIGNAL(MethodInfo("game_won", PropertyInfo(Variant::INT, "winner_id")));
 }
 
 CatanGame::CatanGame()
@@ -351,6 +356,20 @@ CatanGame::CatanGame()
     prompt_road_b["call_local"] = true;
     prompt_road_b["channel"] = 0;
     rpc_config("client_prompt_road_building", prompt_road_b);
+
+    Dictionary win_conf;
+    win_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    win_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    win_conf["call_local"] = true;
+    win_conf["channel"] = 0;
+    rpc_config("client_announce_winner", win_conf);
+
+    Dictionary sync_bought_conf;
+    sync_bought_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_bought_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_bought_conf["call_local"] = true;
+    sync_bought_conf["channel"] = 0;
+    rpc_config("client_sync_dev_card_bought", sync_bought_conf);
 }
 
 CatanGame::~CatanGame()
@@ -497,6 +516,8 @@ void CatanGame::server_process_build(const String& vertex_name) {
             advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
         }
     }
+
+    server_check_victory(sender_id);
 }
 
 // 3. 全員が受け取って画面を更新する
@@ -850,6 +871,7 @@ void CatanGame::server_process_build_city(const String& vertex_name) {
 
     board_vertices[vertex_name].building_type = 2; // ここを2にするだけで資源が2倍もらえるようになる！
     rpc("client_sync_build_city", vertex_name, sender_id);
+    server_check_victory(sender_id);
 }
 
 void CatanGame::client_sync_build_city(const String& vertex_name, int player_id) {
@@ -944,6 +966,7 @@ void CatanGame::server_process_buy_dev_card() {
 
     // ★ 本人にだけ「各カードの最新枚数」を同期する
     rpc_id(sender_id, "client_sync_private_dev_cards", p.dev_knight, p.dev_vp, p.dev_road, p.dev_plenty, p.dev_mono);
+    server_check_victory(sender_id);
 }
 
 void CatanGame::client_sync_private_dev_cards(int knight, int vp, int road, int plenty, int mono) {
@@ -1171,4 +1194,35 @@ void CatanGame::server_process_play_road_building() {
 
 void CatanGame::client_prompt_road_building() {
     emit_signal("prompt_road_building");
+}
+
+void CatanGame::server_check_victory(int player_id) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+
+    int total_vp = 0;
+
+    // 1. 建築物の点数を数える（家=1点、都市=2点）
+    for (const auto& pair : board_vertices) {
+        if (pair.second.owner_id == player_id) {
+            if (pair.second.building_type == 1) total_vp += 1;
+            else if (pair.second.building_type == 2) total_vp += 2;
+        }
+    }
+
+    // 2. 引いて持っているVP（勝利点）カードの点数を足す（1枚=1点）
+    total_vp += players[player_id].dev_vp;
+
+    // ※ 後ほど「最大騎士力」や「最長交易路」を実装したらここに足します！
+
+    UtilityFunctions::print("Server: Player ", player_id, " currently has ", total_vp, " VPs.");
+
+    // 10点以上なら勝利宣言！
+    if (total_vp >= 10) {
+        UtilityFunctions::print("Server: Player ", player_id, " WINS THE GAME!");
+        rpc("client_announce_winner", player_id);
+    }
+}
+
+void CatanGame::client_announce_winner(int winner_id) {
+    emit_signal("game_won", winner_id);
 }

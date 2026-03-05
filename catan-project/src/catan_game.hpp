@@ -189,6 +189,8 @@ namespace godot
         void request_play_road_building();
         void server_process_play_road_building();
         void client_prompt_road_building();
+        void server_check_victory(int player_id);
+        void client_announce_winner(int winner_id);
     };
 
 } // namespace godot

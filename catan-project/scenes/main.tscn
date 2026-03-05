@@ -1,15 +1,18 @@
-[gd_scene load_steps=20 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=23 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
+[ext_resource type="PackedScene" uid="uid://r3sjqryn2qey" path="res://scenes/port.tscn" id="2_muem4"]
 [ext_resource type="Texture2D" uid="uid://cc4pn87enjx2w" path="res://assets/images/pasture.png" id="2_sugp2"]
 [ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="3_jyhfs"]
 [ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="4_tefeu"]
 [ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="5_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="6_tipki"]
 [ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="8_eb6dy"]
+[ext_resource type="Texture2D" uid="uid://c6j85edsi8ft1" path="res://assets/images/wood_trade.png" id="9_0ld40"]
 [ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="9_trceg"]
 [ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="10_a8y0u"]
+[ext_resource type="Texture2D" uid="uid://c2bvpa7y3y7la" path="res://assets/images/brick_trade.png" id="10_gqmmt"]
 [ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="11_jkv2x"]
 [ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
 [ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
@@ -166,6 +169,46 @@ number = 11
 position = Vector2(359.2, 431.2)
 texture = ExtResource("5_o6xl0")
 
+[node name="Ports" type="Node" parent="."]
+
+[node name="Wood" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/Wood" instance=ExtResource("2_muem4")]
+position = Vector2(61.999985, 394)
+rotation = 2.3463843
+scale = Vector2(0.19, 0.19)
+port_type = "wood"
+
+[node name="Port2" parent="Ports/Wood" instance=ExtResource("2_muem4")]
+position = Vector2(101.000015, 413)
+rotation = -0.3482873
+scale = Vector2(0.19, 0.19)
+port_type = "wood"
+
+[node name="WoodTrade" type="Sprite2D" parent="Ports/Wood"]
+position = Vector2(54.000004, 432)
+scale = Vector2(0.03, 0.03)
+texture = ExtResource("9_0ld40")
+
+[node name="Brick" type="Node" parent="Ports"]
+
+[node name="Port" parent="Ports/Brick" instance=ExtResource("2_muem4")]
+position = Vector2(218.00002, 471.00006)
+rotation = 1.5707964
+scale = Vector2(0.1, 0.19)
+port_type = "wood"
+
+[node name="Port2" parent="Ports/Brick" instance=ExtResource("2_muem4")]
+position = Vector2(254.99997, 493.00003)
+rotation = -0.6370452
+scale = Vector2(0.08, 0.19)
+port_type = "wood"
+
+[node name="BrickTrade" type="Sprite2D" parent="Ports/Brick"]
+position = Vector2(224, 503.99997)
+scale = Vector2(0.03, 0.03)
+texture = ExtResource("10_gqmmt")
+
 [node name="GameUI" type="CanvasLayer" parent="."]
 
 [node name="DiceLabel" type="Label" parent="GameUI"]
@@ -282,6 +325,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "発展カード"
 
 [node name="RollButton" type="Button" parent="GameUI"]
+visible = false
 offset_left = 248.0
 offset_top = 248.0
 offset_right = 909.0
@@ -297,23 +341,11 @@ offset_right = 1149.0
 offset_bottom = 351.0
 scale = Vector2(0.19, 0.19)
 
-[node name="TradeUI" parent="GameUI" instance=ExtResource("13_trceg")]
-visible = false
-
-[node name="DevCardUI" parent="GameUI" instance=ExtResource("14_a8y0u")]
-visible = false
-
-[node name="DiscardUI" parent="GameUI" instance=ExtResource("15_jkv2x")]
-visible = false
-
-[node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("16_jbj1t")]
-visible = false
-
 [node name="MessageWindow" type="ColorRect" parent="GameUI"]
 offset_top = 528.0
 offset_right = 480.0
 offset_bottom = 648.0
-color = Color(0, 0, 0, 0.49803922)
+color = Color(0, 0, 0, 0.6901961)
 
 [node name="MessageLabel" type="Label" parent="GameUI/MessageWindow"]
 layout_mode = 1
@@ -325,3 +357,15 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 30
 text = "メッセージ"
 autowrap_mode = 2
+
+[node name="TradeUI" parent="GameUI" instance=ExtResource("13_trceg")]
+visible = false
+
+[node name="DevCardUI" parent="GameUI" instance=ExtResource("14_a8y0u")]
+visible = false
+
+[node name="DiscardUI" parent="GameUI" instance=ExtResource("15_jkv2x")]
+visible = false
+
+[node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("16_jbj1t")]
+visible = false

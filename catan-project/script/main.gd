@@ -64,6 +64,7 @@ func _ready():
 	GameManager.prompt_discard.connect(_on_prompt_discard)
 	GameManager.notify_robber_phase.connect(_on_notify_robber_phase)
 	GameManager.prompt_road_building.connect(_on_prompt_road_building)
+	GameManager.game_won.connect(_on_game_won)
 	discard_ui.hide()
 
 	call_deferred("_generate_intersections")
@@ -332,3 +333,21 @@ func show_info(msg: String):
 	if message_label != null:
 		message_label.text = msg
 	print(msg) # コンソールにも履歴として残しておく
+
+func _on_game_won(winner_id: int):
+	# メッセージウィンドウに結果を表示
+	if winner_id == multiplayer.get_unique_id():
+		show_info("おめでとうございます！あなたが10点に到達して勝利しました！ 🎉")
+	else:
+		var winner_name = "Player " + str(winner_id)
+		if player_uis.has(winner_id):
+			winner_name = player_uis[winner_id].name_label.text
+		show_info("残念！ " + winner_name + " が10点に到達し、ゲームに勝利しました！")
+		
+	# ゲーム終了なので、すべての操作ボタンを押せなくする
+	turn_end_btn.disabled = true
+	roll_btn.disabled = true
+	open_trade_btn.disabled = true
+	open_dev_btn.disabled = true
+	turn_end_btn.modulate = Color.DIM_GRAY
+	roll_btn.modulate = Color.DIM_GRAY
