@@ -1,0 +1,86 @@
+[gd_scene load_steps=5 format=3 uid="uid://bekee4ivqu27a"]
+
+[ext_resource type="Script" uid="uid://vp7ilg0p4uog" path="res://script/trade_accept_ui.gd" id="1_opjov"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1gq7d"]
+bg_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m6fnj"]
+bg_color = Color(0, 0.3529412, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xih8n"]
+bg_color = Color(1, 0, 0, 1)
+
+[node name="TradeAcceptUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_opjov")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 128.0
+offset_top = 128.0
+offset_right = 1024.0
+offset_bottom = 512.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1gq7d")
+
+[node name="MessageLabel" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 45
+text = "〇〇さんからの提案！"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="GiveLabel" type="Label" parent="Panel"]
+layout_mode = 0
+anchor_left = 0.2857143
+anchor_top = 0.16666667
+anchor_right = 0.42745537
+anchor_bottom = 0.2578125
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 25
+text = "もらえる資源"
+metadata/_edit_use_anchors_ = true
+
+[node name="WantLabel" type="Label" parent="Panel"]
+layout_mode = 0
+anchor_left = 0.5714286
+anchor_top = 0.16666667
+anchor_right = 0.71316963
+anchor_bottom = 0.2578125
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 25
+text = "あげる資源"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="AcceptButton" type="Button" parent="Panel"]
+layout_mode = 0
+anchor_left = 0.42857143
+anchor_top = 0.5833333
+anchor_right = 0.5703125
+anchor_bottom = 0.7239583
+theme_override_font_sizes/font_size = 33
+theme_override_styles/normal = SubResource("StyleBoxFlat_m6fnj")
+text = "承諾する"
+metadata/_edit_use_anchors_ = true
+
+[node name="DeclineButton" type="Button" parent="Panel"]
+layout_mode = 0
+anchor_left = 0.4107143
+anchor_top = 0.7708333
+anchor_right = 0.5926339
+anchor_bottom = 0.9114583
+theme_override_font_sizes/font_size = 33
+theme_override_styles/normal = SubResource("StyleBoxFlat_xih8n")
+text = "閉じる/断る"
+metadata/_edit_use_anchors_ = true
