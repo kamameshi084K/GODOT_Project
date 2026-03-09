@@ -40,7 +40,7 @@ namespace godot
         int dev_plenty = 0;
         int dev_mono = 0;
         int free_roads_available = 0;
-        
+        int knights_played = 0;
         String player_name = "Unknown";
     };
 
@@ -68,6 +68,15 @@ namespace godot
         int setup_settlements_built_this_turn = 0;
         int setup_roads_built_this_turn = 0;
         int pending_discard_players = 0;
+
+        bool is_player_trade_active = false;
+        int trade_proposer_id = 0;
+        int t_gw=0, t_gb=0, t_gs=0, t_gwh=0, t_go=0; 
+        int t_ww=0, t_wb=0, t_ws=0, t_wwh=0, t_wo=0;
+        int largest_army_player = 0;
+        int largest_army_count = 2; // 3枚以上で獲得
+        int longest_road_player = 0;
+        int longest_road_length = 4; // 5本以上で獲得
 
     protected:
         // Godotへのメソッド・RPC設定の登録用
@@ -193,6 +202,27 @@ namespace godot
         void server_check_victory(int player_id);
         void client_announce_winner(int winner_id);
         void register_port(const String& vertex_name, const String& port_type);
+        // ▼ プレイヤートレード用の関数
+        void request_propose_trade(int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo);
+        void server_process_propose_trade(int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo);
+        void client_receive_trade_proposal(int proposer_id, int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo);
+
+        void request_accept_trade();
+        void server_process_accept_trade();
+        
+        // ▼ 承諾者の通知と最終決定用
+        void client_notify_trade_accepted(int accepter_id); 
+        void request_execute_trade(int target_id);
+        void server_process_execute_trade(int target_id);
+        
+        void request_cancel_trade();
+        void server_process_cancel_trade();
+        void client_trade_completed();
+
+        void update_longest_road();
+        
+        void client_notify_largest_army(int player_id);
+        void client_notify_longest_road(int player_id);
     };
 
 } // namespace godot

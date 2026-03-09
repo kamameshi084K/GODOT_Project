@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://dpn78rcq1hm2f"]
+[gd_scene load_steps=8 format=3 uid="uid://dpn78rcq1hm2f"]
 
 [ext_resource type="Texture2D" uid="uid://dyymeirabusly" path="res://assets/images/wood.png" id="1_ibwsd"]
 [ext_resource type="Script" uid="uid://b7jqdtas7da3y" path="res://script/player_trade_ui.gd" id="1_jio7f"]
 [ext_resource type="Texture2D" uid="uid://bbbuc5kguywvf" path="res://assets/images/brick.png" id="2_jio7f"]
 [ext_resource type="Texture2D" uid="uid://obc8t752v7nv" path="res://assets/images/sheep.png" id="3_8t3n8"]
 [ext_resource type="Texture2D" uid="uid://7x4g30idm5s6" path="res://assets/images/wheat.png" id="4_xr8dn"]
+[ext_resource type="Texture2D" uid="uid://d1fviraghlhbp" path="res://assets/images/ore.png" id="6_8t3n8"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bv4xy"]
 bg_color = Color(1, 1, 1, 1)
@@ -107,7 +108,7 @@ metadata/_edit_group_ = true
 
 [node name="texture" type="TextureRect" parent="GiveBox/Ore"]
 layout_mode = 2
-texture = ExtResource("2_jio7f")
+texture = ExtResource("6_8t3n8")
 expand_mode = 2
 
 [node name="val" type="SpinBox" parent="GiveBox/Ore"]
@@ -207,7 +208,7 @@ metadata/_edit_group_ = true
 
 [node name="texture" type="TextureRect" parent="WantBox/Ore"]
 layout_mode = 2
-texture = ExtResource("2_jio7f")
+texture = ExtResource("6_8t3n8")
 expand_mode = 2
 
 [node name="val" type="SpinBox" parent="WantBox/Ore"]

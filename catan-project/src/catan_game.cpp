@@ -142,6 +142,33 @@ void CatanGame::_bind_methods()
     ADD_SIGNAL(MethodInfo("game_won", PropertyInfo(Variant::INT, "winner_id")));
 
     ClassDB::bind_method(D_METHOD("register_port", "vertex_name", "port_type"), &CatanGame::register_port);
+
+    // プレイヤートレードのバインド
+    ClassDB::bind_method(D_METHOD("request_propose_trade", "gw", "gb", "gs", "gwh", "go", "ww", "wb", "ws", "wwh", "wo"), &CatanGame::request_propose_trade);
+    ClassDB::bind_method(D_METHOD("server_process_propose_trade", "gw", "gb", "gs", "gwh", "go", "ww", "wb", "ws", "wwh", "wo"), &CatanGame::server_process_propose_trade);
+    ClassDB::bind_method(D_METHOD("client_receive_trade_proposal", "proposer_id", "gw", "gb", "gs", "gwh", "go", "ww", "wb", "ws", "wwh", "wo"), &CatanGame::client_receive_trade_proposal);
+
+    ClassDB::bind_method(D_METHOD("request_accept_trade"), &CatanGame::request_accept_trade);
+    ClassDB::bind_method(D_METHOD("server_process_accept_trade"), &CatanGame::server_process_accept_trade);
+    
+    ClassDB::bind_method(D_METHOD("client_notify_trade_accepted", "accepter_id"), &CatanGame::client_notify_trade_accepted);
+    ClassDB::bind_method(D_METHOD("request_execute_trade", "target_id"), &CatanGame::request_execute_trade);
+    ClassDB::bind_method(D_METHOD("server_process_execute_trade", "target_id"), &CatanGame::server_process_execute_trade);
+
+    ClassDB::bind_method(D_METHOD("request_cancel_trade"), &CatanGame::request_cancel_trade);
+    ClassDB::bind_method(D_METHOD("server_process_cancel_trade"), &CatanGame::server_process_cancel_trade);
+    ClassDB::bind_method(D_METHOD("client_trade_completed"), &CatanGame::client_trade_completed);
+
+    ADD_SIGNAL(MethodInfo("trade_proposed", PropertyInfo(Variant::INT, "proposer_id"), 
+        PropertyInfo(Variant::INT, "gw"), PropertyInfo(Variant::INT, "gb"), PropertyInfo(Variant::INT, "gs"), PropertyInfo(Variant::INT, "gwh"), PropertyInfo(Variant::INT, "go"),
+        PropertyInfo(Variant::INT, "ww"), PropertyInfo(Variant::INT, "wb"), PropertyInfo(Variant::INT, "ws"), PropertyInfo(Variant::INT, "wwh"), PropertyInfo(Variant::INT, "wo")));
+    ADD_SIGNAL(MethodInfo("trade_accepted_by_someone", PropertyInfo(Variant::INT, "accepter_id")));
+    ADD_SIGNAL(MethodInfo("trade_completed"));
+
+    ClassDB::bind_method(D_METHOD("client_notify_largest_army", "player_id"), &CatanGame::client_notify_largest_army);
+    ClassDB::bind_method(D_METHOD("client_notify_longest_road", "player_id"), &CatanGame::client_notify_longest_road);
+    ADD_SIGNAL(MethodInfo("largest_army_changed", PropertyInfo(Variant::INT, "player_id")));
+    ADD_SIGNAL(MethodInfo("longest_road_changed", PropertyInfo(Variant::INT, "player_id")));
 }
 
 CatanGame::CatanGame()
@@ -372,6 +399,33 @@ CatanGame::CatanGame()
     sync_bought_conf["call_local"] = true;
     sync_bought_conf["channel"] = 0;
     rpc_config("client_sync_dev_card_bought", sync_bought_conf);
+
+    Dictionary prop_trade;
+    prop_trade["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    prop_trade["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    prop_trade["call_local"] = true;
+    prop_trade["channel"] = 0;
+    rpc_config("server_process_propose_trade", prop_trade);
+    rpc_config("server_process_accept_trade", prop_trade);
+    rpc_config("server_process_execute_trade", prop_trade);
+    rpc_config("server_process_cancel_trade", prop_trade);
+
+    Dictionary sync_trade;
+    sync_trade["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_trade["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_trade["call_local"] = true;
+    sync_trade["channel"] = 0;
+    rpc_config("client_receive_trade_proposal", sync_trade);
+    rpc_config("client_notify_trade_accepted", sync_trade);
+    rpc_config("client_trade_completed", sync_trade);
+
+    Dictionary sync_title;
+    sync_title["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_title["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_title["call_local"] = true;
+    sync_title["channel"] = 0;
+    rpc_config("client_notify_largest_army", sync_title);
+    rpc_config("client_notify_longest_road", sync_title);
 }
 
 CatanGame::~CatanGame()
@@ -518,7 +572,7 @@ void CatanGame::server_process_build(const String& vertex_name) {
             advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
         }
     }
-
+    update_longest_road();
     server_check_victory(sender_id);
 }
 
@@ -602,6 +656,8 @@ void CatanGame::server_process_build_road(const String& edge_name) {
             advance_setup_turn();
         }
     }
+    update_longest_road();
+    server_check_victory(sender_id);
 }
 
 void CatanGame::client_sync_build_road(const String& edge_name, int player_id) {
@@ -873,6 +929,7 @@ void CatanGame::server_process_build_city(const String& vertex_name) {
 
     board_vertices[vertex_name].building_type = 2; // ここを2にするだけで資源が2倍もらえるようになる！
     rpc("client_sync_build_city", vertex_name, sender_id);
+    update_longest_road();
     server_check_victory(sender_id);
 }
 
@@ -1050,6 +1107,19 @@ void CatanGame::server_process_play_knight() {
     // カードを消費する
     p.dev_knight -= 1;
     p.dev_cards -= 1;
+    p.knights_played += 1;
+    UtilityFunctions::print("Server: Player ", sender_id, " played Knight. Total: ", p.knights_played);
+
+    // 最大騎士力の更新チェック
+    if (p.knights_played > largest_army_count) {
+        largest_army_count = p.knights_played;
+        if (largest_army_player != sender_id) {
+            largest_army_player = sender_id;
+            UtilityFunctions::print("Server: Player ", sender_id, " takes Largest Army!");
+            rpc("client_notify_largest_army", sender_id);
+        }
+    }
+    server_check_victory(sender_id); // 騎士を使って勝利する可能性があるためチェック
 
     UtilityFunctions::print("Server: Player ", sender_id, " played a Knight!");
 
@@ -1241,6 +1311,8 @@ void CatanGame::server_check_victory(int player_id) {
 
     // 2. 引いて持っているVP（勝利点）カードの点数を足す（1枚=1点）
     total_vp += players[player_id].dev_vp;
+    if (player_id == largest_army_player) total_vp += 2;
+    if (player_id == longest_road_player) total_vp += 2;
 
     // ※ 後ほど「最大騎士力」や「最長交易路」を実装したらここに足します！
 
@@ -1262,4 +1334,218 @@ void CatanGame::register_port(const String& vertex_name, const String& port_type
         board_vertices[vertex_name].port_type = port_type;
         UtilityFunctions::print("Server: Port registered at ", vertex_name, " [Type: ", port_type, "]");
     }
+}
+
+void CatanGame::request_propose_trade(int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo) {
+    rpc_id(1, "server_process_propose_trade", gw, gb, gs, gwh, go, ww, wb, ws, wwh, wo);
+}
+
+void CatanGame::server_process_propose_trade(int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) return;
+
+    PlayerData& p = players[sender_id];
+    if (p.wood < gw || p.brick < gb || p.sheep < gs || p.wheat < gwh || p.ore < go) return;
+
+    is_player_trade_active = true;
+    trade_proposer_id = sender_id;
+    t_gw = gw; t_gb = gb; t_gs = gs; t_gwh = gwh; t_go = go;
+    t_ww = ww; t_wb = wb; t_ws = ws; t_wwh = wwh; t_wo = wo;
+
+    for (int pid : player_order) {
+        // 自分も含めた全員に「提案が通ったよ」と通知する
+        rpc_id(pid, "client_receive_trade_proposal", sender_id, gw, gb, gs, gwh, go, ww, wb, ws, wwh, wo);
+    }
+}
+
+void CatanGame::client_receive_trade_proposal(int proposer_id, int gw, int gb, int gs, int gwh, int go, int ww, int wb, int ws, int wwh, int wo) {
+    emit_signal("trade_proposed", proposer_id, gw, gb, gs, gwh, go, ww, wb, ws, wwh, wo);
+}
+
+void CatanGame::request_accept_trade() {
+    rpc_id(1, "server_process_accept_trade");
+}
+
+void CatanGame::server_process_accept_trade() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int accepter_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (accepter_id == 0) accepter_id = 1;
+
+    if (!is_player_trade_active || accepter_id == trade_proposer_id) return;
+
+    PlayerData& p_acc = players[accepter_id];
+    if (p_acc.wood < t_ww || p_acc.brick < t_wb || p_acc.sheep < t_ws || p_acc.wheat < t_wwh || p_acc.ore < t_wo) return;
+
+    // ★ 承諾したことを提案者に通知するだけ！
+    rpc_id(trade_proposer_id, "client_notify_trade_accepted", accepter_id);
+}
+
+void CatanGame::client_notify_trade_accepted(int accepter_id) {
+    emit_signal("trade_accepted_by_someone", accepter_id);
+}
+
+void CatanGame::request_execute_trade(int target_id) {
+    rpc_id(1, "server_process_execute_trade", target_id);
+}
+
+void CatanGame::server_process_execute_trade(int target_id) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    if (!is_player_trade_active || sender_id != trade_proposer_id) return;
+
+    PlayerData& p_prop = players[trade_proposer_id];
+    PlayerData& p_acc = players[target_id];
+
+    if (p_prop.wood < t_gw || p_prop.brick < t_gb || p_prop.sheep < t_gs || p_prop.wheat < t_gwh || p_prop.ore < t_go) return;
+    if (p_acc.wood < t_ww || p_acc.brick < t_wb || p_acc.sheep < t_ws || p_acc.wheat < t_wwh || p_acc.ore < t_wo) return;
+
+    // 資源スワップ
+    p_prop.wood -= t_gw; p_prop.brick -= t_gb; p_prop.sheep -= t_gs; p_prop.wheat -= t_gwh; p_prop.ore -= t_go;
+    p_acc.wood  += t_gw; p_acc.brick  += t_gb; p_acc.sheep  += t_gs; p_acc.wheat  += t_gwh; p_acc.ore  += t_go;
+
+    p_acc.wood -= t_ww; p_acc.brick -= t_wb; p_acc.sheep -= t_ws; p_acc.wheat -= t_wwh; p_acc.ore -= t_wo;
+    p_prop.wood += t_ww; p_prop.brick += t_wb; p_prop.sheep += t_ws; p_prop.wheat += t_wwh; p_prop.ore += t_wo;
+
+    is_player_trade_active = false;
+    rpc("client_sync_resources", trade_proposer_id, p_prop.wood, p_prop.brick, p_prop.sheep, p_prop.wheat, p_prop.ore);
+    rpc("client_sync_resources", target_id, p_acc.wood, p_acc.brick, p_acc.sheep, p_acc.wheat, p_acc.ore);
+    rpc("client_trade_completed");
+}
+
+void CatanGame::request_cancel_trade() {
+    rpc_id(1, "server_process_cancel_trade");
+}
+
+void CatanGame::server_process_cancel_trade() {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (sender_id == 0) sender_id = 1;
+
+    if (is_player_trade_active && sender_id == trade_proposer_id) {
+        is_player_trade_active = false;
+        rpc("client_trade_completed");
+    }
+}
+
+void CatanGame::client_trade_completed() {
+    emit_signal("trade_completed");
+}
+
+// DFS（深さ優先探索）による最長ルートの計算
+void CatanGame::update_longest_road() {
+    int best_player = 0;
+    int best_length = 4; // 5本以上で称号獲得
+    bool tie = false;
+
+    for (int pid : player_order) {
+        std::vector<String> p_edges;
+        for (auto& ep : board_edges) {
+            if (ep.second.owner_id == pid) p_edges.push_back(ep.first);
+        }
+        if (p_edges.empty()) continue;
+
+        int max_len_for_p = 0;
+
+        // DFS用の再帰関数（交差点ベース）
+        auto dfs = [&](auto& self, const String& current_vertex, std::vector<String>& visited_edges) -> int {
+            int max_l = 0;
+            for (const String& edge : p_edges) {
+                // すでに通った道はスキップ
+                if (std::find(visited_edges.begin(), visited_edges.end(), edge) != visited_edges.end()) continue;
+
+                // この道が今の交差点に繋がっているか
+                if (board_edges[edge].midpoint.distance_to(board_vertices[current_vertex].position) < 35.0f) {
+                    
+                    // 繋がっているなら、道の「反対側の交差点」を探す
+                    String next_vertex = "";
+                    for (const auto& vp : board_vertices) {
+                        if (vp.first != current_vertex && board_edges[edge].midpoint.distance_to(vp.second.position) < 35.0f) {
+                            next_vertex = vp.first;
+                            break;
+                        }
+                    }
+                    if (next_vertex == "") continue;
+
+                    visited_edges.push_back(edge);
+
+                    // 相手の拠点に分断されていないかチェック
+                    if (board_vertices[next_vertex].owner_id != 0 && board_vertices[next_vertex].owner_id != pid) {
+                        max_l = std::max(max_l, 1); // 相手の拠点で止まる
+                    } else {
+                        max_l = std::max(max_l, 1 + self(self, next_vertex, visited_edges)); // 次の交差点へ進む
+                    }
+
+                    visited_edges.pop_back();
+                }
+            }
+            return max_l;
+        };
+
+        // 全ての道をスタート地点として試す
+        for (const String& start_edge : p_edges) {
+            std::vector<String> end_vertices;
+            for (const auto& vp : board_vertices) {
+                if (board_edges[start_edge].midpoint.distance_to(vp.second.position) < 35.0f) {
+                    end_vertices.push_back(vp.first);
+                }
+            }
+            
+            // 道の両端の交差点からそれぞれ探索
+            for (const String& start_v : end_vertices) {
+                std::vector<String> visited;
+                visited.push_back(start_edge);
+
+                // 反対側の交差点へ
+                String next_v = (end_vertices[0] == start_v && end_vertices.size() > 1) ? end_vertices[1] : end_vertices[0];
+                
+                int len = 1;
+                if (board_vertices[next_v].owner_id != 0 && board_vertices[next_v].owner_id != pid) {
+                    // スタート直後の交差点が塞がれていた場合
+                } else {
+                    len += dfs(dfs, next_v, visited);
+                }
+                
+                max_len_for_p = std::max(max_len_for_p, len);
+            }
+        }
+
+        // 記録更新の判定
+        if (max_len_for_p > best_length) {
+            best_length = max_len_for_p;
+            best_player = pid;
+            tie = false;
+        } else if (max_len_for_p == best_length && max_len_for_p >= 5) {
+            if (pid == longest_road_player) {
+                best_player = pid;
+                tie = false;
+            } else if (best_player != longest_road_player) {
+                tie = true;
+            }
+        }
+    }
+
+    if (tie) best_player = 0;
+
+    // 称号の移動
+    if (best_player != longest_road_player) {
+        longest_road_player = best_player;
+        longest_road_length = best_player == 0 ? 4 : best_length;
+        UtilityFunctions::print("Server: Longest Road holder changed to Player ", longest_road_player, " (length: ", longest_road_length, ")");
+        rpc("client_notify_longest_road", longest_road_player);
+    } else if (best_player != 0) {
+        longest_road_length = best_length;
+    }
+}
+
+void CatanGame::client_notify_largest_army(int player_id) {
+    emit_signal("largest_army_changed", player_id);
+}
+
+void CatanGame::client_notify_longest_road(int player_id) {
+    emit_signal("longest_road_changed", player_id);
 }

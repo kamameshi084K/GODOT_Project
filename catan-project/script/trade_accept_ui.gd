@@ -1,10 +1,11 @@
-extends Panel
+extends Control
 
-@onready var msg_label = $MessageLabel # （VBoxContainerの中に入れた場合は $VBoxContainer/MessageLabel などにパスを合わせてください）
-@onready var give_label = $GiveLabel
-@onready var want_label = $WantLabel
-@onready var accept_btn = $AcceptButton # （HBoxContainerの中に入れた場合はパスを合わせてください）
-@onready var decline_btn = $DeclineButton
+# ▼ ツリーに合わせて「Panel/」を追加しました ▼
+@onready var msg_label = $Panel/MessageLabel
+@onready var give_label = $Panel/GiveLabel
+@onready var want_label = $Panel/WantLabel
+@onready var accept_btn = $Panel/AcceptButton
+@onready var decline_btn = $Panel/DeclineButton
 
 func _ready():
 	accept_btn.pressed.connect(_on_accept)

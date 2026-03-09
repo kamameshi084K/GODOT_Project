@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://cdxebb2yknhew"]
+[gd_scene load_steps=29 format=3 uid="uid://cdxebb2yknhew"]
 
 [ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
 [ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
@@ -24,6 +24,7 @@
 [ext_resource type="Texture2D" uid="uid://d3na7n1vjjo7o" path="res://assets/images/ore_trade.png" id="22_y6deb"]
 [ext_resource type="PackedScene" uid="uid://dpn78rcq1hm2f" path="res://scenes/player_trade_ui.tscn" id="23_y6deb"]
 [ext_resource type="PackedScene" uid="uid://bekee4ivqu27a" path="res://scenes/trade_accept_ui.tscn" id="24_og1vs"]
+[ext_resource type="PackedScene" uid="uid://bdypej5t3ale1" path="res://scenes/trade_list_ui.tscn" id="25_og1vs"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
 font_size = 34
@@ -359,6 +360,7 @@ offset_bottom = 645.0
 
 [node name="WoodCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
+tooltip_text = "木材：【道】や【家（開拓地）】を作るのに必要です。"
 texture = ExtResource("8_eb6dy")
 expand_mode = 3
 
@@ -374,6 +376,7 @@ label_settings = SubResource("LabelSettings_muem4")
 
 [node name="BrickCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
+tooltip_text = "レンガ（土）：【道】や【家（開拓地）】を作るのに必要です。"
 texture = ExtResource("9_trceg")
 expand_mode = 3
 
@@ -389,6 +392,7 @@ label_settings = SubResource("LabelSettings_muem4")
 
 [node name="SheepCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
+tooltip_text = "羊毛：【家（開拓地）】を作ったり、【発展カード】を引くのに必要です。"
 texture = ExtResource("10_a8y0u")
 expand_mode = 3
 
@@ -404,6 +408,7 @@ label_settings = SubResource("LabelSettings_muem4")
 
 [node name="WheatCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
+tooltip_text = "小麦：【家（開拓地）】や【都市】を作ったり、【発展カード】を引くのに必要です。"
 texture = ExtResource("11_jkv2x")
 expand_mode = 3
 
@@ -419,6 +424,7 @@ label_settings = SubResource("LabelSettings_muem4")
 
 [node name="OreCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
+tooltip_text = "鉱石（鉄）：家を【都市】にアップグレードしたり、【発展カード】を引くのに必要です。"
 texture = ExtResource("12_jbj1t")
 expand_mode = 3
 
@@ -437,6 +443,7 @@ offset_left = 618.0
 offset_top = 323.0
 offset_right = 747.0
 offset_bottom = 436.0
+tooltip_text = "ターン終了：建設や交渉を終え、次のプレイヤーに手番を回します。"
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "ターン終了"
 
@@ -445,6 +452,7 @@ offset_left = 752.0
 offset_top = 323.0
 offset_right = 881.0
 offset_bottom = 436.0
+tooltip_text = "銀行と交換：同じ資源4つを払って、好きな資源1つと交換します。港に家を建てていると「3:1」や「2:1」の有利なレートで交換できます。"
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "交換"
 
@@ -453,6 +461,7 @@ offset_left = 886.0
 offset_top = 323.0
 offset_right = 1015.0
 offset_bottom = 436.0
+tooltip_text = "発展カード：麦1・羊1・鉄1を払って、ゲームを有利に進める特殊なカードを1枚引きます。"
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "発展カード"
 
@@ -461,6 +470,7 @@ offset_left = 1020.0
 offset_top = 323.0
 offset_right = 1149.0
 offset_bottom = 436.0
+tooltip_text = "プレイヤーと交渉：他のプレイヤーに条件を提示して、資源を交換してもらいます。"
 theme_override_styles/normal = SubResource("StyleBoxFlat_eb6dy")
 text = "交渉"
 
@@ -470,6 +480,7 @@ offset_left = 248.0
 offset_top = 248.0
 offset_right = 909.0
 offset_bottom = 393.0
+tooltip_text = "サイコロを振る：自分のターンの最初に必ず行います。出た目と同じ数字の土地から資源が産出されます。（※7が出ると盗賊が動きます）"
 theme_override_font_sizes/font_size = 100
 theme_override_styles/normal = SubResource("StyleBoxFlat_a8y0u")
 text = "サイコロを振る！"
@@ -514,4 +525,7 @@ visible = false
 visible = false
 
 [node name="TradeAcceptUI" parent="GameUI" instance=ExtResource("24_og1vs")]
+visible = false
+
+[node name="TradeListUI" parent="GameUI" instance=ExtResource("25_og1vs")]
 visible = false

@@ -17,6 +17,10 @@ extends Node2D
 @onready var discard_ui = $GameUI/DiscardUI
 @onready var resource_select_ui = $GameUI/ResourceSelectUI
 @onready var message_label = $GameUI/MessageWindow/MessageLabel
+@onready var trade_list_ui = $GameUI/TradeListUI
+@onready var open_player_trade_btn = $GameUI/OpenPlayerTradeButton
+@onready var player_trade_ui = $GameUI/PlayerTradeUI
+@onready var trade_accept_ui = $GameUI/TradeAcceptUI
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -32,6 +36,9 @@ var is_moving_robber = false
 var robber_scene = preload("res://scenes/Robber.tscn")
 var robber_icon: Node2D # Sprite2DからNode2Dに変更（シーンを実体化するため）
 var free_roads_left = 0
+
+var current_largest_army_player = 0
+var current_longest_road_player = 0
 
 func _ready():
 	GameManager.dice_rolled.connect(_on_dice_rolled)
@@ -65,6 +72,17 @@ func _ready():
 	GameManager.notify_robber_phase.connect(_on_notify_robber_phase)
 	GameManager.prompt_road_building.connect(_on_prompt_road_building)
 	GameManager.game_won.connect(_on_game_won)
+	GameManager.trade_proposed.connect(_on_trade_proposed)
+	GameManager.trade_accepted_by_someone.connect(_on_trade_accepted_by_someone)
+	GameManager.trade_completed.connect(_on_trade_completed)
+	GameManager.largest_army_changed.connect(_on_largest_army_changed)
+	GameManager.longest_road_changed.connect(_on_longest_road_changed)
+	
+	open_player_trade_btn.pressed.connect(func(): player_trade_ui.show())
+	open_player_trade_btn.disabled = true
+	player_trade_ui.hide()
+	trade_accept_ui.hide()
+	trade_list_ui.hide()
 	discard_ui.hide()
 
 	call_deferred("_generate_intersections")
@@ -109,6 +127,7 @@ func _on_dice_rolled(roll_value: int):
 	if is_my_turn:
 		open_trade_btn.disabled = false
 		open_dev_btn.disabled = false
+		open_player_trade_btn.disabled = false
 		if roll_value == 7:
 			show_info("★7が出ました！全員のバースト処理を待っています...")
 			# まだターン終了させない
@@ -213,22 +232,23 @@ func _on_turn_changed(active_player_id: int, phase: int = 2):
 	
 	if is_my_turn:
 		if phase == 0 or phase == 1:
-			# 初期配置フェーズ
 			open_trade_btn.disabled = true 
-			open_dev_btn.disabled = true # ★追加: 初期配置は購入不可
+			open_dev_btn.disabled = true
+			open_player_trade_btn.disabled = true # ★追加
 		else:
-			# 通常フェーズ
 			roll_btn.show()
 			roll_btn.disabled = false
 			open_trade_btn.disabled = true 
 			open_dev_btn.disabled = true 
+			open_player_trade_btn.disabled = true # ★追加（サイコロ振るまでは押せない）
 			turn_end_btn.disabled = true
 	else:
-		# 自分のターンじゃない時
 		open_trade_btn.disabled = true 
-		open_dev_btn.disabled = true # ★追加
+		open_dev_btn.disabled = true 
+		open_player_trade_btn.disabled = true # ★追加
 		trade_ui.hide() 
-		dev_ui.hide() # ★追加: ターンが変わったら強制的に閉じる
+		dev_ui.hide() 
+		player_trade_ui.hide() # ★追加
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -376,3 +396,78 @@ func _setup_ports():
 			
 			# C++(サーバー)に登録！
 			GameManager.register_port(v1.name, port.port_type)
+
+func _on_trade_proposed(proposer_id: int, gw: int, gb: int, gs: int, gwh: int, go: int, ww: int, wb: int, ws: int, wwh: int, wo: int):
+	# 自分が提案した本人の場合はリストUIを表示して待つ
+	if proposer_id == multiplayer.get_unique_id():
+		trade_list_ui.setup()
+		show_info("★ トレードを提案しました。他のプレイヤーの返答を待っています...")
+		return
+		
+	# 他のプレイヤーには承諾UI（ポップアップ）を出す
+	var proposer_name = "Player " + str(proposer_id)
+	if player_uis.has(proposer_id):
+		proposer_name = player_uis[proposer_id].name_label.text
+		
+	trade_accept_ui.setup(proposer_name, gw, gb, gs, gwh, go, ww, wb, ws, wwh, wo)
+
+func _on_trade_accepted_by_someone(accepter_id: int):
+	# 誰かが「承諾」を押したら、提案者のリストにボタンを追加する
+	var accepter_name = "Player " + str(accepter_id)
+	if player_uis.has(accepter_id):
+		accepter_name = player_uis[accepter_id].name_label.text
+	
+	trade_list_ui.add_accepter(accepter_id, accepter_name)
+
+func _on_trade_completed():
+	# トレードが成立（またはキャンセル）したら全UIを閉じる
+	trade_accept_ui.hide()
+	player_trade_ui.hide()
+	trade_list_ui.hide()
+	show_info("★ プレイヤートレードが成立（またはキャンセル）しました！")
+
+func _on_largest_army_changed(player_id: int):
+	# 1. もし前の保持者がいたら、その人から2点引く
+	if current_largest_army_player != 0 and current_largest_army_player != player_id:
+		if player_uis.has(current_largest_army_player):
+			player_uis[current_largest_army_player].add_vp(-2)
+
+	# 2. 新しい保持者に2点足してメッセージを出す
+	if player_id != 0:
+		if player_uis.has(player_id):
+			player_uis[player_id].add_vp(2)
+			
+		var p_name = "Player " + str(player_id)
+		if player_uis.has(player_id):
+			p_name = player_uis[player_id].name_label.text
+		elif player_id == multiplayer.get_unique_id():
+			p_name = "あなた"
+			
+		show_info("⚔️ " + p_name + " が【最大騎士力】(2VP) を獲得しました！")
+	
+	# 保持者の記録を更新
+	current_largest_army_player = player_id
+
+func _on_longest_road_changed(player_id: int):
+	# 1. もし前の保持者がいたら、その人から2点引く
+	if current_longest_road_player != 0 and current_longest_road_player != player_id:
+		if player_uis.has(current_longest_road_player):
+			player_uis[current_longest_road_player].add_vp(-2)
+
+	# 2. 新しい保持者に2点足してメッセージを出す
+	if player_id != 0:
+		if player_uis.has(player_id):
+			player_uis[player_id].add_vp(2)
+			
+		var p_name = "Player " + str(player_id)
+		if player_uis.has(player_id):
+			p_name = player_uis[player_id].name_label.text
+		elif player_id == multiplayer.get_unique_id():
+			p_name = "あなた"
+			
+		show_info("🛣️ " + p_name + " が【最長交易路】(2VP) を獲得しました！")
+	else:
+		show_info("🛣️ 【最長交易路】が分断され、該当者なしになりました！")
+		
+	# 保持者の記録を更新
+	current_longest_road_player = player_id
