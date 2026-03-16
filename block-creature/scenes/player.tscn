@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://blqeqxgtcccgd"]
+
+[ext_resource type="Script" uid="uid://bcdxngg14t5r5" path="res://script/move.gd" id="1_g2els"]
+[ext_resource type="Script" uid="uid://8g6o2sp216ed" path="res://script/block_creature_mesh.gd" id="2_qhqgy"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_51s2u"]
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_g2els")
+
+[node name="BlockCreatureMesh" type="BlockCreatureMesh" parent="."]
+script = ExtResource("2_qhqgy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_51s2u")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7681491, 5)

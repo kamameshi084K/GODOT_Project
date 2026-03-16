@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+import os
+import sys
+
+# godot-cppのビルド設定を読み込む
+env = SConscript("godot-cpp/SConstruct")
+
+# インクルードパスの設定
+env.Append(CPPPATH=[".", "src"])
+
+# ソースファイルをすべて取得
+sources = Glob("src/*.cpp")
+
+# 出力先を現在のフォルダ構成（bin/直下）に合わせる
+if env["platform"] == "macos":
+    library = env.SharedLibrary(
+        "bin/block_creature.macos.template_debug.framework/block_creature",
+        source=sources,
+    )
+else:
+    library = env.SharedLibrary(
+        "bin/block_creature",
+        source=sources,
+    )
+
+Default(library)

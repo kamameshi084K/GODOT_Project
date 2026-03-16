@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://b1d5uhpeew6v"]
+
+[ext_resource type="Script" uid="uid://cq12s0payvkth" path="res://script/food.gd" id="1_xven1"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_af40f"]
+
+[node name="Food" type="Area3D"]
+script = ExtResource("1_xven1")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_af40f")
