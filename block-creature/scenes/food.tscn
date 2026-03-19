@@ -11,3 +11,5 @@ script = ExtResource("1_xven1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("BoxShape3D_af40f")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
