@@ -1,0 +1,66 @@
+[gd_scene load_steps=6 format=3 uid="uid://bxgpwqs0kseoa"]
+
+[ext_resource type="Script" uid="uid://p0x3rplkvr6q" path="res://script/build.gd" id="1_pkp5r"]
+[ext_resource type="Script" uid="uid://8g6o2sp216ed" path="res://script/block_creature_mesh.gd" id="1_s5sh5"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ns6u7"]
+
+[sub_resource type="Sky" id="Sky_5t4e2"]
+sky_material = SubResource("PanoramaSkyMaterial_ns6u7")
+
+[sub_resource type="Environment" id="Environment_xvgsr"]
+background_mode = 1
+background_color = Color(0.16470589, 0.18039216, 0.20784314, 1)
+sky = SubResource("Sky_5t4e2")
+ambient_light_source = 2
+ambient_light_color = Color(0.5370113, 0.5370113, 0.5370113, 1)
+tonemap_mode = 3
+ssao_enabled = true
+
+[node name="BuildScene" type="Node3D"]
+script = ExtResource("1_pkp5r")
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 0.7071068, 0.7071068, 0, -0.7071068, 0.7071068, 0, 10, 0)
+shadow_enabled = true
+shadow_blur = 1.5
+
+[node name="Floor" type="CSGBox3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+use_collision = true
+size = Vector3(30, 1, 30)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
+environment = SubResource("Environment_xvgsr")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.094968, 10)
+
+[node name="BlockCreatureMesh" type="BlockCreatureMesh" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("1_s5sh5")
+
+[node name="CursorMesh" type="MeshInstance3D" parent="."]
+skeleton = NodePath("../BlockCreatureMesh")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Label" type="Label" parent="UI/Control"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Button" type="Button" parent="UI/Control"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0

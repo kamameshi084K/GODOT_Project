@@ -30,11 +30,16 @@ public:
     BlockCreatureMesh();
     ~BlockCreatureMesh();
 
+<<<<<<< Updated upstream
     // GDScriptから呼べるようにする関数
     void setup(); 
     void add_block(const Vector3& pos, const String& type);
     float get_mass() const;
     float get_speed() const;
+=======
+    // ★ ここが心臓部：ブロックの座標リストを受け取ってメッシュを生成する関数
+    void generate_mesh(const PackedVector3Array& positions, const PackedInt32Array& types);
+>>>>>>> Stashed changes
 };
 
 }
