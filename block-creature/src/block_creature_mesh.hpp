@@ -39,6 +39,9 @@ public:
 =======
     // ★ ここが心臓部：ブロックの座標リストを受け取ってメッシュを生成する関数
     void generate_mesh(const PackedVector3Array& positions, const PackedInt32Array& types);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 };
 

@@ -8,6 +8,7 @@ using namespace godot;
 
 void BlockCreatureMesh::_bind_methods() {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // GDScriptから呼べるように関数を登録
     ClassDB::bind_method(D_METHOD("setup"), &BlockCreatureMesh::setup);
     ClassDB::bind_method(D_METHOD("add_block", "pos", "type"), &BlockCreatureMesh::add_block, DEFVAL("normal"));
@@ -22,10 +23,15 @@ BlockCreatureMesh::BlockCreatureMesh() {
     // 引数が2つになったので登録名を変更します
     ClassDB::bind_method(D_METHOD("generate_mesh", "positions", "types"), &BlockCreatureMesh::generate_mesh);
 >>>>>>> Stashed changes
+=======
+    // 引数が2つになったので登録名を変更します
+    ClassDB::bind_method(D_METHOD("generate_mesh", "positions", "types"), &BlockCreatureMesh::generate_mesh);
+>>>>>>> Stashed changes
 }
 
 BlockCreatureMesh::~BlockCreatureMesh() {}
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 // 初期化処理（一番弱い1ブロックだけにする）
 void BlockCreatureMesh::setup() {
@@ -92,6 +98,8 @@ void BlockCreatureMesh::generate_mesh() {
     for (int i = 0; i < keys.size(); i++) {
         Vector3 pos = keys[i];
 =======
+=======
+>>>>>>> Stashed changes
 void BlockCreatureMesh::generate_mesh(const PackedVector3Array& positions, const PackedInt32Array& types) {
     Ref<SurfaceTool> st;
     st.instantiate();
@@ -106,6 +114,22 @@ void BlockCreatureMesh::generate_mesh(const PackedVector3Array& positions, const
         if (i < types.size()) {
             type = types[i];
         }
+<<<<<<< Updated upstream
+
+        // ★追加：パーツの種類（ID）によって色を変える
+        Color block_color;
+        switch (type) {
+            case 0: block_color = Color(0.5, 0.5, 0.5); break; // 0: 基本装甲（グレー）
+            case 1: block_color = Color(1.0, 0.2, 0.2); break; // 1: スラスター/武器など（赤）
+            case 2: block_color = Color(0.2, 0.5, 1.0); break; // 2: コアパーツ（青）
+            default: block_color = Color(1.0, 1.0, 1.0); break; // その他（白）
+        }
+        
+        // SurfaceToolに色を設定（これ以降に追加される頂点はこの色になります）
+        st->set_color(block_color);
+
+>>>>>>> Stashed changes
+=======
 
         // ★追加：パーツの種類（ID）によって色を変える
         Color block_color;
@@ -132,7 +156,12 @@ void BlockCreatureMesh::generate_mesh(const PackedVector3Array& positions, const
         Vector3 p7 = pos + Vector3(-s,  s,  s);
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         // 前面(Front)
+=======
+        // ※面を追加する処理（st->add_vertex(...)）は今までと全く同じでOKです！
+        // 前面
+>>>>>>> Stashed changes
 =======
         // ※面を追加する処理（st->add_vertex(...)）は今までと全く同じでOKです！
         // 前面

@@ -1,25 +1,34 @@
 extends BlockCreatureMesh
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 func _ready():
 	# C++側の初期化関数を呼ぶ（1ブロックだけになり、メッシュが作られる）
 	setup()
 
 	# 全体の色設定
 =======
+=======
+>>>>>>> Stashed changes
 var block_list: Array[Dictionary] = []
 var static_body: StaticBody3D
 
 func _ready():
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 	var material = StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true 
 	self.material_override = material
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # ※今後は add_block(Vector3(1, 0, 0), "red") などと呼ぶだけで、
 # 裏でC++がメッシュ更新とステータス計算をすべて一瞬で終わらせてくれます。
 =======
+=======
+>>>>>>> Stashed changes
 	# ★ 物理エンジン用の親玉ノードを一つ作っておく
 	static_body = StaticBody3D.new()
 	add_child(static_body)
@@ -54,4 +63,7 @@ func _update_mesh():
 		type_array.append(b["type"])
 
 	generate_mesh(pos_array, type_array)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
