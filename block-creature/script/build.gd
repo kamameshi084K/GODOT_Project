@@ -64,6 +64,7 @@ func _process(delta: float) -> void:
 		cursor.visible = true 
 
 		# 左クリックで装甲（ID=0）を置く
+		# 左クリックで装甲（ID=0）を置く
 		if Input.is_action_just_pressed("click"):
 			creature.add_block(grid_pos, 0)
 			
@@ -71,6 +72,21 @@ func _process(delta: float) -> void:
 		elif Input.is_action_just_pressed("right_click"):
 			creature.add_block(grid_pos, 1)
 			
+		# ★新規追加：Xキーでブロックを削除する
+		elif Input.is_action_just_pressed("delete"):
+			# 注意：追加する時は外側の grid_pos でしたが、削除する時は「ぶつかった対象」である target_block を消します！
+			creature.remove_block(target_block)
+		elif Input.is_action_just_pressed("delete"):
+			creature.remove_block(target_block) 
+			
 	else:
 		# 空を向いている時はカーソルを隠す
+		cursor.visible = false
+
+	# ---------------------------------------------------
+	# ★ここから下を追加：Enterキーで出撃！
+	if Input.is_action_just_pressed("launch"):
+		creature.launch_machine()
+		# 出撃したら、もうブロックは置けないように組み立て処理をストップさせる
+		set_process(false) 
 		cursor.visible = false

@@ -24,7 +24,7 @@ extends Node2D
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
-var player_ui_scene = preload("res://scenes/player_ui.tscn")
+var player_ui_scene = preload("res://scenes/Player_ui.tscn")
 var player_uis = {}
 
 var intersection_scene = preload("res://scenes/Intersection.tscn")

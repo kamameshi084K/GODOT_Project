@@ -1,30 +1,30 @@
 [gd_scene load_steps=29 format=3 uid="uid://cdxebb2yknhew"]
 
-[ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="1_o5qli"]
-[ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_o6xl0"]
-[ext_resource type="PackedScene" uid="uid://r3sjqryn2qey" path="res://scenes/port.tscn" id="2_muem4"]
-[ext_resource type="Texture2D" uid="uid://cc4pn87enjx2w" path="res://assets/images/pasture.png" id="2_sugp2"]
-[ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="3_jyhfs"]
-[ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="4_tefeu"]
-[ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="5_o6xl0"]
-[ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="6_tipki"]
-[ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="8_eb6dy"]
-[ext_resource type="Texture2D" uid="uid://c6j85edsi8ft1" path="res://assets/images/wood_trade.png" id="9_0ld40"]
-[ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="9_trceg"]
-[ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="10_a8y0u"]
-[ext_resource type="Texture2D" uid="uid://c2bvpa7y3y7la" path="res://assets/images/brick_trade.png" id="10_gqmmt"]
-[ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="11_jkv2x"]
-[ext_resource type="Texture2D" uid="uid://cwp82leny4g3f" path="res://assets/images/sheep_trade.png" id="11_jscy8"]
-[ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="12_jbj1t"]
-[ext_resource type="Texture2D" uid="uid://c328u7pkqgtbk" path="res://assets/images/wheat_trade.png" id="12_pm3ni"]
-[ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="13_trceg"]
-[ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="14_a8y0u"]
-[ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/discard_ui.tscn" id="15_jkv2x"]
-[ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/resource_select_ui.tscn" id="16_jbj1t"]
-[ext_resource type="Texture2D" uid="uid://d3na7n1vjjo7o" path="res://assets/images/ore_trade.png" id="22_y6deb"]
-[ext_resource type="PackedScene" uid="uid://dpn78rcq1hm2f" path="res://scenes/player_trade_ui.tscn" id="23_y6deb"]
-[ext_resource type="PackedScene" uid="uid://bekee4ivqu27a" path="res://scenes/trade_accept_ui.tscn" id="24_og1vs"]
-[ext_resource type="PackedScene" uid="uid://bdypej5t3ale1" path="res://scenes/trade_list_ui.tscn" id="25_og1vs"]
+[ext_resource type="Script" uid="uid://dytk63ylc2fvu" path="res://script/main.gd" id="1_xa025"]
+[ext_resource type="PackedScene" uid="uid://cbtvxhr5volln" path="res://scenes/HexTile.tscn" id="2_36rkl"]
+[ext_resource type="Texture2D" uid="uid://cc4pn87enjx2w" path="res://assets/images/pasture.png" id="3_fs0b5"]
+[ext_resource type="Texture2D" uid="uid://ds1tmj1lvi5al" path="res://assets/images/field.png" id="4_ma7h6"]
+[ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="5_e2s0e"]
+[ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="6_gsxep"]
+[ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="7_v0vrg"]
+[ext_resource type="PackedScene" uid="uid://r3sjqryn2qey" path="res://scenes/Port.tscn" id="8_dg70y"]
+[ext_resource type="Texture2D" uid="uid://c6j85edsi8ft1" path="res://assets/images/wood_trade.png" id="9_pnhog"]
+[ext_resource type="Texture2D" uid="uid://c2bvpa7y3y7la" path="res://assets/images/brick_trade.png" id="10_2c4at"]
+[ext_resource type="Texture2D" uid="uid://cwp82leny4g3f" path="res://assets/images/sheep_trade.png" id="11_g6wdg"]
+[ext_resource type="Texture2D" uid="uid://d3na7n1vjjo7o" path="res://assets/images/ore_trade.png" id="12_hq6as"]
+[ext_resource type="Texture2D" uid="uid://c328u7pkqgtbk" path="res://assets/images/wheat_trade.png" id="13_kxyth"]
+[ext_resource type="Texture2D" uid="uid://cgeeklo74wb7c" path="res://assets/images/cards/wood.png" id="14_cobve"]
+[ext_resource type="Texture2D" uid="uid://dni3ien057wwc" path="res://assets/images/cards/brick.png" id="15_cmqll"]
+[ext_resource type="Texture2D" uid="uid://dbkrtdjesvv6" path="res://assets/images/cards/sheep.png" id="16_8cp6k"]
+[ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="17_8b871"]
+[ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="18_pdwbg"]
+[ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="19_5grtr"]
+[ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/Dev_card_ui.tscn" id="20_vua0o"]
+[ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/Discard_ui.tscn" id="21_t70y2"]
+[ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/Resource_select_ui.tscn" id="22_8gny2"]
+[ext_resource type="PackedScene" uid="uid://dpn78rcq1hm2f" path="res://scenes/Player_trade_ui.tscn" id="23_s3wmy"]
+[ext_resource type="PackedScene" uid="uid://bekee4ivqu27a" path="res://scenes/Trade_accept_ui.tscn" id="24_gdcyb"]
+[ext_resource type="PackedScene" uid="uid://bdypej5t3ale1" path="res://scenes/Trade_list_ui.tscn" id="25_oa6sj"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
 font_size = 34
@@ -38,154 +38,154 @@ bg_color = Color(0, 0.45490196, 0.96862745, 1)
 bg_color = Color(0, 0, 0, 1)
 
 [node name="Main" type="Node2D"]
-script = ExtResource("1_o6xl0")
+script = ExtResource("1_xa025")
 
 [node name="Board" type="Board" parent="."]
 
-[node name="HexTile" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile" parent="Board" instance=ExtResource("2_36rkl")]
 r = -2
 number = 6
 position = Vector2(171.20001, 107.20002)
 
-[node name="HexTile2" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile2" parent="Board" instance=ExtResource("2_36rkl")]
 q = 1
 r = -2
 tile_type = 2
 number = 3
 position = Vector2(265.20004, 107.200005)
-texture = ExtResource("2_sugp2")
+texture = ExtResource("3_fs0b5")
 
-[node name="HexTile3" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile3" parent="Board" instance=ExtResource("2_36rkl")]
 q = 2
 r = -2
 tile_type = 2
 number = 8
 position = Vector2(359.2, 107.200005)
-texture = ExtResource("2_sugp2")
+texture = ExtResource("3_fs0b5")
 
-[node name="HexTile4" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile4" parent="Board" instance=ExtResource("2_36rkl")]
 q = -1
 r = -1
 tile_type = 3
 position = Vector2(124.20003, 188.20003)
-texture = ExtResource("3_jyhfs")
+texture = ExtResource("4_ma7h6")
 
-[node name="HexTile5" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile5" parent="Board" instance=ExtResource("2_36rkl")]
 r = -1
 tile_type = 4
 number = 4
 position = Vector2(218.20001, 188.20003)
-texture = ExtResource("4_tefeu")
+texture = ExtResource("5_e2s0e")
 
-[node name="HexTile6" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile6" parent="Board" instance=ExtResource("2_36rkl")]
 q = 1
 r = -1
 tile_type = 3
 number = 5
 position = Vector2(312.2, 188.20001)
-texture = ExtResource("3_jyhfs")
+texture = ExtResource("4_ma7h6")
 
-[node name="HexTile7" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile7" parent="Board" instance=ExtResource("2_36rkl")]
 q = 2
 r = -1
 number = 10
 position = Vector2(406.20004, 188.19998)
 
-[node name="HexTile8" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile8" parent="Board" instance=ExtResource("2_36rkl")]
 q = -2
 number = 5
 position = Vector2(77.20001, 269.2)
 
-[node name="HexTile9" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile9" parent="Board" instance=ExtResource("2_36rkl")]
 q = -1
 tile_type = 1
 number = 9
 position = Vector2(171.20003, 269.2)
-texture = ExtResource("5_o6xl0")
+texture = ExtResource("6_gsxep")
 
-[node name="HexTile10" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile10" parent="Board" instance=ExtResource("2_36rkl")]
 tile_type = 5
 number = 0
 position = Vector2(265.2, 269.2)
-texture = ExtResource("6_tipki")
+texture = ExtResource("7_v0vrg")
 
-[node name="HexTile11" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile11" parent="Board" instance=ExtResource("2_36rkl")]
 q = 1
 tile_type = 4
 number = 6
 position = Vector2(359.2, 269.2)
-texture = ExtResource("4_tefeu")
+texture = ExtResource("5_e2s0e")
 
-[node name="HexTile12" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile12" parent="Board" instance=ExtResource("2_36rkl")]
 q = 2
 tile_type = 3
 number = 9
 position = Vector2(453.2, 269.2)
-texture = ExtResource("3_jyhfs")
+texture = ExtResource("4_ma7h6")
 
-[node name="HexTile13" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile13" parent="Board" instance=ExtResource("2_36rkl")]
 q = -2
 r = 1
 tile_type = 3
 number = 10
 position = Vector2(124.20001, 350.2)
-texture = ExtResource("3_jyhfs")
+texture = ExtResource("4_ma7h6")
 
-[node name="HexTile14" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile14" parent="Board" instance=ExtResource("2_36rkl")]
 q = -1
 r = 1
 tile_type = 4
 number = 11
 position = Vector2(218.20001, 350.2)
-texture = ExtResource("4_tefeu")
+texture = ExtResource("5_e2s0e")
 
-[node name="HexTile15" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile15" parent="Board" instance=ExtResource("2_36rkl")]
 r = 1
 number = 3
 position = Vector2(312.2, 350.2)
 
-[node name="HexTile16" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile16" parent="Board" instance=ExtResource("2_36rkl")]
 q = 1
 r = 1
 tile_type = 2
 number = 12
 position = Vector2(406.2, 350.2)
-texture = ExtResource("2_sugp2")
+texture = ExtResource("3_fs0b5")
 
-[node name="HexTile17" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile17" parent="Board" instance=ExtResource("2_36rkl")]
 q = -2
 r = 2
 tile_type = 1
 number = 8
 position = Vector2(171.20001, 431.2)
-texture = ExtResource("5_o6xl0")
+texture = ExtResource("6_gsxep")
 
-[node name="HexTile18" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile18" parent="Board" instance=ExtResource("2_36rkl")]
 q = -1
 r = 2
 tile_type = 2
 number = 4
 position = Vector2(265.2, 431.2)
-texture = ExtResource("2_sugp2")
+texture = ExtResource("3_fs0b5")
 
-[node name="HexTile19" parent="Board" instance=ExtResource("1_o5qli")]
+[node name="HexTile19" parent="Board" instance=ExtResource("2_36rkl")]
 r = 2
 tile_type = 1
 number = 11
 position = Vector2(359.2, 431.2)
-texture = ExtResource("5_o6xl0")
+texture = ExtResource("6_gsxep")
 
 [node name="Ports" type="Node" parent="."]
 
 [node name="Wood" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/Wood" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/Wood" instance=ExtResource("8_dg70y")]
 position = Vector2(76.999985, 389)
 rotation = 1.5707964
 scale = Vector2(0.08, 0.19)
 port_type = "wood"
 
-[node name="Port2" parent="Ports/Wood" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/Wood" instance=ExtResource("8_dg70y")]
 position = Vector2(111.00001, 413.00006)
 rotation = -0.6370452
 scale = Vector2(0.08, 0.19)
@@ -194,17 +194,17 @@ port_type = "wood"
 [node name="WoodTrade" type="Sprite2D" parent="Ports/Wood"]
 position = Vector2(78, 426)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("9_0ld40")
+texture = ExtResource("9_pnhog")
 
 [node name="Brick" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/Brick" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/Brick" instance=ExtResource("8_dg70y")]
 position = Vector2(218.00002, 471.00006)
 rotation = 1.5707964
 scale = Vector2(0.1, 0.19)
 port_type = "brick"
 
-[node name="Port2" parent="Ports/Brick" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/Brick" instance=ExtResource("8_dg70y")]
 position = Vector2(254.99997, 493.00003)
 rotation = -0.6370452
 scale = Vector2(0.08, 0.19)
@@ -213,16 +213,16 @@ port_type = "brick"
 [node name="BrickTrade" type="Sprite2D" parent="Ports/Brick"]
 position = Vector2(224, 503.99997)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("10_gqmmt")
+texture = ExtResource("10_2c4at")
 
 [node name="3_1" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(406.99994, 471.99997)
 rotation = 1.5707964
 scale = Vector2(0.1, 0.19)
 
-[node name="Port2" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(370.99985, 493.99994)
 rotation = 0.6370452
 scale = Vector2(0.08, 0.19)
@@ -234,12 +234,12 @@ offset_right = 414.0
 offset_bottom = 511.0
 text = "3:1"
 
-[node name="Port3" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port3" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(464, 370.99997)
 rotation = -0.6370452
 scale = Vector2(0.08, 0.19)
 
-[node name="Port4" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port4" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(464, 330)
 rotation = 0.6370452
 scale = Vector2(0.08, 0.19)
@@ -251,12 +251,12 @@ offset_right = 498.0
 offset_bottom = 361.0
 text = "3:1"
 
-[node name="Port5" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port5" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(406.00012, 65.99998)
 rotation = 1.5707964
 scale = Vector2(0.1, 0.19)
 
-[node name="Port6" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port6" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(371, 47.00002)
 rotation = -0.5235988
 scale = Vector2(0.08, 0.19)
@@ -268,12 +268,12 @@ offset_right = 412.0
 offset_bottom = 51.0
 text = "3:1"
 
-[node name="Port7" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port7" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(18.999987, 289)
 rotation = 0.5235988
 scale = Vector2(0.08, 0.19)
 
-[node name="Port8" parent="Ports/3_1" instance=ExtResource("2_muem4")]
+[node name="Port8" parent="Ports/3_1" instance=ExtResource("8_dg70y")]
 position = Vector2(19, 251)
 rotation = -0.5235988
 scale = Vector2(0.08, 0.19)
@@ -287,13 +287,13 @@ text = "3:1"
 
 [node name="Sheep" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/Sheep" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/Sheep" instance=ExtResource("8_dg70y")]
 position = Vector2(113.000015, 128)
 rotation = 0.5235988
 scale = Vector2(0.08, 0.19)
 port_type = "sheep"
 
-[node name="Port2" parent="Ports/Sheep" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/Sheep" instance=ExtResource("8_dg70y")]
 position = Vector2(77.99999, 150)
 rotation = 1.5707964
 scale = Vector2(0.08, 0.19)
@@ -302,17 +302,17 @@ port_type = "sheep"
 [node name="SheepTrade" type="Sprite2D" parent="Ports/Sheep"]
 position = Vector2(86.00003, 121.000015)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("11_jscy8")
+texture = ExtResource("11_g6wdg")
 
 [node name="Ore" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/Ore" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/Ore" instance=ExtResource("8_dg70y")]
 position = Vector2(253, 46.999996)
 rotation = 0.5235988
 scale = Vector2(0.08, 0.19)
 port_type = "ore"
 
-[node name="Port2" parent="Ports/Ore" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/Ore" instance=ExtResource("8_dg70y")]
 position = Vector2(218, 69)
 rotation = 1.5707964
 scale = Vector2(0.08, 0.19)
@@ -321,17 +321,17 @@ port_type = "ore"
 [node name="OreTrade" type="Sprite2D" parent="Ports/Ore"]
 position = Vector2(224.00002, 41.000008)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("22_y6deb")
+texture = ExtResource("12_hq6as")
 
 [node name="Wheat" type="Node" parent="Ports"]
 
-[node name="Port" parent="Ports/Wheat" instance=ExtResource("2_muem4")]
+[node name="Port" parent="Ports/Wheat" instance=ExtResource("8_dg70y")]
 position = Vector2(463, 207.99997)
 rotation = -0.6370452
 scale = Vector2(0.08, 0.19)
 port_type = "wheat"
 
-[node name="Port2" parent="Ports/Wheat" instance=ExtResource("2_muem4")]
+[node name="Port2" parent="Ports/Wheat" instance=ExtResource("8_dg70y")]
 position = Vector2(463, 167)
 rotation = 0.6370452
 scale = Vector2(0.08, 0.19)
@@ -340,7 +340,7 @@ port_type = "wheat"
 [node name="WheatTrade" type="Sprite2D" parent="Ports/Wheat"]
 position = Vector2(488, 192)
 scale = Vector2(0.03, 0.03)
-texture = ExtResource("12_pm3ni")
+texture = ExtResource("13_kxyth")
 
 [node name="GameUI" type="CanvasLayer" parent="."]
 
@@ -361,7 +361,7 @@ offset_bottom = 645.0
 [node name="WoodCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
 tooltip_text = "木材：【道】や【家（開拓地）】を作るのに必要です。"
-texture = ExtResource("8_eb6dy")
+texture = ExtResource("14_cobve")
 expand_mode = 3
 
 [node name="CountLabel" type="Label" parent="GameUI/ResourceCards/WoodCard"]
@@ -377,7 +377,7 @@ label_settings = SubResource("LabelSettings_muem4")
 [node name="BrickCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
 tooltip_text = "レンガ（土）：【道】や【家（開拓地）】を作るのに必要です。"
-texture = ExtResource("9_trceg")
+texture = ExtResource("15_cmqll")
 expand_mode = 3
 
 [node name="CountLabel" type="Label" parent="GameUI/ResourceCards/BrickCard"]
@@ -393,7 +393,7 @@ label_settings = SubResource("LabelSettings_muem4")
 [node name="SheepCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
 tooltip_text = "羊毛：【家（開拓地）】を作ったり、【発展カード】を引くのに必要です。"
-texture = ExtResource("10_a8y0u")
+texture = ExtResource("16_8cp6k")
 expand_mode = 3
 
 [node name="CountLabel" type="Label" parent="GameUI/ResourceCards/SheepCard"]
@@ -409,7 +409,7 @@ label_settings = SubResource("LabelSettings_muem4")
 [node name="WheatCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
 tooltip_text = "小麦：【家（開拓地）】や【都市】を作ったり、【発展カード】を引くのに必要です。"
-texture = ExtResource("11_jkv2x")
+texture = ExtResource("17_8b871")
 expand_mode = 3
 
 [node name="CountLabel" type="Label" parent="GameUI/ResourceCards/WheatCard"]
@@ -425,7 +425,7 @@ label_settings = SubResource("LabelSettings_muem4")
 [node name="OreCard" type="TextureRect" parent="GameUI/ResourceCards"]
 layout_mode = 2
 tooltip_text = "鉱石（鉄）：家を【都市】にアップグレードしたり、【発展カード】を引くのに必要です。"
-texture = ExtResource("12_jbj1t")
+texture = ExtResource("18_pdwbg")
 expand_mode = 3
 
 [node name="CountLabel" type="Label" parent="GameUI/ResourceCards/OreCard"]
@@ -509,23 +509,23 @@ theme_override_font_sizes/font_size = 30
 text = "メッセージ"
 autowrap_mode = 2
 
-[node name="TradeUI" parent="GameUI" instance=ExtResource("13_trceg")]
+[node name="TradeUI" parent="GameUI" instance=ExtResource("19_5grtr")]
 visible = false
 
-[node name="DevCardUI" parent="GameUI" instance=ExtResource("14_a8y0u")]
+[node name="DevCardUI" parent="GameUI" instance=ExtResource("20_vua0o")]
 visible = false
 
-[node name="DiscardUI" parent="GameUI" instance=ExtResource("15_jkv2x")]
+[node name="DiscardUI" parent="GameUI" instance=ExtResource("21_t70y2")]
 visible = false
 
-[node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("16_jbj1t")]
+[node name="ResourceSelectUI" parent="GameUI" instance=ExtResource("22_8gny2")]
 visible = false
 
-[node name="PlayerTradeUI" parent="GameUI" instance=ExtResource("23_y6deb")]
+[node name="PlayerTradeUI" parent="GameUI" instance=ExtResource("23_s3wmy")]
 visible = false
 
-[node name="TradeAcceptUI" parent="GameUI" instance=ExtResource("24_og1vs")]
+[node name="TradeAcceptUI" parent="GameUI" instance=ExtResource("24_gdcyb")]
 visible = false
 
-[node name="TradeListUI" parent="GameUI" instance=ExtResource("25_og1vs")]
+[node name="TradeListUI" parent="GameUI" instance=ExtResource("25_oa6sj")]
 visible = false
