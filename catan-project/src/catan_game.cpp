@@ -490,7 +490,7 @@ void CatanGame::notify_dice_result(int roll_value)
 void CatanGame::start_game() {
     if (get_tree()->get_multiplayer()->is_server()) {
         // call_local を true に設定すると、サーバー自身もこのRPCを実行します
-        rpc("rpc_change_scene", "res://scenes/Main.tscn");
+        rpc("rpc_change_scene", "res:/scenes/Main.tscn");
     }
 }
 
