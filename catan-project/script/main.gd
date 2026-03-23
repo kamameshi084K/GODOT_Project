@@ -229,7 +229,16 @@ func _distribute_resources(roll: int):
 
 func _on_turn_changed(active_player_id: int, phase: int = 2):
 	is_my_turn = (active_player_id == multiplayer.get_unique_id())
-	
+	var active_name = "Player " + str(active_player_id)
+	if is_my_turn:
+		active_name = "あなた"
+	elif player_uis.has(active_player_id):
+		active_name = player_uis[active_player_id].name_label.text
+		
+	if phase == 0 or phase == 1:
+		show_info("【初期配置】 " + active_name + " のターンです！")
+	else:
+		show_info("🎲 " + active_name + " のターンです！")
 	if is_my_turn:
 		if phase == 0 or phase == 1:
 			open_trade_btn.disabled = true 
@@ -290,8 +299,16 @@ func _setup_robber():
 	robber_icon.name = "Robber"
 	for tile in board.get_children():
 		var res_type_int = tile.get("tile_type")
-		if res_type_int == 5:
+		if res_type_int == 5: # 5が砂漠タイル
 			tile.add_child(robber_icon)
+			
+			# ▼ 見た目の位置を綺麗に調整する
+			robber_icon.position = Vector2(-15, -15) 
+			
+			# ▼ サーバー(C++)に砂漠の座標を教えて、同じ場所に置けないようにする！
+			if multiplayer.is_server():
+				GameManager.set_initial_robber_pos(tile.position)
+				
 			break
 
 # ★追加：右側のリストを作成する処理

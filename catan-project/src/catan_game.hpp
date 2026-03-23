@@ -64,6 +64,8 @@ namespace godot
         Ref<ENetMultiplayerPeer> peer;
         GamePhase current_phase = PHASE_SETUP_1; // 現在のフェーズ
 
+        Vector2 robber_pos = Vector2(-9999, -9999);
+
         // 初期配置フェーズ中、そのターンに建てた数を記録する変数
         int setup_settlements_built_this_turn = 0;
         int setup_roads_built_this_turn = 0;
@@ -223,6 +225,7 @@ namespace godot
         
         void client_notify_largest_army(int player_id);
         void client_notify_longest_road(int player_id);
+        void set_initial_robber_pos(Vector2 pos);
     };
 
 } // namespace godot

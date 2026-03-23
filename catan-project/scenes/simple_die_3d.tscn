@@ -1,0 +1,120 @@
+[gd_scene load_steps=23 format=3 uid="uid://cynfwm7ny5k1"]
+
+[ext_resource type="Script" uid="uid://7f7l1g3twbqf" path="res://script/simple_die_3d.gd" id="1_0jd78"]
+[ext_resource type="Texture2D" uid="uid://7kavra4no1ko" path="res://assets/textures/dice1.png" id="2_0vgsw"]
+[ext_resource type="Texture2D" uid="uid://dlk3gv4cha0kp" path="res://assets/textures/dice6.png" id="3_px8n6"]
+[ext_resource type="Texture2D" uid="uid://catm6j00rchrk" path="res://assets/textures/dice2.png" id="4_u32wx"]
+[ext_resource type="Texture2D" uid="uid://bcp8cm21ma5b3" path="res://assets/textures/dice5.png" id="5_gwtsl"]
+[ext_resource type="Texture2D" uid="uid://dbhwnv2h5t5w3" path="res://assets/textures/dice3.png" id="6_oalev"]
+[ext_resource type="Texture2D" uid="uid://6vwmiv20pna3" path="res://assets/textures/dice4.png" id="7_kvuql"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qngjk"]
+albedo_texture = ExtResource("2_0vgsw")
+
+[sub_resource type="QuadMesh" id="QuadMesh_vy5wf"]
+material = SubResource("StandardMaterial3D_qngjk")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xen80"]
+albedo_texture = ExtResource("3_px8n6")
+
+[sub_resource type="QuadMesh" id="QuadMesh_tmkux"]
+material = SubResource("StandardMaterial3D_xen80")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rfywd"]
+albedo_texture = ExtResource("4_u32wx")
+
+[sub_resource type="QuadMesh" id="QuadMesh_p5xjn"]
+material = SubResource("StandardMaterial3D_rfywd")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_11p7r"]
+albedo_texture = ExtResource("5_gwtsl")
+
+[sub_resource type="QuadMesh" id="QuadMesh_8rfyy"]
+material = SubResource("StandardMaterial3D_11p7r")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v61y3"]
+albedo_texture = ExtResource("6_oalev")
+
+[sub_resource type="QuadMesh" id="QuadMesh_x4qdi"]
+material = SubResource("StandardMaterial3D_v61y3")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l5byh"]
+albedo_texture = ExtResource("7_kvuql")
+
+[sub_resource type="QuadMesh" id="QuadMesh_1jvt5"]
+material = SubResource("StandardMaterial3D_l5byh")
+
+[sub_resource type="Animation" id="Animation_gqyfe"]
+resource_name = "roll"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(12.566371, 6.2831855, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_p3qly"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5vxwo"]
+_data = {
+&"RESET": SubResource("Animation_p3qly"),
+&"roll": SubResource("Animation_gqyfe")
+}
+
+[node name="SimpleDie3D" type="Node3D"]
+script = ExtResource("1_0jd78")
+
+[node name="Face1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5)
+mesh = SubResource("QuadMesh_vy5wf")
+metadata/_edit_group_ = true
+
+[node name="Face6" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.5)
+mesh = SubResource("QuadMesh_tmkux")
+metadata/_edit_group_ = true
+
+[node name="Face2" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.5, 0, 0)
+mesh = SubResource("QuadMesh_p5xjn")
+metadata/_edit_group_ = true
+
+[node name="Face5" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -0.5, 0, 0)
+mesh = SubResource("QuadMesh_8rfyy")
+metadata/_edit_group_ = true
+
+[node name="Face3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.5, 0)
+mesh = SubResource("QuadMesh_x4qdi")
+metadata/_edit_group_ = true
+
+[node name="Face4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, -0.5, 0)
+mesh = SubResource("QuadMesh_1jvt5")
+metadata/_edit_group_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_5vxwo")
+}

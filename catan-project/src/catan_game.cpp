@@ -169,6 +169,8 @@ void CatanGame::_bind_methods()
     ClassDB::bind_method(D_METHOD("client_notify_longest_road", "player_id"), &CatanGame::client_notify_longest_road);
     ADD_SIGNAL(MethodInfo("largest_army_changed", PropertyInfo(Variant::INT, "player_id")));
     ADD_SIGNAL(MethodInfo("longest_road_changed", PropertyInfo(Variant::INT, "player_id")));
+
+    ClassDB::bind_method(D_METHOD("set_initial_robber_pos", "pos"), &CatanGame::set_initial_robber_pos);
 }
 
 CatanGame::CatanGame()
@@ -697,6 +699,11 @@ void CatanGame::distribute_resources_for_hex(Vector2 hex_center, float hex_radiu
     // 砂漠などは資源を配らないので無視
     if (resource_type == "desert" || resource_type == "none" || resource_type == "") return;
 
+    if (hex_center.distance_to(robber_pos) < 5.0f) {
+        UtilityFunctions::print("Server: 盗賊がいるため ", resource_type, " は産出されません！");
+        return;
+    }
+
     // すべての交差点を1つずつ確認する
     for (const auto& pair : board_vertices) {
         // もしそこに誰かの家が建っていたら
@@ -796,7 +803,12 @@ void CatanGame::server_process_move_robber(Vector2 pos) {
     if (!get_tree()->get_multiplayer()->is_server()) return;
     int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     if (sender_id == 0) sender_id = 1;
-
+    if (pos.distance_to(robber_pos) < 5.0f) {
+        UtilityFunctions::print("Server: 同じ場所には盗賊を置けません！");
+        return; 
+    }
+    // 盗賊の現在地を新しい場所に更新
+    robber_pos = pos;
     Array victims;
     float hex_radius = 54.0f;
     for (const auto& pair : board_vertices) {
@@ -1548,4 +1560,11 @@ void CatanGame::client_notify_largest_army(int player_id) {
 
 void CatanGame::client_notify_longest_road(int player_id) {
     emit_signal("longest_road_changed", player_id);
+}
+
+// 盗賊の初期位置（砂漠）をサーバーに記憶させる
+void CatanGame::set_initial_robber_pos(Vector2 pos) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    robber_pos = pos;
+    UtilityFunctions::print("Server: 盗賊の初期位置を砂漠に設定しました ", pos);
 }
