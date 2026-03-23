@@ -24,11 +24,11 @@ namespace godot
     };
 
     struct PlayerData {
-        int wood = 10;
-        int brick = 10;
-        int sheep = 10;
-        int wheat = 10;
-        int ore = 10;
+        int wood = 0;
+        int brick = 0;
+        int sheep = 0;
+        int wheat = 0;
+        int ore = 0;
         
         int turn_index = 0;
         int dev_cards = 0; // 全員に見える「合計枚数」用
