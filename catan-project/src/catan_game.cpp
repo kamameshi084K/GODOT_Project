@@ -15,10 +15,10 @@ void CatanGame::_bind_methods()
     ClassDB::bind_method(D_METHOD("join_game", "address", "port"), &CatanGame::join_game, DEFVAL("127.0.0.1"), DEFVAL(53000));
     
     ClassDB::bind_method(D_METHOD("request_roll_dice"), &CatanGame::request_roll_dice);
-    ClassDB::bind_method(D_METHOD("notify_dice_result", "roll_value"), &CatanGame::notify_dice_result);
+    ClassDB::bind_method(D_METHOD("notify_dice_result", "dice1", "dice2"), &CatanGame::notify_dice_result);
     ClassDB::bind_method(D_METHOD("start_game"), &CatanGame::start_game);
     ClassDB::bind_method(D_METHOD("rpc_change_scene", "scene_path"), &CatanGame::rpc_change_scene);
-    ADD_SIGNAL(MethodInfo("dice_rolled", PropertyInfo(Variant::INT, "roll_value")));
+    ADD_SIGNAL(MethodInfo("dice_rolled", PropertyInfo(Variant::INT, "dice1"), PropertyInfo(Variant::INT, "dice2")));
 
     ClassDB::bind_method(D_METHOD("request_build_settlement", "vertex_name"), &CatanGame::request_build_settlement);
     ClassDB::bind_method(D_METHOD("server_process_build", "vertex_name"), &CatanGame::server_process_build);
@@ -171,6 +171,18 @@ void CatanGame::_bind_methods()
     ADD_SIGNAL(MethodInfo("longest_road_changed", PropertyInfo(Variant::INT, "player_id")));
 
     ClassDB::bind_method(D_METHOD("set_initial_robber_pos", "pos"), &CatanGame::set_initial_robber_pos);
+
+    ClassDB::bind_method(D_METHOD("_on_peer_disconnected", "id"), &CatanGame::_on_peer_disconnected);
+    ClassDB::bind_method(D_METHOD("_on_peer_connected", "id"), &CatanGame::_on_peer_connected);
+    ClassDB::bind_method(D_METHOD("client_notify_disconnect", "player_name"), &CatanGame::client_notify_disconnect);
+    ADD_SIGNAL(MethodInfo("player_disconnected", PropertyInfo(Variant::STRING, "player_name")));
+
+    ClassDB::bind_method(D_METHOD("request_reconnect", "old_name"), &CatanGame::request_reconnect);
+    ClassDB::bind_method(D_METHOD("server_process_reconnect", "old_name"), &CatanGame::server_process_reconnect);
+    ClassDB::bind_method(D_METHOD("client_sync_reconnect", "old_id", "new_id", "p_name"), &CatanGame::client_sync_reconnect);
+    ClassDB::bind_method(D_METHOD("client_receive_full_state", "state"), &CatanGame::client_receive_full_state);
+    ADD_SIGNAL(MethodInfo("player_reconnected", PropertyInfo(Variant::INT, "old_id"), PropertyInfo(Variant::INT, "new_id"), PropertyInfo(Variant::STRING, "p_name")));
+    ADD_SIGNAL(MethodInfo("full_state_received", PropertyInfo(Variant::DICTIONARY, "state")));
 }
 
 CatanGame::CatanGame()
@@ -428,6 +440,28 @@ CatanGame::CatanGame()
     sync_title["channel"] = 0;
     rpc_config("client_notify_largest_army", sync_title);
     rpc_config("client_notify_longest_road", sync_title);
+
+    Dictionary disc_conf;
+    disc_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    disc_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    disc_conf["call_local"] = true;
+    disc_conf["channel"] = 0;
+    rpc_config("client_notify_disconnect", disc_conf);
+
+    Dictionary rec_conf;
+    rec_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_ANY_PEER;
+    rec_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    rec_conf["call_local"] = true;
+    rec_conf["channel"] = 0;
+    rpc_config("server_process_reconnect", rec_conf);
+
+    Dictionary sync_rec_conf;
+    sync_rec_conf["rpc_mode"] = MultiplayerAPI::RPC_MODE_AUTHORITY;
+    sync_rec_conf["transfer_mode"] = MultiplayerPeer::TRANSFER_MODE_RELIABLE;
+    sync_rec_conf["call_local"] = true;
+    sync_rec_conf["channel"] = 0;
+    rpc_config("client_sync_reconnect", sync_rec_conf);
+    rpc_config("client_receive_full_state", sync_rec_conf);
 }
 
 CatanGame::~CatanGame()
@@ -438,6 +472,11 @@ void CatanGame::host_game(int port)
 {
     peer->create_server(port);
     get_tree()->get_multiplayer()->set_multiplayer_peer(peer);
+
+    // ▼ 追加：サーバーが接続と切断を監視する！
+    get_tree()->get_multiplayer()->connect("peer_disconnected", Callable(this, "_on_peer_disconnected"));
+    get_tree()->get_multiplayer()->connect("peer_connected", Callable(this, "_on_peer_connected"));
+
     UtilityFunctions::print("Server started on port ", port);
 }
 
@@ -475,7 +514,7 @@ void CatanGame::request_roll_dice() {
     int dice2 = distrib(gen);
     int dice_roll = dice1 + dice2;
 
-    rpc("notify_dice_result", dice_roll);
+    rpc("notify_dice_result", dice1, dice2);
 
     // ★追加: 7が出たらバースト処理をキックする！
     if (dice_roll == 7) {
@@ -483,10 +522,10 @@ void CatanGame::request_roll_dice() {
     }
 }
 
-void CatanGame::notify_dice_result(int roll_value)
+void CatanGame::notify_dice_result(int dice1, int dice2)
 {
-    UtilityFunctions::print("Client: Dice rolled! Result: ", roll_value);
-    emit_signal("dice_rolled", roll_value);
+    UtilityFunctions::print("Client: Dice rolled! Result: ", dice1, " and ", dice2);
+    emit_signal("dice_rolled", dice1, dice2);
 }
 
 void CatanGame::start_game() {
@@ -777,16 +816,18 @@ void CatanGame::server_process_end_turn() {
     int sender_id = get_tree()->get_multiplayer()->get_remote_sender_id();
     if (sender_id == 0) sender_id = 1;
 
-    // もし自分のターンじゃないのに「終了」しようとしたら弾く（チート対策）
     if (player_order.size() > 0 && sender_id != player_order[current_turn_index]) {
         UtilityFunctions::print("Server: あなたのターンではありません！");
         return;
     }
 
-    // 次の人のインデックスへ（最後まで行ったら0に戻る）
-    current_turn_index = (current_turn_index + 1) % player_order.size();
+    // ▼▼▼ 変更：切断されていない「次の人」が見つかるまでスキップし続ける！ ▼▼▼
+    int start_index = current_turn_index;
+    do {
+        current_turn_index = (current_turn_index + 1) % player_order.size();
+    } while (!players[player_order[current_turn_index]].is_connected && current_turn_index != start_index);
+
     has_rolled_dice_this_turn = false;
-    // 全員に「次の人のターンになったよ」と通知！
     rpc("client_sync_turn", player_order[current_turn_index], current_phase);
 }
 
@@ -1568,3 +1609,130 @@ void CatanGame::set_initial_robber_pos(Vector2 pos) {
     robber_pos = pos;
     UtilityFunctions::print("Server: 盗賊の初期位置を砂漠に設定しました ", pos);
 }
+
+// 誰かが切断された時にGodotエンジンから自動で呼ばれる
+void CatanGame::_on_peer_disconnected(int id) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    
+    if (players.count(id) > 0) {
+        // 1. 接続状態を「切断(false)」にする（データは残る！）
+        players[id].is_connected = false;
+        
+        // 2. 全員に「〇〇が切断した」と通知
+        String d_name = players[id].player_name;
+        rpc("client_notify_disconnect", d_name);
+
+        // 3. もし切断したのが「今のターンの人」なら、強制的にターンを飛ばす！
+        if (player_order.size() > 0 && player_order[current_turn_index] == id) {
+            int start_index = current_turn_index;
+            do {
+                current_turn_index = (current_turn_index + 1) % player_order.size();
+            } while (!players[player_order[current_turn_index]].is_connected && current_turn_index != start_index);
+
+            has_rolled_dice_this_turn = false;
+            rpc("client_sync_turn", player_order[current_turn_index], current_phase);
+        }
+    }
+}
+
+void CatanGame::_on_peer_connected(int id) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    // ※再接続時の復旧処理はフェーズ2でここに書きます！
+}
+
+void CatanGame::client_notify_disconnect(const String& player_name) {
+    emit_signal("player_disconnected", player_name);
+}
+
+void CatanGame::request_reconnect(const String& old_name) {
+    rpc_id(1, "server_process_reconnect", old_name);
+}
+
+void CatanGame::server_process_reconnect(const String& old_name) {
+    if (!get_tree()->get_multiplayer()->is_server()) return;
+    int new_id = get_tree()->get_multiplayer()->get_remote_sender_id();
+    if (new_id == 0) new_id = 1;
+
+    // 1. 切断中のプレイヤーから、名前が一致する人を探す
+    int old_id = 0;
+    for (auto& pair : players) {
+        if (pair.second.player_name == old_name && !pair.second.is_connected) {
+            old_id = pair.first;
+            break;
+        }
+    }
+
+    if (old_id == 0) {
+        UtilityFunctions::print("Server: 復帰対象が見つかりません。名前: ", old_name);
+        return;
+    }
+
+    UtilityFunctions::print("Server: Player Reconnecting... Old ID: ", old_id, " -> New ID: ", new_id);
+
+    // 2. プレイヤーデータのお引越し
+    PlayerData p_data = players[old_id];
+    p_data.is_connected = true;
+    players[new_id] = p_data;
+    players.erase(old_id);
+
+    // 3. ターン順番リストのID書き換え
+    for (int i = 0; i < player_order.size(); i++) {
+        if (player_order[i] == old_id) { player_order[i] = new_id; break; }
+    }
+
+    // 4. 盤面の所有権（家、道）のID書き換え
+    for (auto& pair : board_vertices) { if (pair.second.owner_id == old_id) pair.second.owner_id = new_id; }
+    for (auto& pair : board_edges) { if (pair.second.owner_id == old_id) pair.second.owner_id = new_id; }
+
+    // 5. 称号のID書き換え
+    if (largest_army_player == old_id) largest_army_player = new_id;
+    if (longest_road_player == old_id) longest_road_player = new_id;
+    if (trade_proposer_id == old_id) trade_proposer_id = new_id;
+
+    // 6. 復帰した人に「現在の盤面状態」を全てまとめた辞書(Dictionary)を送る！
+    Dictionary state;
+    state["current_phase"] = current_phase;
+    state["robber_pos"] = robber_pos;
+    
+    Array v_arr;
+    for (auto& pair : board_vertices) {
+        if (pair.second.owner_id != 0) {
+            Dictionary v; v["name"] = pair.first; v["owner"] = pair.second.owner_id; v["type"] = pair.second.building_type;
+            v_arr.push_back(v);
+        }
+    }
+    state["vertices"] = v_arr;
+
+    Array e_arr;
+    for (auto& pair : board_edges) {
+        if (pair.second.owner_id != 0) {
+            Dictionary e; e["name"] = pair.first; e["owner"] = pair.second.owner_id;
+            e_arr.push_back(e);
+        }
+    }
+    state["edges"] = e_arr;
+
+    rpc_id(new_id, "client_receive_full_state", state);
+
+    // 7. 全員に「IDが変わって復帰したよ」と教える
+    rpc("client_sync_reconnect", old_id, new_id, old_name);
+
+    // 8. 最新のプレイヤーリストとターンを再送信
+    Array player_info_list;
+    for (int i = 0; i < player_order.size(); i++) {
+        int pid = player_order[i];
+        Dictionary info; info["id"] = pid; info["turn_index"] = players[pid].turn_index; info["name"] = players[pid].player_name;
+        info["vp"] = 0; info["hand_count"] = players[pid].wood + players[pid].brick + players[pid].sheep + players[pid].wheat + players[pid].ore;
+        info["dev_cards"] = players[pid].dev_cards;
+        player_info_list.push_back(info);
+    }
+    rpc("client_sync_player_list", player_info_list);
+    
+    // リソースと手札を復旧
+    rpc("client_sync_resources", new_id, p_data.wood, p_data.brick, p_data.sheep, p_data.wheat, p_data.ore);
+    rpc_id(new_id, "client_sync_private_dev_cards", p_data.dev_knight, p_data.dev_vp, p_data.dev_road, p_data.dev_plenty, p_data.dev_mono);
+    rpc("client_sync_turn", player_order[current_turn_index], current_phase);
+}
+
+void CatanGame::client_sync_reconnect(int old_id, int new_id, const String& p_name) { emit_signal("player_reconnected", old_id, new_id, p_name); }
+void CatanGame::client_receive_full_state(Dictionary state) { emit_signal("full_state_received", state); }

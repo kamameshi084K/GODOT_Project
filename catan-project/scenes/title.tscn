@@ -61,3 +61,7 @@ text = "Start Game"
 [node name="NameInput" type="LineEdit" parent="VBoxContainer"]
 layout_mode = 2
 text = "名前を入力"
+
+[node name="ReconnectButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "再接続"

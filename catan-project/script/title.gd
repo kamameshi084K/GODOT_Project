@@ -19,6 +19,8 @@ func _ready():
 	
 	# ★変更：クライアントが接続成功した時に、名前を送信する関数を呼ぶ
 	multiplayer.connected_to_server.connect(_on_connected_ok)
+	
+	$VBoxContainer/ReconnectButton.pressed.connect(_on_reconnect_button_pressed)
 
 func _on_host_pressed():
 	GameManager.host_game()
@@ -63,3 +65,26 @@ func _update_status(_id):
 	
 	if multiplayer.is_server() and count >= 2:
 		start_btn.disabled = false
+
+func _on_reconnect_button_pressed():
+	var player_name = name_input.text
+	var ip = ip_input.text
+	
+	if ip == "":
+		ip = "127.0.0.1"
+		
+	if player_name == "":
+		print("名前を入力してください！")
+		return
+		
+	# 1. サーバーに接続する
+	GameManager.join_game(ip, 53000)
+	
+	# 2. 通信が安定するまで待つ
+	await get_tree().create_timer(1.0).timeout 
+	
+	# ▼▼▼ 修正：ずっと消えない GameManager に名前を「メモ」しておく！ ▼▼▼
+	GameManager.set_meta("reconnect_name", player_name)
+	
+	# 3. メイン画面へ移動（※これ以降のコードは書かない）
+	get_tree().change_scene_to_file("res://scenes/main.tscn")

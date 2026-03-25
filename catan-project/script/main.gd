@@ -21,6 +21,7 @@ extends Node2D
 @onready var open_player_trade_btn = $GameUI/OpenPlayerTradeButton
 @onready var player_trade_ui = $GameUI/PlayerTradeUI
 @onready var trade_accept_ui = $GameUI/TradeAcceptUI
+@onready var dice_viewport = $GameUI/DiceViewport
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -54,6 +55,7 @@ func _ready():
 	roll_btn.modulate = Color.DIM_GRAY
 	turn_end_btn.modulate = Color.DIM_GRAY
 	roll_btn.hide()
+	dice_viewport.hide()
 	
 	if not multiplayer.is_server():
 		roll_btn.disabled = true
@@ -77,6 +79,9 @@ func _ready():
 	GameManager.trade_completed.connect(_on_trade_completed)
 	GameManager.largest_army_changed.connect(_on_largest_army_changed)
 	GameManager.longest_road_changed.connect(_on_longest_road_changed)
+	GameManager.player_disconnected.connect(_on_player_disconnected)
+	GameManager.player_reconnected.connect(_on_player_reconnected)
+	GameManager.full_state_received.connect(_on_full_state_received)
 	
 	open_player_trade_btn.pressed.connect(func(): player_trade_ui.show())
 	open_player_trade_btn.disabled = true
@@ -112,25 +117,54 @@ func _ready():
 	)
 	
 	show_info("カタンへようこそ！あなたのターンを待っています...")
+	
+	if GameManager.has_meta("reconnect_name"):
+		var r_name = GameManager.get_meta("reconnect_name")
+		GameManager.remove_meta("reconnect_name") # 読み取ったらメモを消す
+		_request_reconnect_delayed(r_name)
 
 func _on_roll_pressed():
-	GameManager.rpc_id(1, "request_roll_dice")
 	roll_btn.disabled = true
-	roll_btn.hide()
+	# アニメーションの処理は消して、サーバーにお願いするだけ！
+	GameManager.rpc_id(1, "request_roll_dice")
 
-func _on_dice_rolled(roll_value: int):
+func _on_dice_rolled(d1: int, d2: int):
+	# 合計値はここで計算する
+	var roll_value = d1 + d2
+	
+	if dice_viewport:
+		dice_viewport.show()
+		var die1 = dice_viewport.get_node("SubViewport/Die1")
+		var die2 = dice_viewport.get_node("SubViewport/Die2")
+		die1.start_roll()
+		die2.start_roll()
+		dice_label.text = "🎲 振っています..."
+		
+	await get_tree().create_timer(1.0).timeout
+	
+	if dice_viewport:
+		var die1 = dice_viewport.get_node("SubViewport/Die1")
+		var die2 = dice_viewport.get_node("SubViewport/Die2")
+		
+		# ▼▼▼ 修正：ランダム分割処理を消して、サーバーから来た数字をそのまま使う！ ▼▼▼
+		die1.stop_roll_to_value(d1, 0.5)
+		die2.stop_roll_to_value(d2, 0.5)
+		
+		await get_tree().create_timer(2.0).timeout
+		dice_viewport.hide()
+	
+	# ▼ これ以降は既存の処理（資源を配るなど） ▼
 	dice_label.text = "出目: " + str(roll_value)
 	if multiplayer.is_server():
 		_distribute_resources(roll_value)
-	await get_tree().create_timer(1.0).timeout
 	
 	if is_my_turn:
+		roll_btn.hide() # ここでボタンを完全に隠す
 		open_trade_btn.disabled = false
 		open_dev_btn.disabled = false
 		open_player_trade_btn.disabled = false
 		if roll_value == 7:
 			show_info("★7が出ました！全員のバースト処理を待っています...")
-			# まだターン終了させない
 			turn_end_btn.disabled = true
 			turn_end_btn.modulate = Color.DIM_GRAY
 		else:
@@ -488,3 +522,46 @@ func _on_longest_road_changed(player_id: int):
 		
 	# 保持者の記録を更新
 	current_longest_road_player = player_id
+
+func _on_player_disconnected(player_name: String):
+	# 画面を止めず、メッセージだけで「スキップしたこと」を伝える
+	show_info("⚠️ 通信エラー: " + player_name + " が切断されました。復帰するまでターンをスキップします。")
+
+func _on_player_reconnected(old_id: int, new_id: int, p_name: String):
+	show_info("✅ " + p_name + " が再接続しました！ (ID: " + str(old_id) + " -> " + str(new_id) + ")")
+
+# サーバーから送られてきた「過去の盤面」を一瞬で復元する処理
+func _on_full_state_received(state: Dictionary):
+	show_info("🔄 最新の盤面データを復元しています...")
+	
+	# 1. 家と都市の復元
+	var vertices = state["vertices"]
+	for v in vertices:
+		var v_node = $Intersections.get_node_or_null(v["name"])
+		if v_node:
+			v_node.update_building(v["owner"], v["type"])
+			
+	# 2. 道の復元
+	var edges = state["edges"]
+	for e in edges:
+		var e_node = $Edges.get_node_or_null(e["name"])
+		if e_node:
+			e_node.build_road(e["owner"])
+			
+	# 3. 盗賊の復元
+	var r_pos = state["robber_pos"]
+	if r_pos != Vector2(-9999, -9999): # 初期位置じゃなければ
+		if robber_icon.get_parent() != null:
+			robber_icon.get_parent().remove_child(robber_icon)
+		for tile in board.get_children():
+			if tile.position.distance_to(r_pos) < 1.0:
+				tile.add_child(robber_icon)
+				robber_icon.position = Vector2(-15, -15)
+				break
+				
+func _request_reconnect_delayed(r_name: String):
+	# 盤面（家や道）の受け入れ準備が完全に終わるまで0.5秒だけ待つ
+	await get_tree().create_timer(0.5).timeout
+	
+	# ▼▼▼ 修正：rpc_idを消して、直接関数を呼ぶ！ ▼▼▼
+	GameManager.request_reconnect(r_name)

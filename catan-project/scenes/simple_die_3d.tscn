@@ -44,6 +44,21 @@ albedo_texture = ExtResource("7_kvuql")
 [sub_resource type="QuadMesh" id="QuadMesh_1jvt5"]
 material = SubResource("StandardMaterial3D_l5byh")
 
+[sub_resource type="Animation" id="Animation_p3qly"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+
 [sub_resource type="Animation" id="Animation_gqyfe"]
 resource_name = "roll"
 loop_mode = 1
@@ -60,21 +75,6 @@ tracks/0/keys = {
 "values": [Vector3(0, 0, 0), Vector3(12.566371, 6.2831855, 0)]
 }
 
-[sub_resource type="Animation" id="Animation_p3qly"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:rotation")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(0, 0, 0)]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_5vxwo"]
 _data = {
 &"RESET": SubResource("Animation_p3qly"),
@@ -82,6 +82,7 @@ _data = {
 }
 
 [node name="SimpleDie3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 0.9999999, 0, 0, 0, 1.0000001, 0, 0, 0)
 script = ExtResource("1_0jd78")
 
 [node name="Face1" type="MeshInstance3D" parent="."]

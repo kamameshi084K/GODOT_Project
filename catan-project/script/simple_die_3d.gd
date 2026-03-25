@@ -4,12 +4,12 @@ extends Node3D
 
 # 各面が上(Y+)を向くための回転角(Euler度数)
 const FACE_ROTATIONS = {
-	1: Vector3(-90, 0, 0),    # Face1(Z+) を上へ
-	2: Vector3(90, 0, 0),     # Face2(Z-) を上へ
-	3: Vector3(0, 0, 90),     # Face3(X+) を上へ
-	4: Vector3(0, 0, -90),    # Face4(X-) を上へ
-	5: Vector3(0, 0, 0),      # Face5(Y+) はそのまま
-	6: Vector3(180, 0, 0)     # Face6(Y-) を180度回す
+	1: Vector3(-90, 0, 0),    # 1(手前) を 上に向ける
+	2: Vector3(0, 0, 90),     # 2(右) を 上に向ける
+	3: Vector3(0, 0, 0),      # 3(上) は 最初から上なのでそのまま
+	4: Vector3(-180, 0, 0),    # 4(下) を 上に向ける
+	5: Vector3(0, -90, -90),     # 5(奥) を 上に向ける
+	6: Vector3(90, 0, 0)     # 6(左) を 上に向ける
 }
 
 func _ready():

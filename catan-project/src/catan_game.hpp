@@ -42,6 +42,7 @@ namespace godot
         int free_roads_available = 0;
         int knights_played = 0;
         String player_name = "Unknown";
+        bool is_connected = true;
     };
 
     // ゲームの進行フェーズを表す列挙型（enum）を定義
@@ -111,9 +112,10 @@ namespace godot
 
         /**
          * @brief [RPC] サーバーから全クライアントへダイスの結果を通知
-         * @param roll_value 決定されたダイスの合計値
+         * @param dice1 1つ目のダイスの値
+         * @param dice2 2つ目のダイスの値
          */
-        void notify_dice_result(int roll_value);
+        void notify_dice_result(int dice1, int dice2);
 
         void start_game();
 
@@ -226,6 +228,15 @@ namespace godot
         void client_notify_largest_army(int player_id);
         void client_notify_longest_road(int player_id);
         void set_initial_robber_pos(Vector2 pos);
+
+        void _on_peer_disconnected(int id);
+        void _on_peer_connected(int id);
+        void client_notify_disconnect(const String& player_name);
+
+        void request_reconnect(const String& old_name);
+        void server_process_reconnect(const String& old_name);
+        void client_sync_reconnect(int old_id, int new_id, const String& p_name);
+        void client_receive_full_state(Dictionary state);
     };
 
 } // namespace godot
