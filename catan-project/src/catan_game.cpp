@@ -558,21 +558,16 @@ void CatanGame::server_process_build(const String& vertex_name) {
         UtilityFunctions::print("Server: あなたのターンではないため建築できません！");
         return;
     }
-    // ★ 不正チェック2：サイコロを振る前に建てようとした
-    
 
     PlayerData& p = players[sender_id];
 
-    // ★変更: フェーズごとのチェック処理
+    // ★ 1. フェーズごとのコストの「事前チェック」（ここではまだ減らさない！）
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
-        // 初期配置フェーズの場合
         if (setup_settlements_built_this_turn >= 1) {
             UtilityFunctions::print("Server: 初期配置では家を1つしか建てられません！");
             return;
         }
-        // コストは消費しない（無料）
     } else {
-        // 通常ゲームの場合
         if (!has_rolled_dice_this_turn) {
             UtilityFunctions::print("Server: サイコロを振るまでは建築できません！");
             return;
@@ -581,36 +576,44 @@ void CatanGame::server_process_build(const String& vertex_name) {
             UtilityFunctions::print("Server: 資源が足りないため家を建てられません！");
             return;
         }
-        // コスト消費
-        p.wood -= 1; p.brick -= 1; p.sheep -= 1; p.wheat -= 1;
-        rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
     }
 
+    // ★ 2. 建築可能かどうかの「場所チェック」
     // すでに家がないかチェック
-    if (board_vertices[vertex_name].owner_id != 0) return; 
+    if (board_vertices[vertex_name].owner_id != 0) {
+        UtilityFunctions::print("Server: すでに建物があります！");
+        return; 
+    }
 
-    // 距離ルールのチェック（既存のまま）
+    // 距離ルールのチェック
     Vector2 my_pos = board_vertices[vertex_name].position;
     for (const auto& pair : board_vertices) {
         if (pair.second.owner_id != 0) {
             float dist = my_pos.distance_to(pair.second.position);
-            if (dist > 0.1f && dist < 80.0f) return; // 近すぎる
+            if (dist > 0.1f && dist < 80.0f) {
+                UtilityFunctions::print("Server: 他の家と近すぎます！");
+                return; // 近すぎる
+            }
         }
     }
 
+    // ★ 3. すべての厳しいチェックを通過したので、ここで初めてコストを消費する！
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
         setup_settlements_built_this_turn++;
+    } else {
+        p.wood -= 1; p.brick -= 1; p.sheep -= 1; p.wheat -= 1;
+        rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
     }
 
+    // ★ 4. 建築を確定して全員の画面を更新
     board_vertices[vertex_name].owner_id = sender_id;
     board_vertices[vertex_name].building_type = 1;
 
     rpc("client_sync_build", vertex_name, sender_id);
 
     if (current_phase == PHASE_SETUP_1 || current_phase == PHASE_SETUP_2) {
-        // 家と道の両方を建て終わったかチェック
         if (setup_settlements_built_this_turn >= 1 && setup_roads_built_this_turn >= 1) {
-            advance_setup_turn(); // ターンを自動で進める関数を呼ぶ！
+            advance_setup_turn(); 
         }
     }
     update_longest_road();
@@ -820,6 +823,13 @@ void CatanGame::server_process_end_turn() {
         UtilityFunctions::print("Server: あなたのターンではありません！");
         return;
     }
+
+    PlayerData& current_p = players[player_order[current_turn_index]];
+    current_p.has_played_dev_card_this_turn = false;
+    current_p.new_dev_knight = 0;
+    current_p.new_dev_road = 0;
+    current_p.new_dev_plenty = 0;
+    current_p.new_dev_mono = 0;
 
     // ▼▼▼ 変更：切断されていない「次の人」が見つかるまでスキップし続ける！ ▼▼▼
     int start_index = current_turn_index;
@@ -1095,11 +1105,11 @@ void CatanGame::server_process_buy_dev_card() {
     dev_card_deck.pop_back();
     p.dev_cards += 1;
 
-    if (drawn_card == "knight") p.dev_knight++;
-    else if (drawn_card == "vp") p.dev_vp++;
-    else if (drawn_card == "road_building") p.dev_road++;
-    else if (drawn_card == "year_of_plenty") p.dev_plenty++;
-    else if (drawn_card == "monopoly") p.dev_mono++;
+    if (drawn_card == "knight") { p.dev_knight++; p.new_dev_knight++; }
+    else if (drawn_card == "vp") { p.dev_vp++; } // VPはすぐ反映されてOK
+    else if (drawn_card == "road_building") { p.dev_road++; p.new_dev_road++; }
+    else if (drawn_card == "year_of_plenty") { p.dev_plenty++; p.new_dev_plenty++; }
+    else if (drawn_card == "monopoly") { p.dev_mono++; p.new_dev_mono++; }
 
     // 全員に「全体の枚数が増えたよ」と通知
     rpc("client_sync_dev_card_bought", sender_id);
@@ -1157,6 +1167,15 @@ void CatanGame::server_process_play_knight() {
         return;
     }
 
+    if (p.has_played_dev_card_this_turn) {
+        UtilityFunctions::print("Server: 1ターンに使える発展カードは1枚だけです！");
+        return;
+    }
+    if ((p.dev_knight - p.new_dev_knight) <= 0) {
+        UtilityFunctions::print("Server: 引いたばかりのカードは次のターンまで使えません！");
+        return;
+    }
+
     // カードを消費する
     p.dev_knight -= 1;
     p.dev_cards -= 1;
@@ -1190,22 +1209,20 @@ void CatanGame::client_prompt_knight_robber() {
 void CatanGame::server_process_roll_seven(int roller_id) {
     pending_discard_players = 0;
 
-    // 全プレイヤーの手札をチェック
     for (int pid : player_order) {
         PlayerData& p = players[pid];
         int total_hand = p.wood + p.brick + p.sheep + p.wheat + p.ore;
         
-        // 7枚より多く（8枚以上）持っているなら半分捨てる！
-        if (total_hand > 7) {
+        if (total_hand >= 7) {
             int amount_to_discard = total_hand / 2; 
             pending_discard_players++;
             
-            // ★変更: 対象者に「〇枚捨ててね」と同時に「今の所持数」も送る！
+            p.is_waiting_for_discard = true; // ★追加：この人はまだ捨てていない！と記憶する
+            
             rpc_id(pid, "client_prompt_discard", amount_to_discard, p.wood, p.brick, p.sheep, p.wheat, p.ore);
         }
     }
 
-    // もし誰も8枚以上持っていなかったら、すぐに盗賊移動フェーズへ！
     if (pending_discard_players == 0) {
         rpc_id(roller_id, "client_notify_robber_phase");
     }
@@ -1226,6 +1243,7 @@ void CatanGame::server_process_discard(int w, int b, int s, int wh, int o) {
 
     PlayerData& p = players[sender_id];
     p.wood -= w; p.brick -= b; p.sheep -= s; p.wheat -= wh; p.ore -= o;
+    p.is_waiting_for_discard = false; // ★追加：この人は捨て終わった！と記憶する
     
     // 減らした後の資源を同期
     rpc("client_sync_resources", sender_id, p.wood, p.brick, p.sheep, p.wheat, p.ore);
@@ -1260,6 +1278,7 @@ void CatanGame::server_process_play_monopoly(const String& res_type) {
     // カード消費
     p.dev_mono -= 1;
     p.dev_cards -= 1;
+    p.has_played_dev_card_this_turn = true;
 
     int total_stolen = 0;
     
@@ -1311,6 +1330,7 @@ void CatanGame::server_process_play_plenty(const String& res1, const String& res
     // カード消費
     p.dev_plenty -= 1;
     p.dev_cards -= 1;
+    p.has_played_dev_card_this_turn = true;
 
     // 指定された資源を銀行から1つずつもらう（同じ種類を2つ選ぶことも可能）
     if (res1 == "wood") p.wood++; else if (res1 == "brick") p.brick++; else if (res1 == "sheep") p.sheep++; else if (res1 == "wheat") p.wheat++; else if (res1 == "ore") p.ore++;
@@ -1337,6 +1357,7 @@ void CatanGame::server_process_play_road_building() {
     // カード消費
     p.dev_road -= 1;
     p.dev_cards -= 1;
+    p.has_played_dev_card_this_turn = true;
     
     // ★ ここが要！無料の道を2本付与する！
     p.free_roads_available += 2;
@@ -1621,6 +1642,32 @@ void CatanGame::_on_peer_disconnected(int id) {
         // 2. 全員に「〇〇が切断した」と通知
         String d_name = players[id].player_name;
         rpc("client_notify_disconnect", d_name);
+
+        if (players[id].is_waiting_for_discard) {
+            PlayerData& p = players[id];
+            int total_hand = p.wood + p.brick + p.sheep + p.wheat + p.ore;
+            int amount_to_discard = total_hand / 2;
+
+            // 適当な資源から順番に捨てていく（どうせ落ちているのでランダムでなくてもOK）
+            for (int i = 0; i < amount_to_discard; i++) {
+                if (p.wood > 0) p.wood--;
+                else if (p.brick > 0) p.brick--;
+                else if (p.sheep > 0) p.sheep--;
+                else if (p.wheat > 0) p.wheat--;
+                else if (p.ore > 0) p.ore--;
+            }
+            
+            p.is_waiting_for_discard = false; // フラグ解除
+            pending_discard_players--; // 待機人数を減らす
+            UtilityFunctions::print("Server: 切断されたプレイヤーの手札を強制没収しました。残り待機: ", pending_discard_players);
+
+            // これで全員捨て終わったなら、盗賊フェーズへ進める！
+            if (pending_discard_players <= 0) {
+                pending_discard_players = 0;
+                int roller_id = player_order[current_turn_index];
+                rpc_id(roller_id, "client_notify_robber_phase");
+            }
+        }
 
         // 3. もし切断したのが「今のターンの人」なら、強制的にターンを飛ばす！
         if (player_order.size() > 0 && player_order[current_turn_index] == id) {

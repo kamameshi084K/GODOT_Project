@@ -41,8 +41,14 @@ namespace godot
         int dev_mono = 0;
         int free_roads_available = 0;
         int knights_played = 0;
+        bool has_played_dev_card_this_turn = false; // 今ターンすでに使ったか
+        int new_dev_knight = 0;  // 今ターン買ったばかりの騎士
+        int new_dev_road = 0;    // 今ターン買ったばかりの街道建設
+        int new_dev_plenty = 0;  // 今ターン買ったばかりの収穫
+        int new_dev_mono = 0;    // 今ターン買ったばかりの独占
         String player_name = "Unknown";
         bool is_connected = true;
+        bool is_waiting_for_discard = false;
     };
 
     // ゲームの進行フェーズを表す列挙型（enum）を定義

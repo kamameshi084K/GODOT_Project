@@ -41,6 +41,10 @@ var free_roads_left = 0
 var current_largest_army_player = 0
 var current_longest_road_player = 0
 
+var player_colors = {}
+var base_colors = [Color.RED, Color.BLUE, Color.GREEN, Color.PURPLE]
+var current_phase = 0
+
 func _ready():
 	GameManager.dice_rolled.connect(_on_dice_rolled)
 	roll_btn.pressed.connect(_on_roll_pressed)
@@ -206,8 +210,24 @@ func _on_settlement_built(vertex_name: String, player_id: int):
 	var vertex_node = container.get_node_or_null(vertex_name)
 	
 	if vertex_node != null:
-		# ★変更: Sprite2Dを探すのではなく、Intersectionの関数を呼ぶ！
-		vertex_node.update_building(player_id, 1)
+		var c = player_colors.get(player_id, Color.WHITE) # ★追加
+		vertex_node.update_building(player_id, 1, c) # ★変更
+		if multiplayer.is_server() and current_phase == 1:
+			for tile in board.get_children():
+				# 家の座標とタイルの中心座標の距離を測り、くっついているタイルを探す
+				if tile.position.distance_to(vertex_node.position) < (hex_radius_math + 5.0):
+					var res_type_int = tile.get("tile_type")
+					var type_str = ""
+					match res_type_int:
+						0: type_str = "wood"
+						1: type_str = "brick"
+						2: type_str = "sheep"
+						3: type_str = "wheat"
+						4: type_str = "ore"
+					
+					# 砂漠以外なら、サーバーに「この資源を1つ追加して！」とお願いする
+					if type_str != "":
+						GameManager.add_resource(player_id, type_str, 1)
 		
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
 		player_uis[player_id].add_vp(1)
@@ -217,9 +237,9 @@ func _on_road_built(edge_name: String, player_id: int):
 	var edge_node = container.get_node_or_null(edge_name)
 	
 	if edge_node != null:
-		edge_node.build_road(player_id)
+		var c = player_colors.get(player_id, Color.WHITE) # ★追加
+		edge_node.build_road(player_id, c) # ★変更
 		
-	# 無料の道のカウントダウンとメッセージ表示
 	if player_id == multiplayer.get_unique_id() and free_roads_left > 0:
 		free_roads_left -= 1
 		if free_roads_left > 0:
@@ -262,6 +282,7 @@ func _distribute_resources(roll: int):
 			GameManager.distribute_resources_for_hex(tile.position, hex_radius_math, type_str)
 
 func _on_turn_changed(active_player_id: int, phase: int = 2):
+	current_phase = phase
 	is_my_turn = (active_player_id == multiplayer.get_unique_id())
 	var active_name = "Player " + str(active_player_id)
 	if is_my_turn:
@@ -350,18 +371,34 @@ func _on_player_list_updated(player_info_list: Array):
 	for child in player_list.get_children():
 		child.queue_free()
 	player_uis.clear()
+	player_colors.clear() # リセット
 	
 	var my_id = multiplayer.get_unique_id()
 	for info in player_info_list:
 		var pid = info["id"]
-		# 自分以外だったらUIを作る
+		var t_idx = info["turn_index"]
+		
+		# ★ ターン順（0〜3）に応じて色を割り当てて記憶する！
+		player_colors[pid] = base_colors[t_idx % 4]
+		
 		if pid != my_id:
 			var ui = player_ui_scene.instantiate()
 			player_list.add_child(ui)
-			# 発展カード枚数も含めてセットアップ
 			ui.setup(pid, info["turn_index"], info["name"], info["vp"], info["hand_count"], info["dev_cards"])
 			ui.steal_requested.connect(_on_steal_requested)
 			player_uis[pid] = ui
+
+	# ★ すでに盤面にある家や道の色を、決定した色で塗り直す！
+	if has_node("Intersections"):
+		for v_node in $Intersections.get_children():
+			if v_node.owner_id != 0:
+				var c = player_colors.get(v_node.owner_id, Color.WHITE)
+				v_node.update_building(v_node.owner_id, v_node.building_level, c)
+	if has_node("Edges"):
+		for e_node in $Edges.get_children():
+			if e_node.owner_id != 0:
+				var c = player_colors.get(e_node.owner_id, Color.WHITE)
+				e_node.build_road(e_node.owner_id, c)
 
 # ★追加：光ったUIをクリックした時の処理
 func _on_steal_requested(target_id: int):
@@ -378,11 +415,11 @@ func _on_city_built(vertex_name: String, player_id: int):
 	var vertex_node = container.get_node_or_null(vertex_name)
 	
 	if vertex_node != null:
-		# レベル2（都市）として更新！大きく描画される
-		vertex_node.update_building(player_id, 2)
+		var c = player_colors.get(player_id, Color.WHITE) # ★追加
+		vertex_node.update_building(player_id, 2, c) # ★変更
 		
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
-		player_uis[player_id].add_vp(1) # 都市になるとさらに+1点
+		player_uis[player_id].add_vp(1)
 
 func _on_prompt_knight_robber():
 	show_info("★ 騎士カードを使用しました！盗賊を移動させてください。")
@@ -534,23 +571,22 @@ func _on_player_reconnected(old_id: int, new_id: int, p_name: String):
 func _on_full_state_received(state: Dictionary):
 	show_info("🔄 最新の盤面データを復元しています...")
 	
-	# 1. 家と都市の復元
 	var vertices = state["vertices"]
 	for v in vertices:
 		var v_node = $Intersections.get_node_or_null(v["name"])
 		if v_node:
-			v_node.update_building(v["owner"], v["type"])
+			var c = player_colors.get(v["owner"], Color.WHITE) # ★追加
+			v_node.update_building(v["owner"], v["type"], c) # ★変更
 			
-	# 2. 道の復元
 	var edges = state["edges"]
 	for e in edges:
 		var e_node = $Edges.get_node_or_null(e["name"])
 		if e_node:
-			e_node.build_road(e["owner"])
+			var c = player_colors.get(e["owner"], Color.WHITE) # ★追加
+			e_node.build_road(e["owner"], c) # ★変更
 			
-	# 3. 盗賊の復元
 	var r_pos = state["robber_pos"]
-	if r_pos != Vector2(-9999, -9999): # 初期位置じゃなければ
+	if r_pos != Vector2(-9999, -9999): 
 		if robber_icon.get_parent() != null:
 			robber_icon.get_parent().remove_child(robber_icon)
 		for tile in board.get_children():
