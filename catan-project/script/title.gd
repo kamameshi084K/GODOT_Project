@@ -44,7 +44,7 @@ func _on_join_pressed():
 
 func _on_tutorial_pressed():
 	GameManager.set_meta("tutorial_mode", true)
-	get_tree().change_scene_to_file("res://scenes/tutorial.tscn")
+	get_tree().change_scene_to_file("res://scenes/tutorial_mode.tscn")
 
 # ★追加：クライアント側の接続成功処理
 func _on_connected_ok():
