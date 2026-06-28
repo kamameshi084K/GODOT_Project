@@ -5,6 +5,7 @@ extends Control
 @onready var ip_input = $VBoxContainer/AddressInput
 @onready var status_lbl = $VBoxContainer/StatusLabel
 @onready var start_btn = $VBoxContainer/StartButton
+@onready var tutorial_btn = $VBoxContainer/TutorialButton
 
 # ★追加：名前入力用のノードを取得
 @onready var name_input = $VBoxContainer/NameInput
@@ -13,6 +14,7 @@ func _ready():
 	host_btn.pressed.connect(_on_host_pressed)
 	join_btn.pressed.connect(_on_join_pressed)
 	start_btn.pressed.connect(_on_start_pressed)
+	tutorial_btn.pressed.connect(_on_tutorial_pressed)
 	
 	multiplayer.peer_connected.connect(_update_status)
 	multiplayer.peer_disconnected.connect(_update_status)
@@ -40,6 +42,10 @@ func _on_join_pressed():
 	_disable_buttons()
 	status_lbl.text = "Connecting to " + ip + "..."
 
+func _on_tutorial_pressed():
+	GameManager.set_meta("tutorial_mode", true)
+	get_tree().change_scene_to_file("res://scenes/tutorial.tscn")
+
 # ★追加：クライアント側の接続成功処理
 func _on_connected_ok():
 	status_lbl.text = "Connected! Waiting for host..."
@@ -56,6 +62,7 @@ func _on_start_pressed():
 func _disable_buttons():
 	host_btn.disabled = true
 	join_btn.disabled = true
+	tutorial_btn.disabled = true
 	ip_input.editable = false
 	name_input.editable = false # ★追加：接続中は名前も変更不可にする
 
