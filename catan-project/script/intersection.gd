@@ -20,6 +20,20 @@ func _on_mouse_exited():
 
 func _input_event(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var main = get_tree().current_scene
+		
+		if main != null and main.has_method("tutorial_can_build_settlement"):
+			if not main.tutorial_can_build_settlement(name):
+				return
+			
+			if main.tutorial_mode:
+				var my_id = multiplayer.get_unique_id()
+				
+				if main.has_method("tutorial_force_build_settlement"):
+					main.tutorial_force_build_settlement(name, my_id)
+				
+				return
+		
 		if owner_id == multiplayer.get_unique_id() and building_level == 1:
 			GameManager.request_build_city(name)
 		else:
