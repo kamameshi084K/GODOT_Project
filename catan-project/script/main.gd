@@ -22,6 +22,9 @@ extends Node2D
 @onready var player_trade_ui = $GameUI/PlayerTradeUI
 @onready var trade_accept_ui = $GameUI/TradeAcceptUI
 @onready var dice_viewport = $GameUI/DiceViewport
+@onready var tutorial_guide = get_node_or_null("GameUI/TutorialGuide")
+@onready var tutorial_guide_label = get_node_or_null("GameUI/TutorialGuide/GuideLabel")
+@onready var tutorial_next_btn = get_node_or_null("GameUI/TutorialGuide/NextButton")
 
 # ★追加：右側のプレイヤーリスト用
 @onready var player_list = $GameUI/PlayerList
@@ -45,7 +48,14 @@ var player_colors = {}
 var base_colors = [Color.RED, Color.BLUE, Color.GREEN, Color.PURPLE]
 var current_phase = 0
 
+var tutorial_mode := false
+var tutorial_message_index := 0
+
+var tutorial_controller_script = preload("res://script/tutorial_controller.gd")
+var tutorial_controller
+
 func _ready():
+	tutorial_mode = GameManager.has_meta("tutorial_mode") and GameManager.get_meta("tutorial_mode") == true
 	GameManager.dice_rolled.connect(_on_dice_rolled)
 	roll_btn.pressed.connect(_on_roll_pressed)
 	turn_end_btn.pressed.connect(func(): GameManager.request_end_turn())
@@ -120,12 +130,20 @@ func _ready():
 		dev_ui.hide()
 	)
 	
-	show_info("カタンへようこそ！あなたのターンを待っています...")
+	if tutorial_mode:
+		tutorial_controller = tutorial_controller_script.new()
+		add_child(tutorial_controller)
+		tutorial_controller.setup(self)
+	else:
+		show_info("カタンへようこそ！あなたのターンを待っています...")
 	
 	if GameManager.has_meta("reconnect_name"):
 		var r_name = GameManager.get_meta("reconnect_name")
 		GameManager.remove_meta("reconnect_name") # 読み取ったらメモを消す
 		_request_reconnect_delayed(r_name)
+		
+	if tutorial_guide != null:
+		tutorial_guide.hide()
 
 func _on_roll_pressed():
 	roll_btn.disabled = true
@@ -174,6 +192,12 @@ func _on_dice_rolled(d1: int, d2: int):
 		else:
 			turn_end_btn.disabled = false
 			turn_end_btn.modulate = Color.LIGHT_SKY_BLUE
+			
+	if tutorial_mode and is_my_turn:
+		if roll_value == 7:
+			show_info("【チュートリアル】7が出ました。盗賊を移動させる必要があります。")
+		else:
+			show_info("【チュートリアル】資源を確認して、道・家・都市・交換・発展カードのどれをするか考えましょう。")
 
 func _generate_intersections():
 	var vertices = board.get_unique_vertices(hex_radius_math)
@@ -232,6 +256,9 @@ func _on_settlement_built(vertex_name: String, player_id: int):
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
 		player_uis[player_id].add_vp(1)
 		
+	if tutorial_mode and player_id == multiplayer.get_unique_id():
+		show_info("【チュートリアル】家を建てました！家は1点です。隣の土地から資源を得られるようになります。")
+		
 func _on_road_built(edge_name: String, player_id: int):
 	var container = $Edges
 	var edge_node = container.get_node_or_null(edge_name)
@@ -246,6 +273,9 @@ func _on_road_built(edge_name: String, player_id: int):
 			show_info("★ 街道建設：無料で引ける道は残り【1本】です！")
 		else:
 			show_info("★ 街道建設：無料分の道をすべて引き終わりました！")
+			
+	if tutorial_mode and player_id == multiplayer.get_unique_id():
+		show_info("【チュートリアル】道を建てました！道を伸ばすと、新しい場所に家を建てられます。")
 
 func _on_prompt_road_building():
 	free_roads_left = 2
@@ -313,6 +343,11 @@ func _on_turn_changed(active_player_id: int, phase: int = 2):
 		trade_ui.hide() 
 		dev_ui.hide() 
 		player_trade_ui.hide() # ★追加
+	if tutorial_mode and is_my_turn:
+		if phase == 0 or phase == 1:
+			show_info("【チュートリアル】初期配置です。まず家を置き、そのあと道を置きましょう。")
+		else:
+			show_info("【チュートリアル】あなたの通常ターンです。まずサイコロを振りましょう。")
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -420,6 +455,9 @@ func _on_city_built(vertex_name: String, player_id: int):
 		
 	if player_id != multiplayer.get_unique_id() and player_uis.has(player_id):
 		player_uis[player_id].add_vp(1)
+		
+	if tutorial_mode and player_id == multiplayer.get_unique_id():
+		show_info("【チュートリアル】都市にアップグレードしました！都市は2点で、資源も多くもらえます。")
 
 func _on_prompt_knight_robber():
 	show_info("★ 騎士カードを使用しました！盗賊を移動させてください。")
@@ -601,3 +639,15 @@ func _request_reconnect_delayed(r_name: String):
 	
 	# ▼▼▼ 修正：rpc_idを消して、直接関数を呼ぶ！ ▼▼▼
 	GameManager.request_reconnect(r_name)
+
+func show_tutorial(msg: String, can_next: bool = false):
+	if tutorial_guide != null:
+		tutorial_guide.show()
+	
+	if tutorial_guide_label != null:
+		tutorial_guide_label.text = msg
+	
+	if tutorial_next_btn != null:
+		tutorial_next_btn.visible = can_next
+	
+	show_info(msg)

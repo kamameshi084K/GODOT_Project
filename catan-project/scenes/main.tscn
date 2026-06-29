@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://bbvnv6t852rgn" path="res://assets/images/mountain.png" id="5_e2s0e"]
 [ext_resource type="Texture2D" uid="uid://cakfv6dnqgamy" path="res://assets/images/hill.png" id="6_gsxep"]
 [ext_resource type="Texture2D" uid="uid://dewcsgq3xmh0x" path="res://assets/images/desert.png" id="7_v0vrg"]
-[ext_resource type="PackedScene" uid="uid://r3sjqryn2qey" path="res://scenes/port.tscn" id="8_dg70y"]
+[ext_resource type="PackedScene" uid="uid://r3sjqryn2qey" path="res://scenes/Port.tscn" id="8_dg70y"]
 [ext_resource type="Texture2D" uid="uid://c6j85edsi8ft1" path="res://assets/images/wood_trade.png" id="9_pnhog"]
 [ext_resource type="Texture2D" uid="uid://c2bvpa7y3y7la" path="res://assets/images/brick_trade.png" id="10_2c4at"]
 [ext_resource type="Texture2D" uid="uid://cwp82leny4g3f" path="res://assets/images/sheep_trade.png" id="11_g6wdg"]
@@ -19,12 +19,12 @@
 [ext_resource type="Texture2D" uid="uid://m8upgojv2g04" path="res://assets/images/cards/wheat.png" id="17_8b871"]
 [ext_resource type="Texture2D" uid="uid://33ohhtpcqvc3" path="res://assets/images/cards/ore.png" id="18_pdwbg"]
 [ext_resource type="PackedScene" uid="uid://chy5gutyayo0m" path="res://scenes/Trade_ui.tscn" id="19_5grtr"]
-[ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/dev_card_ui.tscn" id="20_vua0o"]
-[ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/discard_ui.tscn" id="21_t70y2"]
-[ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/resource_select_ui.tscn" id="22_8gny2"]
+[ext_resource type="PackedScene" uid="uid://bpk1cimgrt8py" path="res://scenes/Dev_card_ui.tscn" id="20_vua0o"]
+[ext_resource type="PackedScene" uid="uid://17vvt1hd0fad" path="res://scenes/Discard_ui.tscn" id="21_t70y2"]
+[ext_resource type="PackedScene" uid="uid://cpp4fwdhu1k18" path="res://scenes/Resource_select_ui.tscn" id="22_8gny2"]
 [ext_resource type="PackedScene" uid="uid://dpn78rcq1hm2f" path="res://scenes/Player_trade_ui.tscn" id="23_s3wmy"]
-[ext_resource type="PackedScene" uid="uid://bekee4ivqu27a" path="res://scenes/trade_accept_ui.tscn" id="24_gdcyb"]
-[ext_resource type="PackedScene" uid="uid://bdypej5t3ale1" path="res://scenes/trade_list_ui.tscn" id="25_oa6sj"]
+[ext_resource type="PackedScene" uid="uid://bekee4ivqu27a" path="res://scenes/Trade_accept_ui.tscn" id="24_gdcyb"]
+[ext_resource type="PackedScene" uid="uid://bdypej5t3ale1" path="res://scenes/Trade_list_ui.tscn" id="25_oa6sj"]
 [ext_resource type="PackedScene" uid="uid://b0fdnygp7hymi" path="res://scenes/dice_viewport.tscn" id="26_36rkl"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_muem4"]
@@ -532,3 +532,30 @@ visible = false
 visible = false
 
 [node name="DiceViewport" parent="GameUI" instance=ExtResource("26_36rkl")]
+
+[node name="TutorialGuide" type="Panel" parent="GameUI"]
+anchors_preset = -1
+anchor_left = 0.00086805556
+anchor_top = 0.41975307
+anchor_right = 1.0008681
+anchor_bottom = 0.5740741
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="GuideLabel" type="Label" parent="GameUI/TutorialGuide"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 40
+
+[node name="NextButton" type="Button" parent="GameUI/TutorialGuide"]
+layout_mode = 0
+offset_left = 548.0
+offset_top = 56.0
+offset_right = 604.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 26
+text = "次へ"
