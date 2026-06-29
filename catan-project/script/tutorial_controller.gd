@@ -103,7 +103,7 @@ var steps := [
 	},
 	{
 		"id": "resource_check",
-		"message": "資源が増えました。",
+		"message": "出目の土地から資源を獲得します。",
 		"wait": "next"
 	},
 	{
@@ -113,7 +113,7 @@ var steps := [
 	},
 	{
 		"id": "give_road_resources",
-		"message": "練習用に資源を追加。",
+		"message": "道用の資源を追加します。",
 		"wait": "auto",
 		"action": "give_road_resources"
 	},
@@ -121,7 +121,8 @@ var steps := [
 		"id": "build_extra_road",
 		"message": "赤丸に道を建てます。",
 		"wait": "road_built",
-		"target": "Edge_23"
+		"target": "Edge_23",
+		"cost": "road"
 	},
 	{
 		"id": "settlement_cost",
@@ -130,7 +131,7 @@ var steps := [
 	},
 	{
 		"id": "give_settlement_resources",
-		"message": "練習用に資源を追加。",
+		"message": "拠点用の資源を追加します。",
 		"wait": "auto",
 		"action": "give_settlement_resources"
 	},
@@ -138,12 +139,71 @@ var steps := [
 		"id": "build_extra_settlement",
 		"message": "赤丸に拠点を建てます。",
 		"wait": "settlement_built",
-		"target": "Vertex_19"
+		"target": "Vertex_19",
+		"cost": "settlement"
 	},
 	{
-		"id": "finish",
-		"message": "拠点建築までOKです。",
-		"wait": "finish"
+		"id": "settlement_rule",
+		"message": "拠点は隣に置けません。",
+		"wait": "next"
+	},
+	{
+		"id": "city_cost",
+		"message": "都市は小麦2・鉱石3。",
+		"wait": "next"
+	},
+	{
+		"id": "give_city_resources",
+		"message": "都市用の資源を追加します。",
+		"wait": "auto",
+		"action": "give_city_resources"
+	},
+	{
+		"id": "upgrade_city",
+		"message": "赤丸の拠点を都市にします。",
+		"wait": "city_built",
+		"target": "Vertex_2",
+		"cost": "city"
+	},
+	{
+		"id": "trade_intro",
+		"message": "交換では不足資源を補えます。",
+		"wait": "next"
+	},
+	{
+		"id": "bank_trade",
+		"message": "銀行交換は同じ資源4枚で1枚交換。",
+		"wait": "next"
+	},
+	{
+		"id": "port_trade",
+		"message": "港があれば有利に交換できます。",
+		"wait": "next"
+	},
+	{
+		"id": "player_trade",
+		"message": "対戦では他プレイヤーとも交渉できます。",
+		"wait": "next"
+	},
+	{
+		"id": "dev_card_intro",
+		"message": "発展カードは小麦・羊・鉱石で購入。",
+		"wait": "next"
+	},
+	{
+		"id": "dev_card_intro",
+		"message": "発展カードは小麦・羊・鉱石で購入。",
+		"wait": "next"
+	},
+	{
+		"id": "turn_end_intro",
+		"message": "最後にターン終了です。",
+		"wait": "next"
+	},
+	{
+		"id": "end_turn",
+		"message": "ターン終了を押します。",
+		"wait": "turn_end"
 	}
 ]
 
@@ -156,6 +216,7 @@ func setup(main_node):
 	
 	GameManager.settlement_built.connect(_on_settlement_built)
 	GameManager.road_built.connect(_on_road_built)
+	GameManager.city_built.connect(_on_city_built)
 	GameManager.dice_rolled.connect(_on_dice_rolled)
 	
 	if main.tutorial_next_btn != null:
@@ -179,6 +240,8 @@ func _show_current_step():
 		main.show_tutorial_target_vertex(step["target"])
 	elif wait_type == "road_built" and step.has("target"):
 		main.show_tutorial_target_edge(step["target"])
+	elif wait_type == "city_built" and step.has("target"):
+		main.show_tutorial_target_vertex(step["target"])
 	elif wait_type == "auto":
 		main.clear_tutorial_marker()
 		await main.get_tree().create_timer(0.7).timeout
@@ -187,6 +250,9 @@ func _show_current_step():
 	elif wait_type == "dice_rolled":
 		main.clear_tutorial_marker()
 		_enable_roll_button()
+	elif wait_type == "turn_end":
+		main.clear_tutorial_marker()
+		_enable_turn_end_button()
 	else:
 		main.clear_tutorial_marker()
 
@@ -221,6 +287,9 @@ func _on_settlement_built(vertex_name: String, player_id: int):
 		main.show_tutorial("【チュートリアル】赤丸に置いてください。", false)
 		return
 	
+	if step.has("cost") and step["cost"] == "settlement":
+		_pay_settlement_cost(player_id)
+	
 	main.clear_tutorial_marker()
 	
 	if step["id"] == "player_second_settlement":
@@ -246,7 +315,33 @@ func _on_road_built(edge_name: String, player_id: int):
 		main.show_tutorial("【チュートリアル】赤丸に置いてください。", false)
 		return
 	
+	if step.has("cost") and step["cost"] == "road":
+		_pay_road_cost(player_id)
+	
 	main.clear_tutorial_marker()
+	_next_step()
+
+
+func _on_city_built(vertex_name: String, player_id: int):
+	if not _is_waiting("city_built"):
+		return
+	
+	if player_id != main.multiplayer.get_unique_id():
+		return
+	
+	var step = steps[step_index]
+	
+	if step.has("target") and vertex_name != step["target"]:
+		main.show_tutorial("【チュートリアル】赤丸の拠点を都市にしてください。", false)
+		return
+	
+	if step.has("cost") and step["cost"] == "city":
+		_pay_city_cost(player_id)
+	
+	main.clear_tutorial_marker()
+	main.show_tutorial("【チュートリアル】都市になりました。", false)
+	
+	await main.get_tree().create_timer(1.0).timeout
 	_next_step()
 
 
@@ -256,6 +351,10 @@ func notify_settlement_built(vertex_name: String, player_id: int):
 
 func notify_road_built(edge_name: String, player_id: int):
 	_on_road_built(edge_name, player_id)
+
+
+func notify_city_built(vertex_name: String, player_id: int):
+	_on_city_built(vertex_name, player_id)
 
 
 func request_tutorial_roll():
@@ -303,6 +402,8 @@ func _run_auto_step(step: Dictionary):
 				await _give_road_resources()
 			"give_settlement_resources":
 				await _give_settlement_resources()
+			"give_city_resources":
+				await _give_city_resources()
 		return
 	
 	var enemy_id = step["player_id"]
@@ -333,6 +434,36 @@ func _give_settlement_resources():
 	
 	main.show_tutorial("【チュートリアル】拠点用の資源を追加。", false)
 	await main.get_tree().create_timer(1.0).timeout
+
+
+func _give_city_resources():
+	var my_id = main.multiplayer.get_unique_id()
+	
+	GameManager.add_resource(my_id, "wheat", 2)
+	GameManager.add_resource(my_id, "ore", 3)
+	
+	main.show_tutorial("【チュートリアル】小麦と鉱石を追加。", false)
+	await main.get_tree().create_timer(1.0).timeout
+
+
+func _pay_road_cost(player_id: int):
+	GameManager.add_resource(player_id, "wood", -1)
+	GameManager.add_resource(player_id, "brick", -1)
+	main.show_tutorial("【チュートリアル】木材とレンガを消費。", false)
+
+
+func _pay_settlement_cost(player_id: int):
+	GameManager.add_resource(player_id, "wood", -1)
+	GameManager.add_resource(player_id, "brick", -1)
+	GameManager.add_resource(player_id, "sheep", -1)
+	GameManager.add_resource(player_id, "wheat", -1)
+	main.show_tutorial("【チュートリアル】拠点用資源を消費。", false)
+
+
+func _pay_city_cost(player_id: int):
+	GameManager.add_resource(player_id, "wheat", -2)
+	GameManager.add_resource(player_id, "ore", -3)
+	main.show_tutorial("【チュートリアル】小麦と鉱石を消費。", false)
 
 
 func _enemy_build_settlement(enemy_id: int, vertex_name: String):
@@ -369,6 +500,32 @@ func _enable_roll_button():
 	main.open_dev_btn.disabled = true
 	main.open_player_trade_btn.disabled = true
 
+func _enable_turn_end_button():
+	main.roll_btn.disabled = true
+	main.roll_btn.modulate = Color.DIM_GRAY
+	
+	main.open_trade_btn.disabled = true
+	main.open_dev_btn.disabled = true
+	main.open_player_trade_btn.disabled = true
+	
+	main.turn_end_btn.disabled = false
+	main.turn_end_btn.modulate = Color.LIGHT_SKY_BLUE
+
+
+func notify_turn_end_pressed():
+	if not _is_waiting("turn_end"):
+		return
+	
+	main.turn_end_btn.disabled = true
+	main.turn_end_btn.modulate = Color.DIM_GRAY
+	
+	main.show_tutorial("【チュートリアル】お疲れさまでした。", false)
+	
+	await main.get_tree().create_timer(2.0).timeout
+	
+	GameManager.remove_meta("tutorial_mode")
+	main.clear_tutorial_marker()
+	main.get_tree().change_scene_to_file("res://scenes/title.tscn")
 
 func _is_waiting(wait_name: String) -> bool:
 	if step_index >= steps.size():
@@ -400,6 +557,20 @@ func can_build_road(edge_name: String) -> bool:
 	
 	if step.has("target") and edge_name != step["target"]:
 		main.show_tutorial("【チュートリアル】赤丸に置いてください。", false)
+		return false
+	
+	return true
+
+
+func can_build_city(vertex_name: String) -> bool:
+	if not _is_waiting("city_built"):
+		main.show_tutorial("【チュートリアル】今は都市化の場面ではありません。", false)
+		return false
+	
+	var step = steps[step_index]
+	
+	if step.has("target") and vertex_name != step["target"]:
+		main.show_tutorial("【チュートリアル】赤丸の拠点を都市にしてください。", false)
 		return false
 	
 	return true

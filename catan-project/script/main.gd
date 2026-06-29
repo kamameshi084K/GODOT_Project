@@ -59,7 +59,7 @@ func _ready():
 	
 	GameManager.dice_rolled.connect(_on_dice_rolled)
 	roll_btn.pressed.connect(_on_roll_pressed)
-	turn_end_btn.pressed.connect(func(): GameManager.request_end_turn())
+	turn_end_btn.pressed.connect(_on_turn_end_pressed)
 	GameManager.turn_changed.connect(_on_turn_changed)
 	
 	GameManager.player_list_updated.connect(_on_player_list_updated)
@@ -117,7 +117,7 @@ func _ready():
 		await get_tree().process_frame
 		debug_print_board_ids()
 	
-	open_trade_btn.pressed.connect(func(): trade_ui.show())
+	open_trade_btn.pressed.connect(_on_open_trade_pressed)
 	open_trade_btn.disabled = true
 	trade_ui.hide()
 	
@@ -157,6 +157,13 @@ func _on_roll_pressed():
 	roll_btn.disabled = true
 	GameManager.rpc_id(1, "request_roll_dice")
 
+func _on_turn_end_pressed():
+	if tutorial_mode and tutorial_controller != null:
+		if tutorial_controller.has_method("notify_turn_end_pressed"):
+			tutorial_controller.notify_turn_end_pressed()
+			return
+	
+	GameManager.request_end_turn()
 
 func _on_dice_rolled(d1: int, d2: int):
 	var roll_value = d1 + d2
@@ -551,6 +558,26 @@ func show_tutorial(msg: String, can_next: bool = false):
 	if tutorial_next_btn != null:
 		tutorial_next_btn.visible = can_next
 		
+func _on_open_trade_pressed():
+	trade_ui.show()
+	
+	if tutorial_mode and tutorial_controller != null:
+		if tutorial_controller.has_method("notify_trade_opened"):
+			tutorial_controller.notify_trade_opened()
+
+
+func tutorial_enable_bank_trade():
+	open_trade_btn.disabled = false
+	open_trade_btn.modulate = Color.LIGHT_SKY_BLUE
+
+
+func tutorial_disable_bank_trade():
+	open_trade_btn.disabled = true
+	open_trade_btn.modulate = Color.DIM_GRAY
+	trade_ui.hide()
+
+
+
 func tutorial_distribute_resources_for_roll(roll: int, player_id: int) -> Dictionary:
 	var gained := {
 		"wood": 0,
@@ -934,6 +961,25 @@ func tutorial_force_build_settlement(vertex_name: String, player_id: int):
 	
 	if tutorial_controller != null and tutorial_controller.has_method("notify_settlement_built"):
 		tutorial_controller.notify_settlement_built(vertex_name, player_id)
+
+func tutorial_can_build_city(vertex_name: String) -> bool:
+	if not tutorial_mode:
+		return true
+	
+	if tutorial_controller == null:
+		return true
+	
+	if tutorial_controller.has_method("can_build_city"):
+		return tutorial_controller.can_build_city(vertex_name)
+	
+	return true
+
+
+func tutorial_force_build_city(vertex_name: String, player_id: int):
+	_on_city_built(vertex_name, player_id)
+	
+	if tutorial_controller != null and tutorial_controller.has_method("notify_city_built"):
+		tutorial_controller.notify_city_built(vertex_name, player_id)
 
 func tutorial_force_build_road(edge_name: String, player_id: int):
 	_on_road_built(edge_name, player_id)
