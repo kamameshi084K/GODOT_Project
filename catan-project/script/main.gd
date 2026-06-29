@@ -550,6 +550,74 @@ func show_tutorial(msg: String, can_next: bool = false):
 	
 	if tutorial_next_btn != null:
 		tutorial_next_btn.visible = can_next
+		
+func tutorial_distribute_resources_for_roll(roll: int, player_id: int) -> Dictionary:
+	var gained := {
+		"wood": 0,
+		"brick": 0,
+		"sheep": 0,
+		"wheat": 0,
+		"ore": 0
+	}
+	
+	if not has_node("Intersections"):
+		return gained
+	
+	for vertex_node in $Intersections.get_children():
+		if not ("owner_id" in vertex_node):
+			continue
+		
+		if vertex_node.owner_id != player_id:
+			continue
+		
+		var building_level = 1
+		
+		if "building_level" in vertex_node:
+			building_level = vertex_node.building_level
+		
+		for tile in board.get_children():
+			var tile_num = tile.get("number")
+			
+			if tile_num == null:
+				continue
+			
+			if tile_num != roll:
+				continue
+			
+			if tile.position.distance_to(vertex_node.position) < (hex_radius_math + 5.0):
+				var res_type_int = tile.get("tile_type")
+				var resource_name = tutorial_tile_type_to_resource(res_type_int)
+				
+				if resource_name == "":
+					continue
+				
+				var amount = 1
+				
+				if building_level >= 2:
+					amount = 2
+				
+				GameManager.add_resource(player_id, resource_name, amount)
+				gained[resource_name] += amount
+				
+				print("Tutorial resource: ", resource_name, " +", amount, " from ", vertex_node.name)
+	
+	return gained
+
+
+func tutorial_tile_type_to_resource(tile_type: int) -> String:
+	match tile_type:
+		0:
+			return "wood"
+		1:
+			return "brick"
+		2:
+			return "sheep"
+		3:
+			return "wheat"
+		4:
+			return "ore"
+		_:
+			return ""
 
 func setup_tutorial_enemies():
 	tutorial_add_enemy_player(1001, "敵A", 1, Color.BLUE)

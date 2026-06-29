@@ -108,13 +108,14 @@ var steps := [
 	},
 	{
 		"id": "road_cost",
-		"message": "道は木材1・レンガ1で建てます。",
+		"message": "道は木材1・レンガ1。",
 		"wait": "next"
 	},
 	{
 		"id": "give_road_resources",
-		"message": "練習用に資源を追加します。",
-		"wait": "auto"
+		"message": "練習用に資源を追加。",
+		"wait": "auto",
+		"action": "give_road_resources"
 	},
 	{
 		"id": "build_extra_road",
@@ -123,8 +124,25 @@ var steps := [
 		"target": "Edge_23"
 	},
 	{
+		"id": "settlement_cost",
+		"message": "拠点は木・レンガ・羊・小麦。",
+		"wait": "next"
+	},
+	{
+		"id": "give_settlement_resources",
+		"message": "練習用に資源を追加。",
+		"wait": "auto",
+		"action": "give_settlement_resources"
+	},
+	{
+		"id": "build_extra_settlement",
+		"message": "赤丸に拠点を建てます。",
+		"wait": "settlement_built",
+		"target": "Vertex_19"
+	},
+	{
 		"id": "finish",
-		"message": "道の建築までOKです。",
+		"message": "拠点建築までOKです。",
 		"wait": "finish"
 	}
 ]
@@ -209,7 +227,7 @@ func _on_settlement_built(vertex_name: String, player_id: int):
 		if main.has_method("tutorial_give_initial_resources_from_vertex"):
 			main.tutorial_give_initial_resources_from_vertex(vertex_name, player_id)
 		
-		main.show_tutorial("【チュートリアル】初期資源を獲得しました。", false)
+		main.show_tutorial("【チュートリアル】初期資源を獲得。", false)
 		await main.get_tree().create_timer(1.0).timeout
 	
 	_next_step()
@@ -231,11 +249,14 @@ func _on_road_built(edge_name: String, player_id: int):
 	main.clear_tutorial_marker()
 	_next_step()
 
-func notify_road_built(edge_name: String, player_id: int):
-	_on_road_built(edge_name, player_id)
 
 func notify_settlement_built(vertex_name: String, player_id: int):
 	_on_settlement_built(vertex_name, player_id)
+
+
+func notify_road_built(edge_name: String, player_id: int):
+	_on_road_built(edge_name, player_id)
+
 
 func request_tutorial_roll():
 	if is_tutorial_rolling:
@@ -263,16 +284,25 @@ func _on_dice_rolled(d1: int, d2: int):
 		return
 	
 	var total = d1 + d2
+	var my_id = main.multiplayer.get_unique_id()
 	
-	main.show_tutorial("【チュートリアル】出目は " + str(total) + "。資源獲得です。", false)
+	if main.has_method("tutorial_distribute_resources_for_roll"):
+		var gained = main.tutorial_distribute_resources_for_roll(total, my_id)
+		print("Tutorial gained resources: ", gained)
+	
+	main.show_tutorial("【チュートリアル】出目は " + str(total) + "。資源獲得。", false)
 	
 	await main.get_tree().create_timer(1.5).timeout
 	_next_step()
 
 
 func _run_auto_step(step: Dictionary):
-	if step["id"] == "give_road_resources":
-		await _give_road_resources()
+	if step.has("action"):
+		match step["action"]:
+			"give_road_resources":
+				await _give_road_resources()
+			"give_settlement_resources":
+				await _give_settlement_resources()
 		return
 	
 	var enemy_id = step["player_id"]
@@ -289,7 +319,19 @@ func _give_road_resources():
 	GameManager.add_resource(my_id, "wood", 1)
 	GameManager.add_resource(my_id, "brick", 1)
 	
-	main.show_tutorial("【チュートリアル】木材とレンガを追加しました。", false)
+	main.show_tutorial("【チュートリアル】木材とレンガを追加。", false)
+	await main.get_tree().create_timer(1.0).timeout
+
+
+func _give_settlement_resources():
+	var my_id = main.multiplayer.get_unique_id()
+	
+	GameManager.add_resource(my_id, "wood", 1)
+	GameManager.add_resource(my_id, "brick", 1)
+	GameManager.add_resource(my_id, "sheep", 1)
+	GameManager.add_resource(my_id, "wheat", 1)
+	
+	main.show_tutorial("【チュートリアル】拠点用の資源を追加。", false)
 	await main.get_tree().create_timer(1.0).timeout
 
 
