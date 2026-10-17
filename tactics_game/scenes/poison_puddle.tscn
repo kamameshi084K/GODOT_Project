@@ -1,0 +1,48 @@
+[gd_scene load_steps=8 format=3 uid="uid://bn7hqlheltnn"]
+
+[ext_resource type="Script" uid="uid://bg6yv8nxvrit8" path="res://scripts/poison_puddle.gd" id="1_8544u"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xf7mq"]
+size = Vector3(2, 0.5, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_58x8p"]
+albedo_color = Color(0, 0.39594817, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fln2l"]
+material = SubResource("StandardMaterial3D_58x8p")
+size = Vector3(2, 0.5, 2)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_8544u"]
+emission_shape = 3
+emission_box_extents = Vector3(0.8, 0.05, 0.8)
+direction = Vector3(0, 1, 0)
+initial_velocity_min = 0.5
+initial_velocity_max = 1.0
+gravity = Vector3(0, 0.1, 0)
+scale_min = 0.5
+color = Color(0, 0.39607844, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xf7mq"]
+albedo_color = Color(0, 2.0128288, 0, 0.5921569)
+
+[sub_resource type="SphereMesh" id="SphereMesh_58x8p"]
+material = SubResource("StandardMaterial3D_xf7mq")
+radius = 0.08
+height = 0.16
+radial_segments = 8
+rings = 4
+
+[node name="PoisonPuddle" type="Area3D" groups=["hazards"]]
+script = ExtResource("1_8544u")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_xf7mq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_fln2l")
+skeleton = NodePath("../CollisionShape3D")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+process_material = SubResource("ParticleProcessMaterial_8544u")
+draw_pass_1 = SubResource("SphereMesh_58x8p")

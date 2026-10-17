@@ -1,0 +1,3 @@
+[submodule "pikumin/godot-cpp"]
+	path = pikumin/godot-cpp
+	url = https://github.com/godotengine/godot-cpp

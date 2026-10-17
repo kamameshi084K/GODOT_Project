@@ -1,0 +1,68 @@
+[gd_scene load_steps=9 format=3 uid="uid://btic00valne0y"]
+
+[ext_resource type="PackedScene" uid="uid://b83uvuccavptu" path="res://scenes/target.tscn" id="1_0wfyh"]
+[ext_resource type="PackedScene" uid="uid://dvf6gt1ehwd4h" path="res://scenes/follower.tscn" id="2_sugp2"]
+[ext_resource type="PackedScene" uid="uid://bf37oclq7vbr8" path="res://scenes/test_floor.tscn" id="3_sugp2"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sugp2"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_jyhfs"]
+sky_material = SubResource("ProceduralSkyMaterial_sugp2")
+
+[sub_resource type="Environment" id="Environment_tbgi4"]
+background_mode = 2
+sky = SubResource("Sky_jyhfs")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sugp2"]
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_jyhfs"]
+material = SubResource("StandardMaterial3D_sugp2")
+height = 0.001
+
+[node name="Node3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_tbgi4")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="target" parent="." instance=ExtResource("1_0wfyh")]
+aim_cursor_path = NodePath("../AimCursor")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.849666, 1.3549168, -4.0886426)
+
+[node name="Follower" parent="." instance=ExtResource("2_sugp2")]
+target_path = NodePath("../target")
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 2.186408, 0)
+collision_layer = 4
+
+[node name="test_floor" parent="." instance=ExtResource("3_sugp2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.050819874, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.96097255, 0.27664384, 0, -0.27664384, 0.96097255, 0, 1.8320665, 1.3012829)
+
+[node name="Follower2" parent="." instance=ExtResource("2_sugp2")]
+target_path = NodePath("../target")
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, -4.7732635, 2.186408, 0)
+collision_layer = 4
+
+[node name="Follower3" parent="." instance=ExtResource("2_sugp2")]
+target_path = NodePath("../target")
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 2.6198196, 2.186408, 0)
+collision_layer = 4
+
+[node name="Follower4" parent="." instance=ExtResource("2_sugp2")]
+target_path = NodePath("../target")
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 2.186408, 2.2795937)
+collision_layer = 4
+
+[node name="AimCursor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.082)
+mesh = SubResource("CylinderMesh_jyhfs")

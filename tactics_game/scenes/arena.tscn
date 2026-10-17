@@ -1,0 +1,67 @@
+[gd_scene load_steps=12 format=3 uid="uid://bpqd2q1hjbkr4"]
+
+[ext_resource type="Script" uid="uid://bgawl1hrbnlsw" path="res://scripts/ArenaGrid.gd" id="1_wl4x5"]
+[ext_resource type="MeshLibrary" uid="uid://cuaioutlosj7i" path="res://resources/tiles.tres" id="2_olpmc"]
+[ext_resource type="PackedScene" uid="uid://mf4clpc2xuox" path="res://scenes/unit_view.tscn" id="3_olpmc"]
+[ext_resource type="SkillData" uid="uid://twk6swn4i5ug" path="res://resources/skills/smash.tres" id="4_7ft05"]
+[ext_resource type="Script" uid="uid://8g81rtckyndk" path="res://scripts/turn_manager.gd" id="4_xdvfk"]
+[ext_resource type="SkillData" uid="uid://b5m03xlvdrtmy" path="res://resources/skills/poison_bomb.tres" id="5_dpxgc"]
+[ext_resource type="PackedScene" uid="uid://c0o2i2jjolm07" path="res://scenes/hud.tscn" id="6_4ag8t"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_xdvfk"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_7ft05"]
+sky_material = SubResource("ProceduralSkyMaterial_xdvfk")
+
+[sub_resource type="Environment" id="Environment_4ag8t"]
+background_mode = 2
+sky = SubResource("Sky_7ft05")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oexds"]
+size = Vector3(100, 1, 100)
+
+[node name="Arena" type="Node3D"]
+script = ExtResource("1_wl4x5")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_4ag8t")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 4.052722, 0)
+shadow_enabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+
+[node name="GridMap" type="GridMap" parent="."]
+mesh_library = ExtResource("2_olpmc")
+cell_size = Vector3(2, 0.5, 2)
+data = {
+"cells": PackedInt32Array(65536, 0, 0, 65536, 65535, 0, 131071, 65535, 0, 131071, 0, 0, 65537, 65535, 0, 65537, 0, 0, 131070, 65535, 0, 131070, 0, 0)
+}
+metadata/_editor_floor_ = Vector3(0, 1, 0)
+
+[node name="DeathZone" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DeathZone"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)
+shape = SubResource("BoxShape3D_oexds")
+
+[node name="UnitView" parent="." instance=ExtResource("3_olpmc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3259615, 2, 0)
+skills = Array[SkillData]([ExtResource("4_7ft05")])
+
+[node name="UnitView2" parent="." instance=ExtResource("3_olpmc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8484423, 2, 0)
+skills = Array[SkillData]([ExtResource("5_dpxgc")])
+
+[node name="TurnManager" type="Node" parent="." node_paths=PackedStringArray("unit_nodes")]
+script = ExtResource("4_xdvfk")
+unit_nodes = [NodePath("../UnitView"), NodePath("../UnitView2")]
+
+[node name="HUD" parent="." instance=ExtResource("6_4ag8t")]
+
+[editable path="UnitView"]

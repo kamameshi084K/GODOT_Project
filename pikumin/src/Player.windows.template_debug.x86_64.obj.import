@@ -3,12 +3,12 @@
 importer="wavefront_obj"
 importer_version=1
 type="Mesh"
-uid="uid://bk6gu01x0d55x"
+uid="uid://f6c6pp4buuad"
 valid=false
 
 [deps]
 
-source_file="res://src/board.windows.template_debug.x86_64.obj"
+source_file="res://src/Player.windows.template_debug.x86_64.obj"
 
 [params]
 

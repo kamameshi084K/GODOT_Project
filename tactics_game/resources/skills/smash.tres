@@ -1,0 +1,8 @@
+[gd_resource type="SkillData" format=3 uid="uid://twk6swn4i5ug"]
+
+[resource]
+skill_name = "スマッシュ"
+description = "前方の敵を強打し吹き飛ばす。床を破壊する。"
+base_damage = 15
+knockback_force = 12.0
+breaks_floor = true

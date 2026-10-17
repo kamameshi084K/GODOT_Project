@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://dpxuo8f8toaqo"]
+
+[ext_resource type="Script" uid="uid://i18ej162cisd" path="res://scripts/unit_overhead_ui.gd" id="1_yew8h"]
+
+[node name="UnitOverheadUI" type="Sprite3D"]
+billboard = 1
+no_depth_test = true
+script = ExtResource("1_yew8h")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+size = Vector2i(200, 40)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HPBar" type="ProgressBar" parent="SubViewport/VBoxContainer"]
+custom_minimum_size = Vector2(200, 16)
+layout_mode = 2
+
+[node name="ShieldBar" type="ProgressBar" parent="SubViewport/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(200, 10)
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="SubViewport/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "毒スタックや名前表示"
+horizontal_alignment = 1

@@ -1,0 +1,9 @@
+[gd_resource type="SkillData" format=3 uid="uid://b5m03xlvdrtmy"]
+
+[resource]
+skill_name = "毒フラスコ投擲"
+target_type = 4
+range = 12.0
+area_radius = 10.0
+poison_stacks = 3
+max_cooldown = 1

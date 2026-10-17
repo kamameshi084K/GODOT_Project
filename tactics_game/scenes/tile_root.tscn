@@ -1,0 +1,48 @@
+[gd_scene load_steps=8 format=3 uid="uid://7ghkwu3eh4a"]
+
+[ext_resource type="Texture2D" uid="uid://bfihjrl0ue2ih" path="res://assets/textures/destroy_stage_9.png" id="1_vod0n"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ojpid"]
+albedo_color = Color(0.44313726, 0.4509804, 0.45882353, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_15wbj"]
+material = SubResource("StandardMaterial3D_ojpid")
+size = Vector3(2, 0.5, 2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_fcnvn"]
+points = PackedVector3Array(-1, -0.25, -1, -1, 0.25, -1, 1, -0.25, -1, -1, -0.25, 1, -1, 0.25, 1, 1, 0.25, -1, 1, -0.25, 1, 1, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xa57a"]
+transparency = 1
+albedo_texture = ExtResource("1_vod0n")
+uv1_scale = Vector3(4, 4, 4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5clyk"]
+next_pass = SubResource("StandardMaterial3D_xa57a")
+albedo_color = Color(0.44313726, 0.4509804, 0.45882353, 1)
+uv1_scale = Vector3(2, 2, 2)
+uv1_offset = Vector3(1.54, 0, 0)
+uv2_triplanar = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_ph540"]
+material = SubResource("StandardMaterial3D_5clyk")
+size = Vector3(2, 0.5, 2)
+
+[node name="TileRoot" type="Node3D"]
+
+[node name="tile_normal" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_15wbj")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="tile_normal"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="tile_normal/StaticBody3D"]
+shape = SubResource("ConvexPolygonShape3D_fcnvn")
+
+[node name="tile_cracked" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
+mesh = SubResource("BoxMesh_ph540")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="tile_cracked"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="tile_cracked/StaticBody3D"]
+shape = SubResource("ConvexPolygonShape3D_fcnvn")

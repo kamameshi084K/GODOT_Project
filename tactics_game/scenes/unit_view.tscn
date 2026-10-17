@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3 uid="uid://mf4clpc2xuox"]
+
+[ext_resource type="Script" uid="uid://cfnqqro05wwqh" path="res://scripts/Unit_view.gd" id="1_1l4p3"]
+[ext_resource type="PackedScene" uid="uid://dpxuo8f8toaqo" path="res://scenes/unit_overhead_ui.tscn" id="2_d6paq"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_d6paq"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_bl5wp"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1l4p3"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1.0569379, 0, 0, 0.6156863)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_d6paq"]
+material = SubResource("StandardMaterial3D_1l4p3")
+top_radius = 0.95
+bottom_radius = 0.95
+height = 0.001
+
+[node name="UnitView" type="CharacterBody3D"]
+script = ExtResource("1_1l4p3")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_d6paq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_bl5wp")
+
+[node name="RangeIndicator" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.98, 2)
+visible = false
+mesh = SubResource("CylinderMesh_d6paq")
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Head"]
+spring_length = 3.5
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="Head/SpringArm3D"]
+
+[node name="UnitOverheadUI" parent="." instance=ExtResource("2_d6paq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)

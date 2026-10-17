@@ -1,0 +1,5 @@
+{
+    "cmake.autoConfigureOnOpen": false,
+    "cmake.configureOnOpen": false,
+    "godotTools.editorPath.godot4": "c:\\GodotEngine\\Godot_v4.5.1-stable_win64.exe"
+}
