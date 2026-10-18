@@ -11,12 +11,14 @@ var flipped := false
 var preview_origin := Vector2i(-100, -100)
 var reason_label: Label
 var status_label: Label
+var roster_label: Label
 var result_label: Label
 var pieces_grid: GridContainer
 var start_panel: PanelContainer
 var game_panel: Control
 var count_selector: OptionButton
 var name_field: LineEdit
+var start_error_label: Label
 var address_field: LineEdit
 var port_field: LineEdit
 var lobby_panel: PanelContainer
@@ -24,7 +26,10 @@ var lobby_label: Label
 var ready_button: Button
 var launch_button: Button
 var return_button: Button
+var result_panel: PanelContainer
+var full_result_label: Label
 var waiting := false
+var last_game_error := ""
 
 func _ready() -> void:
 	board_view = BlokusBoardView.new()
@@ -59,7 +64,7 @@ func build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 32)
 	start_content.add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "Phase 1：このPCで順番に操作する対戦"
+	subtitle.text = "友人と2〜4人で遊ぶ3Dボードゲーム"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	start_content.add_child(subtitle)
 	name_field = LineEdit.new()
@@ -84,12 +89,15 @@ func build_ui() -> void:
 	join_button.text = "部屋に参加する"
 	join_button.pressed.connect(join_room)
 	online_buttons.add_child(join_button)
+	start_error_label = Label.new()
+	start_error_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.38))
+	start_content.add_child(start_error_label)
 	count_selector = OptionButton.new()
 	for count in [2, 3, 4]:
 		count_selector.add_item("%d人" % count, count)
 	start_content.add_child(count_selector)
 	var start_button := Button.new()
-	start_button.text = "1台で交代して遊ぶ"
+	start_button.text = "このPCで順番に遊ぶ"
 	start_button.pressed.connect(start_local_match)
 	start_content.add_child(start_button)
 	var instructions := Label.new()
@@ -128,6 +136,19 @@ func build_ui() -> void:
 	game_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	game_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(game_panel)
+	result_panel = PanelContainer.new()
+	result_panel.position = Vector2(300, 100)
+	result_panel.custom_minimum_size = Vector2(690, 520)
+	game_panel.add_child(result_panel)
+	var results_content := VBoxContainer.new()
+	result_panel.add_child(results_content)
+	var result_title := Label.new()
+	result_title.text = "対戦結果"
+	result_title.add_theme_font_size_override("font_size", 28)
+	results_content.add_child(result_title)
+	full_result_label = Label.new()
+	results_content.add_child(full_result_label)
+	result_panel.visible = false
 	var left := PanelContainer.new()
 	left.position = Vector2(8, 8)
 	left.custom_minimum_size = Vector2(240, 680)
@@ -137,6 +158,12 @@ func build_ui() -> void:
 	status_label = Label.new()
 	status_label.custom_minimum_size = Vector2(230, 110)
 	left_content.add_child(status_label)
+	var roster_panel := PanelContainer.new()
+	roster_panel.position = Vector2(1000, 8)
+	roster_panel.custom_minimum_size = Vector2(270, 220)
+	game_panel.add_child(roster_panel)
+	roster_label = Label.new()
+	roster_panel.add_child(roster_label)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(230, 455)
 	left_content.add_child(scroll)
@@ -227,10 +254,12 @@ func update_lobby() -> void:
 func prepare_online_match() -> void:
 	match_state = network.match_state
 	waiting = true
+	last_game_error = ""
 	selected_piece = -1
 	start_panel.visible = false
 	lobby_panel.visible = false
 	game_panel.visible = true
+	result_panel.visible = false
 	board_view.show_preview(-1, 0, false, Vector2i.ZERO, 0, false)
 	reason_label.text = "全員の画面を読み込み中…"
 	status_label.text = "対戦準備中"
@@ -247,15 +276,19 @@ func update_online_state() -> void:
 	board_view.show_board(match_state.board)
 	board_view.show_preview(-1, 0, false, Vector2i.ZERO, 0, false)
 	refresh_ui()
+	if last_game_error != "":
+		reason_label.text = last_game_error
+		last_game_error = ""
 
 func show_problem(message: String) -> void:
 	waiting = false
 	if game_panel != null and game_panel.visible:
+		last_game_error = message
 		reason_label.text = message
 	elif lobby_panel != null and lobby_panel.visible:
 		lobby_label.text += "\n" + message
 	else:
-		push_warning(message)
+		start_error_label.text = message
 
 func show_abort(message: String) -> void:
 	waiting = false
@@ -266,6 +299,8 @@ func show_abort(message: String) -> void:
 	update_lobby()
 	if lobby_panel.visible:
 		lobby_label.text += "\n" + message
+	else:
+		start_error_label.text = message
 
 func return_from_game() -> void:
 	selected_piece = -1
@@ -284,6 +319,7 @@ func return_from_game() -> void:
 
 func start_local_match() -> void:
 	match_state = BlokusMatch.new()
+	last_game_error = ""
 	match_state.start(count_selector.get_selected_id())
 	selected_piece = -1
 	piece_rotation = 0
@@ -292,6 +328,7 @@ func start_local_match() -> void:
 	board_view.show_preview(-1, 0, false, Vector2i.ZERO, 0, false)
 	start_panel.visible = false
 	game_panel.visible = true
+	result_panel.visible = false
 	refresh_ui()
 
 func refresh_ui() -> void:
@@ -305,25 +342,44 @@ func refresh_ui() -> void:
 	if network.phase == "playing" and seat < network.seat_order.size():
 		person = network.players.get(network.seat_order[seat], {}).get("name", person)
 	status_label.text = "%sの手番 / %s%s\n残り %d個・%dマス\n青:左上 黄:右上\n赤:右下 緑:左下" % [person, BlokusRules.COLORS[color], shared, remaining.pieces, remaining.squares]
+	var roster := "担当と残り\n"
+	for roster_color in 4:
+		var roster_seat := match_state.seat_for_color(roster_color)
+		var owner := "席%d" % (roster_seat + 1)
+		if network.phase == "playing" and roster_seat < network.seat_order.size():
+			owner = network.players.get(network.seat_order[roster_seat], {}).get("name", owner)
+		if match_state.player_count == 3 and roster_color == 3:
+			owner += "（共有の次担当）"
+		var left_for_color := BlokusRules.remaining(match_state.used, roster_color)
+		roster += "%s %s  %d個 / %dマス\n" % [BlokusRules.COLORS[roster_color], owner, left_for_color.pieces, left_for_color.squares]
+	roster_label.text = roster
 	if match_state.finished:
 		status_label.text = "対戦終了"
-		var results := ""
+		var results := "色ごとの結果\n"
+		for result_color in 4:
+			var color_score := BlokusRules.score(match_state.used, result_color, match_state.last_piece[result_color])
+			var owner := "共有色" if match_state.player_count == 3 and result_color == 3 else "席%d" % (match_state.seat_for_color(result_color) + 1)
+			results += "%s（%s） 残り%dマス: -%d点  ボーナス: +%d点  色計: %d点\n" % [BlokusRules.COLORS[result_color], owner, color_score.remaining, color_score.remaining, color_score.bonus, color_score.total]
+		results += "\n個人の順位と合計点\n"
 		for entry in match_state.player_scores():
-			results += "%d位 席%d: %d点  " % [entry.rank, entry.seat + 1, entry.total]
-			for component in entry.components:
-				var detail: Dictionary = component.score
-				results += "%s 残%d ボーナス%d  " % [BlokusRules.COLORS[component.color], detail.remaining, detail.bonus]
+			var result_person := "席%d" % (entry.seat + 1)
+			if network.phase == "playing" and entry.seat < network.seat_order.size():
+				result_person = network.players.get(network.seat_order[entry.seat], {}).get("name", result_person)
+			results += "%d位 %s: %d点" % [entry.rank, result_person, entry.total]
 			results += "\n"
-		result_label.text = results
+		full_result_label.text = results
+		result_panel.visible = true
+		result_label.text = "全員の最終盤面と得点を表示しています"
 		return_button.text = "ロビーへ戻る" if network.phase == "playing" and multiplayer.is_server() else "ホストがロビーへ戻すのを待つ" if network.phase == "playing" else "人数選択へ戻る"
 		return_button.disabled = network.phase == "playing" and not multiplayer.is_server()
 		return
+	result_panel.visible = false
 	return_button.text = "対戦から退出"
 	return_button.disabled = false
 	result_label.text = match_state.pass_log.back() if not match_state.pass_log.is_empty() else ""
 	for piece_id in BlokusRules.PIECES.size():
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(105, 70)
+		button.custom_minimum_size = Vector2(105, 105)
 		button.text = "%s (%d)\n%s" % [PIECE_NAMES[piece_id], BlokusRules.PIECES[piece_id].size(), piece_icon(piece_id)]
 		button.disabled = match_state.used[color][piece_id]
 		button.pressed.connect(select_piece.bind(piece_id))
@@ -343,9 +399,9 @@ func piece_icon(piece_id: int) -> String:
 	for y in height:
 		var line := ""
 		for x in width:
-			line += "■" if Vector2i(x, y) in shape else " "
+			line += "■" if Vector2i(x, y) in shape else "□"
 		lines.append(line)
-	return " ".join(lines)
+	return "\n".join(lines)
 
 func select_piece(piece_id: int) -> void:
 	if network.phase == "playing" and (match_state.current_seat() != network.local_seat() or waiting):

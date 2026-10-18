@@ -40,6 +40,8 @@ func test_shapes() -> void:
 		canonical[variants[0]] = true
 	expect(counts == [1, 1, 2, 5, 12], "サイズ別個数")
 	expect(squares == 89, "合計89マス")
+	expect(BlokusRules.cells(9, 0, false) == BlokusRules.cells(9, 4, false), "4回転で元に戻る")
+	expect(BlokusRules.cells(9, 0, false) != BlokusRules.cells(9, 0, true), "非対称駒の反転")
 
 func test_placement() -> void:
 	var state := BlokusMatch.new()
@@ -54,6 +56,9 @@ func test_placement() -> void:
 	expect(BlokusRules.check(state.board, state.used, 0, 1, 0, false, Vector2i(1, 1)) == "", "同色角接触")
 	expect(BlokusRules.check(state.board, state.used, 0, 1, 0, false, Vector2i(1, 0)) != "", "同色辺接触")
 	expect(BlokusRules.check(state.board, state.used, 0, 0, 0, false, Vector2i(1, 1)) != "", "使用済み")
+	state.board[BlokusRules.index(Vector2i(1, 0))] = 1
+	expect(BlokusRules.check(state.board, state.used, 0, 1, 0, false, Vector2i(1, 1)) == "", "異色との辺接触")
+	expect(BlokusRules.check(state.board, state.used, 0, 1, 0, false, Vector2i(0, 0)) != "", "重なり")
 	var old_revision := state.revision - 1
 	expect(state.play(0, 1, 0, false, Vector2i(1, 1), state.match_id, old_revision) != "", "古いrevision")
 	expect(state.play(1, 1, 0, false, Vector2i(1, 1), state.match_id, state.revision) != "", "別席")

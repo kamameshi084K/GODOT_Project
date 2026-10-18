@@ -200,8 +200,9 @@ func _connection_failed() -> void:
 	problem.emit("接続に失敗しました。IP・ポート・UDP通信を確認してください")
 
 func _server_disconnected() -> void:
+	var was_connecting := phase == "connecting"
 	disconnect_session()
-	aborted.emit("ホストとの接続が切れました")
+	aborted.emit("接続が拒否されました（満員または対戦中の可能性があります）" if was_connecting else "ホストとの接続が切れました")
 
 @rpc("any_peer", "call_remote", "reliable")
 func register_player(name: String) -> void:

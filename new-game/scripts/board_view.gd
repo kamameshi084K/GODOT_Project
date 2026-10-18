@@ -13,7 +13,7 @@ var placed_root: Node3D
 var preview_root: Node3D
 var yaw := 0.65
 var pitch := 0.95
-var distance := 33.0
+var distance := 30.0
 var dragging_camera := false
 
 func _ready() -> void:
@@ -115,7 +115,7 @@ func screen_cell(screen_position: Vector2) -> Vector2i:
 func reset_camera() -> void:
 	yaw = 0.65
 	pitch = 0.95
-	distance = 33.0
+	distance = 30.0
 	update_camera()
 
 func rotate_camera(delta: Vector2) -> void:
