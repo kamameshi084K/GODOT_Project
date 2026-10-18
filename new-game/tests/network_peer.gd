@@ -8,6 +8,9 @@ var port := 24568
 var started := false
 var submitted_revision := -1
 var last_revision := -1
+var completed := false
+var stale_sent := false
+var turn_violation_sent := false
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -25,16 +28,22 @@ func _initialize() -> void:
 	net.lobby_changed.connect(on_lobby)
 	net.prepare_match.connect(func(): net.notify_loaded())
 	net.state_changed.connect(on_state)
-	net.problem.connect(func(message): fail(message))
+	net.problem.connect(on_problem)
 	net.aborted.connect(func(message):
-		if last_revision < target_revision:
+		if not completed:
 			fail(message)
 	)
 	call_deferred("start_network")
 	create_timer(45.0).timeout.connect(func():
-		if last_revision < target_revision:
+		if not completed:
 			fail("タイムアウト revision=%d" % last_revision)
 	)
+
+func on_problem(message: String) -> void:
+	if message in ["現在の担当者ではありません", "古い操作です"]:
+		print("%s REJECT %s" % [role, message])
+	else:
+		fail(message)
 
 func start_network() -> void:
 	var error := ""
@@ -68,10 +77,14 @@ func on_state() -> void:
 		return
 	last_revision = state.revision
 	print("%s STATE %d %s" % [role, state.revision, str(state.board.hash())])
-	if state.revision >= target_revision:
-		print("%s OK" % role)
-		quit(0)
+	if state.finished or state.revision >= target_revision:
+		completed = true
+		print("%s OK scores=%s" % [role, str(state.player_scores())])
+		create_timer(0.5).timeout.connect(func(): quit(0))
 		return
+	if role != "host" and not turn_violation_sent and state.revision == 0:
+		turn_violation_sent = true
+		net.request_place.rpc_id(1, 0, 0, false, Vector2i(0, 0), state.match_id, state.revision)
 	if state.finished or state.current_seat() != net.local_seat() or submitted_revision == state.revision:
 		return
 	var move := first_move(state)
@@ -79,7 +92,15 @@ func on_state() -> void:
 		fail("手番なのに合法手がない")
 		return
 	submitted_revision = state.revision
-	net.submit(move.id, move.rotation, move.flipped, move.origin, state.match_id, state.revision)
+	if role != "host" and not stale_sent and state.revision >= 1:
+		stale_sent = true
+		net.request_place.rpc_id(1, move.id, move.rotation, move.flipped, move.origin, state.match_id, state.revision - 1)
+	if role == "host" and state.revision == 0:
+		create_timer(0.3).timeout.connect(func():
+			net.submit(move.id, move.rotation, move.flipped, move.origin, state.match_id, state.revision)
+		)
+	else:
+		net.submit(move.id, move.rotation, move.flipped, move.origin, state.match_id, state.revision)
 
 func first_move(state: BlokusMatch) -> Dictionary:
 	var color := state.color_turn

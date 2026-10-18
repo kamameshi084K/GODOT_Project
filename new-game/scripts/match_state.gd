@@ -28,7 +28,10 @@ func start(count: int) -> void:
 	color_turn = 0
 	green_turn_count = 0
 	revision = 0
+	var old_match_id := match_id
 	match_id = randi()
+	while match_id == old_match_id:
+		match_id = randi()
 	finished = false
 	pass_log.clear()
 	advance_unplayable()
