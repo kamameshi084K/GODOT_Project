@@ -97,3 +97,31 @@ func player_scores() -> Array[Dictionary]:
 				higher += 1
 		entry["rank"] = higher + 1
 	return scores
+
+func snapshot() -> Dictionary:
+	return {
+		"board": board.duplicate(),
+		"used": used.duplicate(true),
+		"last_piece": last_piece.duplicate(),
+		"player_count": player_count,
+		"color_turn": color_turn,
+		"green_turn_count": green_turn_count,
+		"revision": revision,
+		"match_id": match_id,
+		"finished": finished,
+		"pass_log": Array(pass_log),
+	}
+
+func load_snapshot(data: Dictionary) -> void:
+	board = data["board"].duplicate()
+	used = data["used"].duplicate(true)
+	last_piece = data["last_piece"].duplicate()
+	player_count = data["player_count"]
+	color_turn = data["color_turn"]
+	green_turn_count = data["green_turn_count"]
+	revision = data["revision"]
+	match_id = data["match_id"]
+	finished = data["finished"]
+	pass_log.clear()
+	for entry in data["pass_log"]:
+		pass_log.append(entry)
